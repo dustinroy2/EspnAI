@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Dugout — Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --espn-red: #d00;
+    --espn-red-hover: #b00;
+    --bg: #f4f5f7;
+    --white: #ffffff;
+    --card: #ffffff;
+    --border: #e2e5ea;
+    --text: #1a1a1a;
+    --text-secondary: #6b7280;
+    --text-tertiary: #9ca3af;
+    --green: #059669;
+    --green-bg: #ecfdf5;
+    --yellow: #d97706;
+    --yellow-bg: #fffbeb;
+    --blue: #2563eb;
+    --blue-bg: #eff6ff;
+    --red-bg: #fef2f2;
+    --sidebar-w: 220px;
+    --topbar-h: 56px;
+    --radius: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-lg: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0;
+    width: var(--sidebar-w);
+    background: var(--white);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    z-index: 100;
+  }
+
+  .sidebar-logo {
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .sidebar-logo .logo-mark {
+    width: 32px; height: 32px; background: var(--espn-red); border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-weight: 700; font-size: 14px;
+  }
+  .sidebar-logo .logo-text {
+    font-size: 16px; font-weight: 700; letter-spacing: -0.3px;
+  }
+  .sidebar-logo .logo-text span { color: var(--espn-red); }
+
+  .sidebar-nav { flex: 1; padding: 12px 10px; }
+  .nav-section { margin-bottom: 20px; }
+  .nav-section-label {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--text-tertiary);
+    padding: 0 10px; margin-bottom: 6px;
+  }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: 6px; cursor: pointer;
+    font-size: 13.5px; font-weight: 500; color: var(--text-secondary);
+    transition: all 0.15s;
+  }
+  .nav-item:hover { background: var(--bg); color: var(--text); }
+  .nav-item.active { background: var(--red-bg); color: var(--espn-red); font-weight: 600; }
+  .nav-item .nav-icon { width: 18px; text-align: center; font-size: 15px; }
+  .nav-item .badge {
+    margin-left: auto; background: var(--espn-red); color: white;
+    font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 10px;
+  }
+
+  .sidebar-footer {
+    padding: 14px 16px; border-top: 1px solid var(--border);
+    font-size: 11px; color: var(--text-tertiary);
+  }
+  .sidebar-footer .status-dot {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--green); margin-right: 4px;
+  }
+
+  /* ── Main Content ── */
+  .main {
+    margin-left: var(--sidebar-w);
+    min-height: 100vh;
+  }
+
+  .topbar {
+    height: var(--topbar-h);
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .topbar h2 { font-size: 17px; font-weight: 600; }
+  .topbar-right { display: flex; align-items: center; gap: 14px; }
+  .topbar-tag {
+    font-size: 11px; font-weight: 500; padding: 3px 10px;
+    border-radius: 12px; background: var(--green-bg); color: var(--green);
+  }
+
+  .content { padding: 24px 28px; max-width: 1200px; }
+
+  /* ── Page sections ── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+    box-shadow: var(--shadow);
+  }
+  .card + .card { margin-top: 16px; }
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .card-title { font-size: 14px; font-weight: 600; }
+  .card-subtitle { font-size: 12px; color: var(--text-secondary); }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 6px; font-size: 13px;
+    font-weight: 600; border: none; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-primary { background: var(--espn-red); color: white; }
+  .btn-primary:hover { background: var(--espn-red-hover); }
+  .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--border); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+  /* ── Status grid (Hub) ── */
+  .status-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+    margin-bottom: 20px;
+  }
+  .status-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px;
+    box-shadow: var(--shadow);
+  }
+  .status-card .label { font-size: 11px; font-weight: 500; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; }
+  .status-card .value { font-size: 22px; font-weight: 700; margin-top: 4px; }
+  .status-card .meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .status-card.ok { border-left: 3px solid var(--green); }
+  .status-card.warn { border-left: 3px solid var(--yellow); }
+
+  /* ── Inline tabs ── */
+  .tabs {
+    display: flex; gap: 0; border-bottom: 2px solid var(--border);
+    margin-bottom: 18px;
+  }
+  .tab {
+    padding: 10px 18px; font-size: 13px; font-weight: 500;
+    color: var(--text-secondary); cursor: pointer;
+    border-bottom: 2px solid transparent; margin-bottom: -2px;
+    transition: all 0.15s;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--espn-red); border-bottom-color: var(--espn-red); font-weight: 600; }
+
+  /* ── Player Table ── */
+  .player-table {
+    width: 100%; border-collapse: collapse; font-size: 13px;
+  }
+  .player-table th {
+    text-align: left; padding: 8px 10px; font-size: 11px;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-tertiary); border-bottom: 2px solid var(--border);
+  }
+  .player-table th.sortable { cursor: pointer; }
+  .player-table th.sortable:hover { color: var(--text); }
+  .player-table td {
+    padding: 10px; border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .player-table tr:hover { background: #f9fafb; }
+
+  .player-name-cell { display: flex; align-items: center; gap: 10px; }
+  .player-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--bg); display: flex; align-items: center;
+    justify-content: center; font-size: 11px; font-weight: 600;
+    color: var(--text-secondary); flex-shrink: 0;
+  }
+  .player-info .name { font-weight: 600; font-size: 13px; }
+  .player-info .meta { font-size: 11px; color: var(--text-secondary); }
+
+  .pos-badge {
+    display: inline-block; padding: 2px 6px; border-radius: 3px;
+    font-size: 11px; font-weight: 600; background: var(--bg);
+    color: var(--text-secondary);
+  }
+  .pos-badge.sp { background: var(--blue-bg); color: var(--blue); }
+  .pos-badge.rp { background: #faf5ff; color: #7c3aed; }
+  .pos-badge.of { background: var(--green-bg); color: var(--green); }
+
+  .stat-cell { font-variant-numeric: tabular-nums; text-align: right; }
+  .stat-highlight { font-weight: 600; color: var(--espn-red); }
+
+  /* ── Category Bars ── */
+  .cat-bars { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+  .cat-bar-item { }
+  .cat-bar-label {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 11px; font-weight: 600; margin-bottom: 4px;
+  }
+  .cat-bar-label .score { color: var(--text-secondary); font-weight: 500; }
+  .cat-bar-track {
+    height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden;
+  }
+  .cat-bar-fill {
+    height: 100%; border-radius: 3px; transition: width 0.3s;
+  }
+  .cat-bar-fill.high { background: var(--green); }
+  .cat-bar-fill.mid { background: var(--yellow); }
+  .cat-bar-fill.low { background: var(--espn-red); }
+
+  /* ── Draft OTC Strip ── */
+  .otc-strip {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px 18px;
+    box-shadow: var(--shadow); margin-bottom: 18px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .otc-round {
+    font-size: 12px; font-weight: 600; color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .otc-round .num { font-size: 24px; color: var(--text); display: block; line-height: 1; }
+  .otc-divider { width: 1px; height: 36px; background: var(--border); }
+  .otc-picks { display: flex; gap: 6px; flex: 1; overflow-x: auto; }
+  .otc-pick {
+    flex-shrink: 0; width: 64px; padding: 6px 4px;
+    border-radius: 6px; text-align: center; font-size: 11px;
+    background: var(--bg); border: 1px solid var(--border);
+  }
+  .otc-pick .pick-num { font-weight: 700; font-size: 13px; }
+  .otc-pick .pick-team { font-size: 10px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .otc-pick.current {
+    background: var(--espn-red); color: white; border-color: var(--espn-red);
+  }
+  .otc-pick.current .pick-team { color: rgba(255,255,255,0.8); }
+  .otc-pick.mine {
+    background: var(--blue-bg); border-color: var(--blue);
+  }
+  .otc-pick.done { opacity: 0.4; }
+  .otc-timer {
+    font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums;
+    color: var(--espn-red); min-width: 48px; text-align: right;
+  }
+
+  /* ── Draft Layout ── */
+  .draft-layout {
+    display: grid; grid-template-columns: 1fr 280px; gap: 18px;
+  }
+
+  /* ── Roster Panel ── */
+  .roster-panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 16px;
+  }
+  .roster-panel .panel-title {
+    font-size: 13px; font-weight: 700; margin-bottom: 12px;
+    display: flex; justify-content: space-between;
+  }
+  .roster-slot {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 0; border-bottom: 1px solid #f3f4f6;
+    font-size: 12px;
+  }
+  .roster-slot:last-child { border-bottom: none; }
+  .slot-pos {
+    width: 28px; font-size: 10px; font-weight: 700;
+    color: var(--text-tertiary); text-align: center;
+  }
+  .slot-player { font-weight: 500; }
+  .slot-player.empty { color: var(--text-tertiary); font-style: italic; }
+  .slot-round { margin-left: auto; font-size: 10px; color: var(--text-tertiary); }
+  .roster-section-label {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--text-tertiary);
+    padding: 8px 0 4px; margin-top: 4px;
+  }
+
+  /* ── On-Clock Overlay ── */
+  .overlay-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 200; display: flex; align-items: center; justify-content: center;
+  }
+  .overlay-card {
+    background: var(--white); border-radius: 12px;
+    width: 90%; max-width: 900px; max-height: 85vh;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    overflow: hidden;
+  }
+  .overlay-header {
+    background: var(--espn-red); color: white;
+    padding: 16px 24px; display: flex; align-items: center;
+    justify-content: space-between;
+  }
+  .overlay-header h3 { font-size: 16px; font-weight: 700; }
+  .overlay-header .timer { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .overlay-body { padding: 24px; overflow-y: auto; max-height: calc(85vh - 60px); }
+
+  .rec-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  .rec-card {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px; text-align: center; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .rec-card:hover { border-color: var(--espn-red); box-shadow: var(--shadow-lg); }
+  .rec-card.top-pick { border-color: var(--espn-red); border-width: 2px; }
+  .rec-rank { font-size: 11px; font-weight: 600; color: var(--text-tertiary); }
+  .rec-card.top-pick .rec-rank { color: var(--espn-red); }
+  .rec-name { font-size: 15px; font-weight: 700; margin: 6px 0 2px; }
+  .rec-meta { font-size: 12px; color: var(--text-secondary); }
+  .rec-sgp { font-size: 20px; font-weight: 700; color: var(--green); margin-top: 6px; }
+  .rec-tags { display: flex; gap: 4px; justify-content: center; margin-top: 8px; flex-wrap: wrap; }
+  .rec-tag {
+    font-size: 10px; font-weight: 600; padding: 2px 6px;
+    border-radius: 3px; background: var(--bg);
+  }
+  .rec-tag.critical { background: var(--red-bg); color: var(--espn-red); }
+  .rec-tag.good { background: var(--green-bg); color: var(--green); }
+
+  .gap-strip {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px;
+  }
+  .gap-chip {
+    display: flex; align-items: center; gap: 4px;
+    padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600;
+  }
+  .gap-chip.locked { background: var(--green-bg); color: var(--green); }
+  .gap-chip.critical { background: var(--red-bg); color: var(--espn-red); }
+  .gap-chip.soon { background: var(--yellow-bg); color: var(--yellow); }
+  .gap-chip.ok { background: var(--bg); color: var(--text-secondary); }
+
+  /* ── Filter bar ── */
+  .filter-bar {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .filter-pills { display: flex; gap: 4px; }
+  .filter-pill {
+    padding: 5px 12px; border-radius: 16px; font-size: 12px;
+    font-weight: 500; background: var(--bg); color: var(--text-secondary);
+    cursor: pointer; border: 1px solid transparent;
+    transition: all 0.15s;
+  }
+  .filter-pill:hover { border-color: var(--border); }
+  .filter-pill.active { background: var(--text); color: var(--white); }
+  .search-input {
+    padding: 7px 12px; border-radius: 6px; border: 1px solid var(--border);
+    font-size: 13px; width: 200px; outline: none;
+    font-family: inherit;
+  }
+  .search-input:focus { border-color: var(--espn-red); }
+  .search-input::placeholder { color: var(--text-tertiary); }
+
+  /* ── Intel Cards ── */
+  .intel-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .intel-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px;
+    box-shadow: var(--shadow);
+  }
+  .intel-card .card-title { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+  .intel-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 0; border-bottom: 1px solid #f3f4f6;
+    font-size: 12px;
+  }
+  .intel-item:last-child { border-bottom: none; }
+  .signal-tag {
+    font-size: 10px; font-weight: 600; padding: 2px 7px;
+    border-radius: 3px;
+  }
+  .signal-tag.buy { background: var(--green-bg); color: var(--green); }
+  .signal-tag.sell { background: var(--red-bg); color: var(--espn-red); }
+  .signal-tag.watch { background: var(--yellow-bg); color: var(--yellow); }
+  .signal-tag.add { background: var(--blue-bg); color: var(--blue); }
+
+  /* ── Hub Settings Row ── */
+  .settings-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0; border-bottom: 1px solid var(--border);
+  }
+  .settings-row:last-child { border-bottom: none; }
+  .settings-label { font-size: 13px; font-weight: 500; flex: 1; }
+  .settings-value { font-size: 13px; color: var(--text-secondary); }
+
+  /* ── Mockup Label ── */
+  .mockup-banner {
+    background: #fffbeb; border: 1px solid #fcd34d;
+    border-radius: 6px; padding: 10px 16px; margin-bottom: 20px;
+    font-size: 12px; color: #92400e; font-weight: 500;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* ── Page transitions ── */
+  .page { animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+    .draft-layout { grid-template-columns: 1fr; }
+    .rec-grid { grid-template-columns: repeat(2, 1fr); }
+    .status-grid { grid-template-columns: 1fr; }
+    .intel-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- SIDEBAR -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">D</div>
+    <div class="logo-text">THE <span>DUGOUT</span></div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-label">Main</div>
+      <div class="nav-item active" onclick="showPage('hub')">
+        <span class="nav-icon">⌂</span> Hub
+      </div>
+      <div class="nav-item" onclick="showPage('prep')">
+        <span class="nav-icon">📋</span> Draft Prep
+      </div>
+      <div class="nav-item" onclick="showPage('live')">
+        <span class="nav-icon">⚡</span> Draft Live
+        <span class="badge">LIVE</span>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">In-Season</div>
+      <div class="nav-item" onclick="showPage('team')">
+        <span class="nav-icon">👤</span> My Team
+      </div>
+      <div class="nav-item" onclick="showPage('intel')">
+        <span class="nav-icon">📡</span> Intel
+      </div>
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <span class="status-dot"></span> ESPN Connected<br>
+    <span style="color:var(--text-tertiary)">We're the Millers · Pick 9</span>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- MAIN CONTENT -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div class="main">
+
+<!-- ── HUB PAGE ── -->
+<div class="page active" id="page-hub">
+  <div class="topbar">
+    <h2>Hub</h2>
+    <div class="topbar-right">
+      <span class="topbar-tag">✓ All Systems Go</span>
+    </div>
+  </div>
+  <div class="content">
+    <div class="mockup-banner">
+      ⚠ MOCKUP — This is a design preview. Click the sidebar to see each section.
+    </div>
+
+    <div class="status-grid">
+      <div class="status-card ok">
+        <div class="label">ESPN Connection</div>
+        <div class="value" style="color:var(--green)">Connected</div>
+        <div class="meta">via Firefox cookies</div>
+      </div>
+      <div class="status-card ok">
+        <div class="label">Claude API</div>
+        <div class="value" style="color:var(--green)">Active</div>
+        <div class="meta">sk-ant-...8f2k</div>
+      </div>
+      <div class="status-card ok">
+        <div class="label">Projections</div>
+        <div class="value">412 players</div>
+        <div class="meta">Generated 2h ago · $0.27</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">League Settings</div>
+        <button class="btn btn-secondary btn-sm">Refresh</button>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">League</div>
+        <div class="settings-value">FIELD OF DREAMS FANTASY BASEBALL</div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">Format</div>
+        <div class="settings-value">12-team H2H Each Category</div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">Your Team</div>
+        <div class="settings-value">We're the Millers</div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">Draft Position</div>
+        <div class="settings-value">Pick 9 of 12 · Snake</div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">Categories</div>
+        <div class="settings-value">R HR RBI SB AVG OPS · K QS W SV ERA WHIP</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="card-header">
+        <div class="card-title">Quick Actions</div>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="showPage('live')">⚡ Enter Draft Room</button>
+        <button class="btn btn-secondary" onclick="showPage('prep')">📋 Draft Prep</button>
+        <button class="btn btn-secondary" onclick="showPage('intel')">📡 Intel Center</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── DRAFT PREP PAGE ── -->
+<div class="page" id="page-prep">
+  <div class="topbar">
+    <h2>Draft Prep</h2>
+    <div class="topbar-right">
+      <span class="topbar-tag">412 players projected</span>
+      <button class="btn btn-primary btn-sm">⚡ Regenerate Projections</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="card" style="margin-bottom:18px">
+      <div class="card-title" style="margin-bottom:12px">Your Category Targets</div>
+      <div class="cat-bars">
+        <div class="cat-bar-item">
+          <div class="cat-bar-label">R <span class="score">—</span></div>
+          <div class="cat-bar-track"><div class="cat-bar-fill mid" style="width:0%"></div></div>
+        </div>
+        <div class="cat-bar-item">
+          <div class="cat-bar-label">HR <span class="score">—</span></div>
+          <div class="cat-bar-track"><div class="cat-bar-fill mid" style="width:0%"></div></div>
+        </div>
+        <div class="cat-bar-item">
+          <div class="cat-bar-label">RBI <span class="score">—</span></div>
+          <div class="cat-bar-track"><div class="cat-bar-fill mid" style="width:0%"></div></div>
+        </div>
+        <div class="cat-bar-item">
+          <div class="cat-bar-label">SB <span class="score">—</span></div>
+          <div class="cat-bar-track"><div class="cat-bar-fill mid" style="width:0%"></div></div>
+        </div>
+        <div class="cat-bar-item">
+          <div class="cat-bar-label">AVG <span class="score">—</span></div>
+          <div class="cat-bar-track"><div class="cat-bar-fill mid" style="width:0%"></div></div>
+        </div>
+        <div class="cat-bar-item">
+          <div class="cat-bar-label">OPS <span class="score">—</span></div>
+          <div class="cat-bar-track"><div class="cat-bar-fill mid" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div class="cat-bars" style="margin-top:10px">
+        <div class="cat-bar-item">
+          <div class="cat-bar-label">K <span class="score">—</span></div>
+          <div class="cat-bar-track"><div class="cat-bar-fill mid" style="width:0%"></div></div>
+        </div>
+        <div class="cat-bar-item">
+          <div class="cat-bar-label">QS <span class="score">—</span></div>
+          <div class="cat-bar-track"><div class="cat-bar-fill mid" style="width:0%"></div></div>
+        </div>
+        <div class="cat-bar-item">
+          <div class="cat-bar-label">W <span class="score">—</span></div>
+          <div class="cat-bar-track"><div class="cat-bar-fill mid" style="width:0%"></div></div>
+        </div>
+        <div class="cat-bar-item">
+          <div class="cat-bar-label">SV <span class="score">—</span></div>
+          <div class="cat-bar-track"><div class="cat-bar-fill mid" style="width:0%"></div></div>
+        </div>
+        <div class="cat-bar-item">
+          <div class="cat-bar-label">ERA <span class="score">—</span></div>
+          <div class="cat-bar-track"><div class="cat-bar-fill mid" style="width:0%"></div></div>
+        </div>
+        <div class="cat-bar-item">
+          <div class="cat-bar-label">WHIP <span class="score">—</span></div>
+          <div class="cat-bar-track"><div class="cat-bar-fill mid" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div style="margin-top:10px; font-size:11px; color:var(--text-tertiary)">
+        Category scores update as you draft. Bars fill 0–100 vs championship thresholds.
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <div class="filter-pills">
+        <div class="filter-pill active">ALL</div>
+        <div class="filter-pill">C</div>
+        <div class="filter-pill">1B</div>
+        <div class="filter-pill">2B</div>
+        <div class="filter-pill">SS</div>
+        <div class="filter-pill">3B</div>
+        <div class="filter-pill">OF</div>
+        <div class="filter-pill">SP</div>
+        <div class="filter-pill">RP</div>
+      </div>
+      <input class="search-input" placeholder="Search players...">
+      <div style="margin-left:auto; font-size:12px; color:var(--text-secondary);">
+        Sorted by <strong>ADP</strong>
+      </div>
+    </div>
+
+    <div class="card" style="padding:0; overflow:hidden;">
+      <table class="player-table">
+        <thead>
+          <tr>
+            <th style="width:40px">#</th>
+            <th>Player</th>
+            <th>Pos</th>
+            <th class="sortable stat-cell">R</th>
+            <th class="sortable stat-cell">HR</th>
+            <th class="sortable stat-cell">RBI</th>
+            <th class="sortable stat-cell">SB</th>
+            <th class="sortable stat-cell">AVG</th>
+            <th class="sortable stat-cell">OPS</th>
+            <th class="sortable stat-cell">ADP</th>
+            <th style="width:60px"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="color:var(--text-tertiary)">1</td>
+            <td><div class="player-name-cell">
+              <div class="player-avatar">SB</div>
+              <div class="player-info"><div class="name">Shohei Ohtani</div><div class="meta">LAD · DH/SP</div></div>
+            </div></td>
+            <td><span class="pos-badge">UTIL</span></td>
+            <td class="stat-cell stat-highlight">112</td>
+            <td class="stat-cell stat-highlight">48</td>
+            <td class="stat-cell">108</td>
+            <td class="stat-cell">18</td>
+            <td class="stat-cell">.288</td>
+            <td class="stat-cell stat-highlight">.985</td>
+            <td class="stat-cell">1.0</td>
+            <td><button class="btn btn-secondary btn-sm">Target</button></td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-tertiary)">2</td>
+            <td><div class="player-name-cell">
+              <div class="player-avatar">AJ</div>
+              <div class="player-info"><div class="name">Aaron Judge</div><div class="meta">NYY · OF</div></div>
+            </div></td>
+            <td><span class="pos-badge of">OF</span></td>
+            <td class="stat-cell stat-highlight">118</td>
+            <td class="stat-cell stat-highlight">52</td>
+            <td class="stat-cell stat-highlight">128</td>
+            <td class="stat-cell">8</td>
+            <td class="stat-cell">.285</td>
+            <td class="stat-cell stat-highlight">1.015</td>
+            <td class="stat-cell">2.0</td>
+            <td><button class="btn btn-secondary btn-sm">Target</button></td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-tertiary)">3</td>
+            <td><div class="player-name-cell">
+              <div class="player-avatar">BH</div>
+              <div class="player-info"><div class="name">Bobby Witt Jr.</div><div class="meta">KC · SS</div></div>
+            </div></td>
+            <td><span class="pos-badge">SS</span></td>
+            <td class="stat-cell">108</td>
+            <td class="stat-cell">32</td>
+            <td class="stat-cell">100</td>
+            <td class="stat-cell stat-highlight">35</td>
+            <td class="stat-cell stat-highlight">.298</td>
+            <td class="stat-cell">.882</td>
+            <td class="stat-cell">3.0</td>
+            <td><button class="btn btn-secondary btn-sm">Target</button></td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-tertiary)">4</td>
+            <td><div class="player-name-cell">
+              <div class="player-avatar">RA</div>
+              <div class="player-info"><div class="name">Ronald Acuña Jr.</div><div class="meta">ATL · OF</div></div>
+            </div></td>
+            <td><span class="pos-badge of">OF</span></td>
+            <td class="stat-cell stat-highlight">115</td>
+            <td class="stat-cell">28</td>
+            <td class="stat-cell">82</td>
+            <td class="stat-cell stat-highlight">52</td>
+            <td class="stat-cell">.282</td>
+            <td class="stat-cell">.895</td>
+            <td class="stat-cell">4.5</td>
+            <td><button class="btn btn-secondary btn-sm">Target</button></td>
+          </tr>
+          <tr style="background:#fffbeb">
+            <td style="color:var(--text-tertiary)">5</td>
+            <td><div class="player-name-cell">
+              <div class="player-avatar">FT</div>
+              <div class="player-info"><div class="name">Fernando Tatís Jr.</div><div class="meta">SD · SS/OF</div></div>
+            </div></td>
+            <td><span class="pos-badge">SS</span></td>
+            <td class="stat-cell">98</td>
+            <td class="stat-cell">34</td>
+            <td class="stat-cell">95</td>
+            <td class="stat-cell stat-highlight">28</td>
+            <td class="stat-cell">.275</td>
+            <td class="stat-cell">.880</td>
+            <td class="stat-cell">5.0</td>
+            <td><button class="btn btn-primary btn-sm">★ R1</button></td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-tertiary)">6</td>
+            <td><div class="player-name-cell">
+              <div class="player-avatar">JR</div>
+              <div class="player-info"><div class="name">José Ramírez</div><div class="meta">CLE · 3B</div></div>
+            </div></td>
+            <td><span class="pos-badge">3B</span></td>
+            <td class="stat-cell">100</td>
+            <td class="stat-cell">30</td>
+            <td class="stat-cell">105</td>
+            <td class="stat-cell stat-highlight">25</td>
+            <td class="stat-cell">.275</td>
+            <td class="stat-cell">.860</td>
+            <td class="stat-cell">6.0</td>
+            <td><button class="btn btn-secondary btn-sm">Target</button></td>
+          </tr>
+          <tr>
+            <td style="color:var(--text-tertiary)">7</td>
+            <td><div class="player-name-cell">
+              <div class="player-avatar">GC</div>
+              <div class="player-info"><div class="name">Gerrit Cole</div><div class="meta">NYY · SP</div></div>
+            </div></td>
+            <td><span class="pos-badge sp">SP</span></td>
+            <td class="stat-cell" style="color:var(--text-tertiary)">—</td>
+            <td class="stat-cell" style="color:var(--text-tertiary)">—</td>
+            <td class="stat-cell" style="color:var(--text-tertiary)">—</td>
+            <td class="stat-cell" style="color:var(--text-tertiary)">—</td>
+            <td class="stat-cell" style="color:var(--text-tertiary)">—</td>
+            <td class="stat-cell" style="color:var(--text-tertiary)">—</td>
+            <td class="stat-cell">18.0</td>
+            <td><button class="btn btn-secondary btn-sm">Target</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ── DRAFT LIVE PAGE ── -->
+<div class="page" id="page-live">
+  <div class="topbar">
+    <h2>Draft Live</h2>
+    <div class="topbar-right">
+      <span class="topbar-tag" style="background:var(--red-bg);color:var(--espn-red)">● LIVE — Polling ESPN</span>
+      <button class="btn btn-secondary btn-sm" onclick="toggleOverlay()">Preview On-Clock</button>
+    </div>
+  </div>
+  <div class="content">
+    <!-- OTC Strip -->
+    <div class="otc-strip">
+      <div class="otc-round">
+        ROUND<br><span class="num">1</span>
+      </div>
+      <div class="otc-divider"></div>
+      <div class="otc-picks">
+        <div class="otc-pick done"><div class="pick-num">1</div><div class="pick-team">Ohtani</div></div>
+        <div class="otc-pick done"><div class="pick-num">2</div><div class="pick-team">Judge</div></div>
+        <div class="otc-pick done"><div class="pick-num">3</div><div class="pick-team">Witt Jr.</div></div>
+        <div class="otc-pick done"><div class="pick-num">4</div><div class="pick-team">Acuña</div></div>
+        <div class="otc-pick done"><div class="pick-num">5</div><div class="pick-team">Tatís</div></div>
+        <div class="otc-pick done"><div class="pick-num">6</div><div class="pick-team">Ramírez</div></div>
+        <div class="otc-pick done"><div class="pick-num">7</div><div class="pick-team">Soto</div></div>
+        <div class="otc-pick current"><div class="pick-num">8</div><div class="pick-team">On Clock</div></div>
+        <div class="otc-pick mine"><div class="pick-num">9</div><div class="pick-team">YOU</div></div>
+        <div class="otc-pick"><div class="pick-num">10</div><div class="pick-team">Team 10</div></div>
+        <div class="otc-pick"><div class="pick-num">11</div><div class="pick-team">Team 11</div></div>
+        <div class="otc-pick"><div class="pick-num">12</div><div class="pick-team">Team 12</div></div>
+      </div>
+      <div class="otc-divider"></div>
+      <div class="otc-timer">1:22</div>
+    </div>
+
+    <!-- Draft Layout -->
+    <div class="draft-layout">
+      <div>
+        <div class="filter-bar">
+          <div class="filter-pills">
+            <div class="filter-pill active">ALL</div>
+            <div class="filter-pill">BAT</div>
+            <div class="filter-pill">SP</div>
+            <div class="filter-pill">RP</div>
+          </div>
+          <input class="search-input" placeholder="Search players...">
+          <label style="font-size:12px; color:var(--text-secondary); display:flex; align-items:center; gap:4px; margin-left:auto;">
+            <input type="checkbox"> Hide drafted
+          </label>
+        </div>
+
+        <div class="card" style="padding:0; overflow:hidden;">
+          <table class="player-table">
+            <thead>
+              <tr>
+                <th style="width:40px">#</th>
+                <th>Player</th>
+                <th>Pos</th>
+                <th class="sortable stat-cell">SGP</th>
+                <th class="sortable stat-cell">ADP</th>
+                <th class="stat-cell">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="opacity:0.35; text-decoration:line-through;">
+                <td>1</td>
+                <td><div class="player-name-cell"><div class="player-avatar">SO</div><div class="player-info"><div class="name">Shohei Ohtani</div><div class="meta">LAD</div></div></div></td>
+                <td><span class="pos-badge">UTIL</span></td>
+                <td class="stat-cell">98.2</td>
+                <td class="stat-cell">1.0</td>
+                <td class="stat-cell" style="color:var(--text-tertiary)">Pk 1</td>
+              </tr>
+              <tr style="opacity:0.35; text-decoration:line-through;">
+                <td>2</td>
+                <td><div class="player-name-cell"><div class="player-avatar">AJ</div><div class="player-info"><div class="name">Aaron Judge</div><div class="meta">NYY</div></div></div></td>
+                <td><span class="pos-badge of">OF</span></td>
+                <td class="stat-cell">95.1</td>
+                <td class="stat-cell">2.0</td>
+                <td class="stat-cell" style="color:var(--text-tertiary)">Pk 2</td>
+              </tr>
+              <tr>
+                <td style="color:var(--espn-red); font-weight:700;">★</td>
+                <td><div class="player-name-cell"><div class="player-avatar" style="background:var(--green-bg);color:var(--green)">MC</div><div class="player-info"><div class="name">Mookie Betts</div><div class="meta">LAD · SS/OF</div></div></div></td>
+                <td><span class="pos-badge">SS</span></td>
+                <td class="stat-cell stat-highlight">89.4</td>
+                <td class="stat-cell">8.5</td>
+                <td class="stat-cell"><span class="signal-tag buy">AVAILABLE</span></td>
+              </tr>
+              <tr>
+                <td style="color:var(--espn-red); font-weight:700;">★</td>
+                <td><div class="player-name-cell"><div class="player-avatar" style="background:var(--green-bg);color:var(--green)">RD</div><div class="player-info"><div class="name">Rafael Devers</div><div class="meta">BOS · 3B</div></div></div></td>
+                <td><span class="pos-badge">3B</span></td>
+                <td class="stat-cell stat-highlight">87.8</td>
+                <td class="stat-cell">9.0</td>
+                <td class="stat-cell"><span class="signal-tag buy">AVAILABLE</span></td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td><div class="player-name-cell"><div class="player-avatar">TS</div><div class="player-info"><div class="name">Trea Turner</div><div class="meta">PHI · SS</div></div></div></td>
+                <td><span class="pos-badge">SS</span></td>
+                <td class="stat-cell">85.2</td>
+                <td class="stat-cell">10.0</td>
+                <td class="stat-cell"><span class="signal-tag buy">AVAILABLE</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Roster Panel -->
+      <div>
+        <div class="roster-panel">
+          <div class="panel-title">
+            Your Roster
+            <span style="font-weight:400; color:var(--text-secondary)">0/23</span>
+          </div>
+          <div class="roster-section-label">Batting</div>
+          <div class="roster-slot"><span class="slot-pos">C</span><span class="slot-player empty">Empty</span></div>
+          <div class="roster-slot"><span class="slot-pos">1B</span><span class="slot-player empty">Empty</span></div>
+          <div class="roster-slot"><span class="slot-pos">2B</span><span class="slot-player empty">Empty</span></div>
+          <div class="roster-slot"><span class="slot-pos">3B</span><span class="slot-player empty">Empty</span></div>
+          <div class="roster-slot"><span class="slot-pos">SS</span><span class="slot-player empty">Empty</span></div>
+          <div class="roster-slot"><span class="slot-pos">OF</span><span class="slot-player empty">Empty</span></div>
+          <div class="roster-slot"><span class="slot-pos">OF</span><span class="slot-player empty">Empty</span></div>
+          <div class="roster-slot"><span class="slot-pos">OF</span><span class="slot-player empty">Empty</span></div>
+          <div class="roster-slot"><span class="slot-pos">UTIL</span><span class="slot-player empty">Empty</span></div>
+          <div class="roster-slot"><span class="slot-pos">UTIL</span><span class="slot-player empty">Empty</span></div>
+          <div class="roster-section-label">Pitching</div>
+          <div class="roster-slot"><span class="slot-pos">SP</span><span class="slot-player empty">Empty</span></div>
+          <div class="roster-slot"><span class="slot-pos">SP</span><span class="slot-player empty">Empty</span></div>
+          <div class="roster-slot"><span class="slot-pos">SP</span><span class="slot-player empty">Empty</span></div>
+          <div class="roster-slot"><span class="slot-pos">RP</span><span class="slot-player empty">Empty</span></div>
+          <div class="roster-slot"><span class="slot-pos">RP</span><span class="slot-player empty">Empty</span></div>
+          <div class="roster-slot"><span class="slot-pos">P</span><span class="slot-player empty">Empty</span></div>
+          <div class="roster-slot"><span class="slot-pos">P</span><span class="slot-player empty">Empty</span></div>
+          <div class="roster-section-label">Bench</div>
+          <div class="roster-slot"><span class="slot-pos">BE</span><span class="slot-player empty">Empty</span></div>
+          <div class="roster-slot"><span class="slot-pos">BE</span><span class="slot-player empty">Empty</span></div>
+          <div class="roster-slot"><span class="slot-pos">BE</span><span class="slot-player empty">Empty</span></div>
+          <div class="roster-slot"><span class="slot-pos">BE</span><span class="slot-player empty">Empty</span></div>
+          <div class="roster-slot"><span class="slot-pos">BE</span><span class="slot-player empty">Empty</span></div>
+          <div class="roster-slot"><span class="slot-pos">BE</span><span class="slot-player empty">Empty</span></div>
+        </div>
+
+        <div class="card" style="margin-top:14px">
+          <div class="card-title" style="margin-bottom:10px; font-size:12px;">Category Scores</div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+            <div class="cat-bar-item">
+              <div class="cat-bar-label" style="font-size:10px;">R <span class="score">0</span></div>
+              <div class="cat-bar-track"><div class="cat-bar-fill low" style="width:0%"></div></div>
+            </div>
+            <div class="cat-bar-item">
+              <div class="cat-bar-label" style="font-size:10px;">HR <span class="score">0</span></div>
+              <div class="cat-bar-track"><div class="cat-bar-fill low" style="width:0%"></div></div>
+            </div>
+            <div class="cat-bar-item">
+              <div class="cat-bar-label" style="font-size:10px;">RBI <span class="score">0</span></div>
+              <div class="cat-bar-track"><div class="cat-bar-fill low" style="width:0%"></div></div>
+            </div>
+            <div class="cat-bar-item">
+              <div class="cat-bar-label" style="font-size:10px;">SB <span class="score">0</span></div>
+              <div class="cat-bar-track"><div class="cat-bar-fill low" style="width:0%"></div></div>
+            </div>
+            <div class="cat-bar-item">
+              <div class="cat-bar-label" style="font-size:10px;">AVG <span class="score">0</span></div>
+              <div class="cat-bar-track"><div class="cat-bar-fill low" style="width:0%"></div></div>
+            </div>
+            <div class="cat-bar-item">
+              <div class="cat-bar-label" style="font-size:10px;">OPS <span class="score">0</span></div>
+              <div class="cat-bar-track"><div class="cat-bar-fill low" style="width:0%"></div></div>
+            </div>
+            <div class="cat-bar-item">
+              <div class="cat-bar-label" style="font-size:10px;">K <span class="score">0</span></div>
+              <div class="cat-bar-track"><div class="cat-bar-fill low" style="width:0%"></div></div>
+            </div>
+            <div class="cat-bar-item">
+              <div class="cat-bar-label" style="font-size:10px;">QS <span class="score">0</span></div>
+              <div class="cat-bar-track"><div class="cat-bar-fill low" style="width:0%"></div></div>
+            </div>
+            <div class="cat-bar-item">
+              <div class="cat-bar-label" style="font-size:10px;">W <span class="score">0</span></div>
+              <div class="cat-bar-track"><div class="cat-bar-fill low" style="width:0%"></div></div>
+            </div>
+            <div class="cat-bar-item">
+              <div class="cat-bar-label" style="font-size:10px;">SV <span class="score">0</span></div>
+              <div class="cat-bar-track"><div class="cat-bar-fill low" style="width:0%"></div></div>
+            </div>
+            <div class="cat-bar-item">
+              <div class="cat-bar-label" style="font-size:10px;">ERA <span class="score">0</span></div>
+              <div class="cat-bar-track"><div class="cat-bar-fill low" style="width:0%"></div></div>
+            </div>
+            <div class="cat-bar-item">
+              <div class="cat-bar-label" style="font-size:10px;">WHIP <span class="score">0</span></div>
+              <div class="cat-bar-track"><div class="cat-bar-fill low" style="width:0%"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MY TEAM PAGE ── -->
+<div class="page" id="page-team">
+  <div class="topbar">
+    <h2>My Team</h2>
+    <div class="topbar-right">
+      <button class="btn btn-primary btn-sm">🧠 Run Analysis</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="tabs">
+      <div class="tab active">Roster</div>
+      <div class="tab">Matchup</div>
+      <div class="tab">Standings</div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">We're the Millers</div>
+          <div class="card-subtitle">0W-0L · Pre-season</div>
+        </div>
+        <span class="topbar-tag">Connect to ESPN to load roster</span>
+      </div>
+      <div style="padding:30px; text-align:center; color:var(--text-tertiary); font-size:14px;">
+        Connect to ESPN on the Hub page to load your team data.<br>
+        <button class="btn btn-primary" style="margin-top:12px" onclick="showPage('hub')">Go to Hub</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── INTEL PAGE ── -->
+<div class="page" id="page-intel">
+  <div class="topbar">
+    <h2>Intel Center</h2>
+    <div class="topbar-right">
+      <span class="topbar-tag">Updated 30m ago</span>
+    </div>
+  </div>
+  <div class="content">
+    <div class="tabs">
+      <div class="tab active">Statcast</div>
+      <div class="tab">Wire</div>
+      <div class="tab">Farm System</div>
+      <div class="tab">Two-Starters</div>
+    </div>
+
+    <div class="intel-grid">
+      <div class="intel-card">
+        <div class="card-title">Regression Risks <span style="font-weight:400;color:var(--text-tertiary);font-size:11px;">BA overperforming xBA</span></div>
+        <div class="intel-item">
+          <div><strong>Luis Arraez</strong> <span style="color:var(--text-secondary);font-size:11px">SD · 1B</span></div>
+          <div><span class="signal-tag sell">SELL</span> <span style="font-size:11px;color:var(--text-secondary)">.312 BA → .278 xBA</span></div>
+        </div>
+        <div class="intel-item">
+          <div><strong>Yandy Díaz</strong> <span style="color:var(--text-secondary);font-size:11px">TB · 1B</span></div>
+          <div><span class="signal-tag sell">SELL</span> <span style="font-size:11px;color:var(--text-secondary)">.298 BA → .265 xBA</span></div>
+        </div>
+        <div class="intel-item">
+          <div><strong>Kyle Tucker</strong> <span style="color:var(--text-secondary);font-size:11px">HOU · OF</span></div>
+          <div><span class="signal-tag watch">WATCH</span> <span style="font-size:11px;color:var(--text-secondary)">.289 BA → .270 xBA</span></div>
+        </div>
+      </div>
+
+      <div class="intel-card">
+        <div class="card-title">Breakout Candidates <span style="font-weight:400;color:var(--text-tertiary);font-size:11px;">xBA exceeding BA</span></div>
+        <div class="intel-item">
+          <div><strong>Marcell Ozuna</strong> <span style="color:var(--text-secondary);font-size:11px">ATL · DH</span></div>
+          <div><span class="signal-tag buy">BUY</span> <span style="font-size:11px;color:var(--text-secondary)">.248 BA → .282 xBA</span></div>
+        </div>
+        <div class="intel-item">
+          <div><strong>Vinnie Pasquantino</strong> <span style="color:var(--text-secondary);font-size:11px">KC · 1B</span></div>
+          <div><span class="signal-tag buy">BUY</span> <span style="font-size:11px;color:var(--text-secondary)">.255 BA → .280 xBA</span></div>
+        </div>
+        <div class="intel-item">
+          <div><strong>Spencer Torkelson</strong> <span style="color:var(--text-secondary);font-size:11px">DET · 1B</span></div>
+          <div><span class="signal-tag buy">BUY</span> <span style="font-size:11px;color:var(--text-secondary)">.221 BA → .258 xBA</span></div>
+        </div>
+      </div>
+
+      <div class="intel-card">
+        <div class="card-title">Farm System — AAA Trending <span style="font-weight:400;color:var(--text-tertiary);font-size:11px;">OPS > .900</span></div>
+        <div class="intel-item">
+          <div><strong>Jackson Chourio</strong> <span style="color:var(--text-secondary);font-size:11px">MIL · OF</span></div>
+          <div><span class="signal-tag add">ADD</span> <span style="font-size:11px;color:var(--text-secondary)">.312/.389/.545 · 8 HR</span></div>
+        </div>
+        <div class="intel-item">
+          <div><strong>Coby Mayo</strong> <span style="color:var(--text-secondary);font-size:11px">BAL · 3B</span></div>
+          <div><span class="signal-tag add">ADD</span> <span style="font-size:11px;color:var(--text-secondary)">.298/.372/.552 · 11 HR</span></div>
+        </div>
+        <div class="intel-item">
+          <div><strong>James Wood</strong> <span style="color:var(--text-secondary);font-size:11px">WSH · OF</span></div>
+          <div><span class="signal-tag watch">WATCH</span> <span style="font-size:11px;color:var(--text-secondary)">.285/.395/.488 · 6 HR</span></div>
+        </div>
+      </div>
+
+      <div class="intel-card">
+        <div class="card-title">Recent Transactions <span style="font-weight:400;color:var(--text-tertiary);font-size:11px;">Last 3 days</span></div>
+        <div class="intel-item">
+          <div><strong>Paul Skenes</strong> <span style="color:var(--text-secondary);font-size:11px">PIT · SP</span></div>
+          <div><span class="signal-tag add">CALLED UP</span></div>
+        </div>
+        <div class="intel-item">
+          <div><strong>Félix Bautista</strong> <span style="color:var(--text-secondary);font-size:11px">BAL · RP</span></div>
+          <div><span class="signal-tag sell">→ 60-day IL</span></div>
+        </div>
+        <div class="intel-item">
+          <div><strong>Spencer Strider</strong> <span style="color:var(--text-secondary);font-size:11px">ATL · SP</span></div>
+          <div><span class="signal-tag watch">Rehab start</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- ON-CLOCK OVERLAY (toggled with button) -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<div class="overlay-backdrop" id="overlay" style="display:none" onclick="toggleOverlay()">
+  <div class="overlay-card" onclick="event.stopPropagation()">
+    <div class="overlay-header">
+      <div>
+        <h3>YOU'RE ON THE CLOCK</h3>
+        <div style="font-size:12px; opacity:0.85">Round 1 · Pick 9 · Overall #9</div>
+      </div>
+      <div class="timer">1:22</div>
+    </div>
+    <div class="overlay-body">
+      <div style="font-size:13px; font-weight:600; color:var(--text-secondary); margin-bottom:10px;">WAR ROOM RECOMMENDS</div>
+      <div class="rec-grid">
+        <div class="rec-card top-pick">
+          <div class="rec-rank">#1 PICK</div>
+          <div class="rec-name">Mookie Betts</div>
+          <div class="rec-meta">LAD · SS/OF · ADP 8.5</div>
+          <div class="rec-sgp">89.4</div>
+          <div style="font-size:10px; color:var(--text-secondary)">SGP Score</div>
+          <div class="rec-tags">
+            <span class="rec-tag good">5-cat elite</span>
+            <span class="rec-tag good">SS eligible</span>
+          </div>
+        </div>
+        <div class="rec-card">
+          <div class="rec-rank">#2</div>
+          <div class="rec-name">Rafael Devers</div>
+          <div class="rec-meta">BOS · 3B · ADP 9.0</div>
+          <div class="rec-sgp">87.8</div>
+          <div style="font-size:10px; color:var(--text-secondary)">SGP Score</div>
+          <div class="rec-tags">
+            <span class="rec-tag good">HR/RBI anchor</span>
+          </div>
+        </div>
+        <div class="rec-card">
+          <div class="rec-rank">#3</div>
+          <div class="rec-name">Trea Turner</div>
+          <div class="rec-meta">PHI · SS · ADP 10.0</div>
+          <div class="rec-sgp">85.2</div>
+          <div style="font-size:10px; color:var(--text-secondary)">SGP Score</div>
+          <div class="rec-tags">
+            <span class="rec-tag good">SB upside</span>
+            <span class="rec-tag critical">Health 72%</span>
+          </div>
+        </div>
+        <div class="rec-card">
+          <div class="rec-rank">#4</div>
+          <div class="rec-name">Corey Seager</div>
+          <div class="rec-meta">TEX · SS · ADP 12.0</div>
+          <div class="rec-sgp">82.1</div>
+          <div style="font-size:10px; color:var(--text-secondary)">SGP Score</div>
+          <div class="rec-tags">
+            <span class="rec-tag good">OPS elite</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size:13px; font-weight:600; color:var(--text-secondary); margin-bottom:8px;">GAP ANALYSIS</div>
+      <div class="gap-strip">
+        <div class="gap-chip critical">SB — CRITICAL (scarcest cat)</div>
+        <div class="gap-chip soon">QS — target Rds 3-5</div>
+        <div class="gap-chip ok">HR — on track</div>
+        <div class="gap-chip ok">R — on track</div>
+        <div class="gap-chip ok">RBI — on track</div>
+        <div class="gap-chip soon">SV — stream later</div>
+        <div class="gap-chip ok">AVG — on track</div>
+        <div class="gap-chip ok">OPS — on track</div>
+        <div class="gap-chip ok">K — on track</div>
+        <div class="gap-chip ok">W — on track</div>
+        <div class="gap-chip ok">ERA — on track</div>
+        <div class="gap-chip ok">WHIP — on track</div>
+      </div>
+
+      <div style="margin-top:18px; display:flex; justify-content:flex-end; gap:10px;">
+        <button class="btn btn-secondary" onclick="toggleOverlay()">Dismiss</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end .main -->
+
+<script>
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  // Highlight nav
+  const labels = { hub: 'Hub', prep: 'Draft Prep', live: 'Draft Live', team: 'My Team', intel: 'Intel' };
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.textContent.trim().replace(/LIVE$/, '').trim() === labels[id]?.trim()) n.classList.add('active');
+  });
+}
+
+function toggleOverlay() {
+  const o = document.getElementById('overlay');
+  o.style.display = o.style.display === 'none' ? 'flex' : 'none';
+}
+
+// Tab clicks
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    t.parentElement.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+  });
+});
+
+// Filter pill clicks
+document.querySelectorAll('.filter-pill').forEach(p => {
+  p.addEventListener('click', () => {
+    p.parentElement.querySelectorAll('.filter-pill').forEach(x => x.classList.remove('active'));
+    p.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

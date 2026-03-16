@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The Dugout — Draft</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --espn:#cc0000;--espn2:#a80000;
+  --ink:#0f1318;--ink2:#2d3748;--ink3:#4a5568;--mid:#718096;--dim:#a0aec0;
+  --rule:#e2e8f0;--bg:#f0f4f8;--white:#ffffff;
+  --gold:#b7791f;--gold-l:#fffbeb;
+  --red:#c53030;--red-l:#fff5f5;
+  --grn:#276749;--grn-l:#f0fff4;--grn2:#2aaa52;
+  --amb:#b7791f;--amb-l:#fffbeb;
+  --blu:#2b6cb0;--blu-l:#ebf8ff;
+  --D:'Bebas Neue',cursive;
+  --C:'Barlow Condensed',sans-serif;
+  --M:'Share Tech Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--C);color:var(--ink);}
+body{display:grid;grid-template-rows:auto auto auto 1fr;height:100vh;}
+
+/* ══ OTC STRIP ══ */
+.otc{background:var(--espn);display:flex;align-items:stretch;overflow:hidden;flex-shrink:0;}
+.otc-left{
+  background:var(--espn2);padding:8px 16px;display:flex;align-items:center;gap:14px;
+  flex-shrink:0;min-width:220px;
+}
+.otc-rnd{font-family:var(--M);font-size:9px;color:rgba(255,255,255,.55);letter-spacing:2px;}
+.otc-timer{font-family:var(--D);font-size:36px;color:#FFD700;letter-spacing:2px;line-height:1;}
+.otc-timer.urgent{color:white;}
+.otc-info{}
+.otc-lbl{font-family:var(--M);font-size:8px;color:rgba(255,255,255,.55);letter-spacing:2px;}
+.otc-team{font-family:var(--C);font-size:16px;font-weight:700;color:white;line-height:1.1;}
+.otc-team.mine{color:#FFD700;}
+.otc-picks{flex:1;display:flex;align-items:stretch;padding:0 8px;gap:2px;overflow-x:auto;}
+.otc-picks::-webkit-scrollbar{display:none;}
+.otp{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:3px 10px;border:1px solid rgba(255,255,255,.12);min-width:64px;flex-shrink:0;cursor:pointer;}
+.otp.done{opacity:.3;}
+.otp.current{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.4);}
+.otp.mine{background:rgba(255,215,0,.1);border-color:rgba(255,215,0,.4);}
+.otp-n{font-family:var(--M);font-size:8px;color:rgba(255,255,255,.45);letter-spacing:1px;}
+.otp-team{font-family:var(--C);font-size:11px;font-weight:700;color:rgba(255,255,255,.85);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:62px;}
+.otp-pick{font-family:var(--C);font-size:9px;color:rgba(255,255,255,.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:62px;}
+.otp.mine .otp-n{color:rgba(255,215,0,.7);}
+.otp.mine .otp-team{color:#FFD700;}
+.otp.current .otp-team{color:white;}
+.otc-status{padding:0 14px;display:flex;align-items:center;gap:6px;flex-shrink:0;border-left:1px solid rgba(255,255,255,.1);}
+.os-dot{width:7px;height:7px;border-radius:50%;}
+.os-dot.live{background:#4ade80;}
+.os-dot.loading{background:#fbbf24;}
+.os-dot.err{background:#f87171;}
+.os-lbl{font-family:var(--M);font-size:8px;color:rgba(255,255,255,.5);letter-spacing:1.5px;}
+.otc-proj{padding:0 14px;border-left:1px solid rgba(255,255,255,.1);display:flex;align-items:center;}
+.proj-tag{font-family:var(--M);font-size:8px;letter-spacing:1px;padding:4px 10px;
+  border:1px solid rgba(255,215,0,.4);color:#FFD700;background:rgba(255,215,0,.06);cursor:pointer;
+  transition:all .1s;}
+.proj-tag:hover{background:rgba(255,215,0,.12);}
+.proj-tag.ready{border-color:rgba(74,222,128,.4);color:#4ade80;background:rgba(74,222,128,.06);}
+
+/* ══ BANNER ══ */
+.banner{
+  background:var(--white);border-bottom:1px solid var(--rule);
+  padding:10px 16px;display:flex;align-items:center;gap:12px;
+  flex-shrink:0;
+}
+.ban-icon{width:36px;height:36px;border-radius:50%;background:var(--espn);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--D);font-size:14px;color:white;flex-shrink:0;}
+.ban-text{flex:1;}
+.ban-title{font-family:var(--C);font-size:17px;font-weight:700;color:var(--ink);line-height:1.1;}
+.ban-sub{font-family:var(--C);font-size:13px;color:var(--mid);margin-top:1px;}
+.ban-verdict{
+  flex-shrink:0;padding:6px 14px;
+  background:var(--grn-l);border:1px solid rgba(39,103,73,.3);
+  font-family:var(--C);font-size:13px;font-weight:700;color:var(--grn);
+  cursor:pointer;transition:all .1s;
+}
+.ban-verdict:hover{background:rgba(39,103,73,.1);}
+.ban-verdict.wait{background:var(--bg);border-color:var(--rule);color:var(--mid);}
+.ban-noproj{flex-shrink:0;font-family:var(--M);font-size:9px;color:var(--mid);letter-spacing:1px;}
+
+/* ══ BODY ══ */
+.body{display:grid;grid-template-columns:186px 1fr;overflow:hidden;}
+
+/* ══ LEFT ROSTER ══ */
+.left{background:var(--white);border-right:1px solid var(--rule);display:flex;flex-direction:column;overflow:hidden;}
+.left-hdr{padding:8px 10px 6px;border-bottom:1px solid var(--rule);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.lh-title{font-family:var(--C);font-size:13px;font-weight:700;color:var(--ink);}
+.lh-sub{font-family:var(--M);font-size:9px;color:var(--mid);}
+.lh-team{font-family:var(--M);font-size:8px;letter-spacing:1px;color:var(--mid);padding:4px 10px;border-bottom:1px solid var(--rule);flex-shrink:0;}
+.roster-scroll{overflow-y:auto;flex:1;}
+.roster-scroll::-webkit-scrollbar{width:3px;}
+.roster-scroll::-webkit-scrollbar-thumb{background:var(--rule);}
+.r-row{display:flex;align-items:center;gap:6px;padding:4px 8px;border-bottom:1px solid var(--bg);}
+.r-row:hover{background:var(--bg);}
+.r-row.filled{background:var(--white);}
+.r-pos{font-family:var(--D);font-size:11px;width:28px;text-align:center;flex-shrink:0;color:var(--dim);}
+.r-row.filled .r-pos{color:var(--espn);}
+.r-av{width:22px;height:22px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--D);font-size:8px;color:white;}
+.r-ec{width:22px;height:22px;border-radius:50%;border:1.5px dashed var(--rule);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--D);font-size:7px;color:var(--dim);}
+.r-info{flex:1;min-width:0;}
+.r-name{font-family:var(--C);font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink);}
+.r-row.empty .r-name{font-weight:400;color:var(--dim);font-size:11px;}
+.r-meta{font-family:var(--M);font-size:8px;color:var(--dim);}
+
+/* ══ MAIN ══ */
+.main{display:flex;flex-direction:column;overflow:hidden;}
+
+/* tabs row */
+.tabs{background:var(--white);border-bottom:1px solid var(--rule);
+  display:flex;align-items:center;padding:0 16px;flex-shrink:0;}
+.tab{padding:10px 14px;font-family:var(--C);font-size:14px;font-weight:700;
+  color:var(--mid);cursor:pointer;border-bottom:2px solid transparent;
+  margin-bottom:-1px;transition:all .1s;white-space:nowrap;}
+.tab:hover{color:var(--ink3);}
+.tab.active{color:var(--espn);border-bottom-color:var(--espn);}
+.tab-space{flex:1;}
+.filter-pill{
+  font-family:var(--C);font-size:12px;font-weight:700;
+  padding:5px 12px;border:1px solid var(--rule);color:var(--ink3);
+  background:var(--white);cursor:pointer;margin-left:6px;
+  transition:all .1s;display:flex;align-items:center;gap:4px;
+}
+.filter-pill:hover{border-color:var(--ink3);}
+.filter-pill.active{border-color:var(--espn);color:var(--espn);}
+.show-drafted{display:flex;align-items:center;gap:6px;margin-left:12px;font-family:var(--C);font-size:12px;color:var(--mid);}
+.sd-toggle{width:32px;height:18px;background:var(--rule);border-radius:9px;position:relative;cursor:pointer;flex-shrink:0;}
+.sd-thumb{width:14px;height:14px;background:white;border-radius:50%;position:absolute;top:2px;left:2px;transition:left .1s;}
+
+/* table */
+.tbl-wrap{overflow:auto;flex:1;}
+.tbl-wrap::-webkit-scrollbar{width:5px;height:5px;}
+.tbl-wrap::-webkit-scrollbar-thumb{background:var(--rule);}
+table{width:100%;border-collapse:collapse;min-width:900px;}
+thead th{
+  font-family:var(--M);font-size:9px;color:var(--mid);letter-spacing:.5px;
+  padding:6px 8px;border-bottom:1px solid var(--rule);
+  background:var(--bg);text-align:right;white-space:nowrap;
+  position:sticky;top:0;z-index:2;cursor:pointer;user-select:none;
+}
+thead th:hover{color:var(--ink);}
+thead th.left{text-align:left;}
+thead th.our{background:#ebf8ff;color:var(--blu);}
+thead th.sort-asc::after{content:' ↑';}
+thead th.sort-desc::after{content:' ↓';}
+tbody td{
+  font-family:var(--C);font-size:13px;color:var(--ink);
+  padding:6px 8px;border-bottom:1px solid var(--rule);
+  text-align:right;white-space:nowrap;background:var(--white);
+}
+tbody td.left{text-align:left;}
+tbody tr:hover td{background:var(--bg);cursor:pointer;}
+tbody tr.rec td{background:#f0fff4;}
+tbody tr.rec:hover td{background:#dcfce7;}
+tbody tr.drafted td{opacity:.35;}
+.rk-cell{font-family:var(--M);font-size:10px;color:var(--dim);width:28px;}
+.draft-btn{
+  font-family:var(--C);font-size:11px;font-weight:700;
+  padding:3px 10px;border:1.5px solid var(--espn);color:var(--espn);
+  background:transparent;cursor:pointer;border-radius:20px;white-space:nowrap;
+  transition:all .1s;
+}
+.draft-btn:hover{background:var(--espn);color:white;}
+
+/* player cell */
+.pc{display:flex;align-items:center;gap:7px;min-width:170px;}
+.pc-av{width:30px;height:30px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--D);font-size:11px;color:white;}
+.pc-info{flex:1;min-width:0;}
+.pc-name{font-family:var(--C);font-size:14px;font-weight:700;color:var(--ink);line-height:1.1;}
+.pc-meta{display:flex;align-items:center;gap:3px;margin-top:2px;flex-wrap:wrap;}
+.pc-team{font-family:var(--M);font-size:9px;color:var(--mid);}
+.pos-tag{font-family:var(--M);font-size:8px;padding:1px 4px;border-radius:2px;font-weight:700;}
+.pos-sp{background:#dbeafe;color:#1e40af;}
+.pos-rp{background:#fee2e2;color:#991b1b;}
+.pos-of{background:#d1fae5;color:#065f46;}
+.pos-ss{background:#fce7f3;color:#9d174d;}
+.pos-3b{background:#fef3c7;color:#92400e;}
+.pos-c{background:#ede9fe;color:#5b21b6;}
+.pos-1b,.pos-2b{background:#f3f4f6;color:#374151;}
+.pos-dh{background:#f0fdf4;color:#166534;}
+.inj-tag{font-family:var(--M);font-size:7px;padding:1px 4px;background:var(--red-l);color:var(--red);border-radius:2px;}
+
+/* stat cells */
+.stat{font-family:var(--M);font-size:11px;}
+.stat.dash{color:var(--dim);}
+.stat.val{color:var(--ink);}
+
+/* our column */
+.our-cell{background:var(--blu-l) !important;border-left:1px solid rgba(43,108,176,.15);}
+tbody tr:hover .our-cell{background:#dbeafe !important;}
+tbody tr.rec .our-cell{background:#dcfce7 !important;}
+.dug-status{font-family:var(--C);font-size:13px;font-weight:700;}
+.dug-status.ok{color:var(--grn);}
+.dug-status.near{color:var(--amb);}
+.dug-status.reach{color:var(--red);}
+.dug-status.late{color:var(--dim);}
+.dug-flags{display:flex;gap:2px;margin-top:3px;flex-wrap:wrap;justify-content:flex-end;}
+.dflag{font-family:var(--M);font-size:7px;padding:1px 4px;border-radius:2px;}
+.df-grn{background:var(--grn-l);color:var(--grn);}
+.df-red{background:var(--red-l);color:var(--red);}
+.df-amb{background:var(--gold-l);color:var(--gold);}
+.df-blu{background:var(--blu-l);color:var(--blu);}
+.df-sec{background:var(--bg);color:var(--mid);}
+
+.health-cell{background:var(--blu-l) !important;}
+tbody tr:hover .health-cell{background:#dbeafe !important;}
+tbody tr.rec .health-cell{background:#dcfce7 !important;}
+.hlth{font-family:var(--D);font-size:18px;letter-spacing:1px;line-height:1;}
+.hlth.good{color:var(--grn);}
+.hlth.risk{color:var(--amb);}
+.hlth.bad{color:var(--red);}
+
+/* empty + error */
+.tbl-empty{padding:60px;text-align:center;font-family:var(--C);font-size:16px;color:var(--mid);}
+
+/* overlay */
+.ov{position:fixed;inset:0;z-index:100;background:rgba(15,19,24,.45);display:none;align-items:center;justify-content:center;}
+.ov.open{display:flex;}
+.popup{background:var(--white);border:1px solid var(--rule);width:500px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.15);}
+.pop-h{padding:16px 20px;border-bottom:1px solid var(--rule);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.pop-t{font-family:var(--D);font-size:22px;letter-spacing:3px;color:var(--ink);}
+.pop-x{font-family:var(--M);font-size:9px;color:var(--mid);cursor:pointer;padding:4px 10px;border:1px solid var(--rule);}
+.pop-x:hover{border-color:var(--ink3);color:var(--ink);}
+.pop-b{overflow-y:auto;flex:1;}
+.pop-f{padding:14px 20px;border-top:1px solid var(--rule);display:flex;gap:8px;flex-shrink:0;}
+.pj-info{padding:20px;border-bottom:1px solid var(--rule);}
+.pj-title{font-family:var(--C);font-size:18px;font-weight:700;margin-bottom:4px;}
+.pj-fresh{color:var(--grn);}
+.pj-stale{color:var(--amb);}
+.pj-sub{font-family:var(--C);font-size:14px;color:var(--mid);line-height:1.5;}
+.pj-cost{margin:16px 20px 4px;padding:8px 12px;background:var(--gold-l);border:1px solid rgba(183,121,31,.3);font-family:var(--M);font-size:9px;color:var(--gold);}
+.mbtn{font-family:var(--M);font-size:9px;letter-spacing:1px;padding:7px 14px;border:1px solid var(--rule);color:var(--mid);background:transparent;cursor:pointer;transition:all .1s;}
+.mbtn:hover{border-color:var(--ink3);color:var(--ink);}
+.mbtn.primary{background:var(--espn);color:white;border-color:var(--espn);}
+.mbtn.primary:hover{background:var(--espn2);}
+
+/* ══ SHARED TOP NAV ══ */
+.topnav{background:#0f1318;border-bottom:3px solid #c53030;display:flex;align-items:center;gap:0;padding:0;font-family:var(--C);position:sticky;top:0;z-index:999;flex-shrink:0;}
+.tn-brand{padding:0 18px;display:flex;align-items:center;gap:8px;border-right:1px solid rgba(255,255,255,.1);flex-shrink:0;text-decoration:none;height:38px;}
+.tn-logo{font-family:var(--D);font-size:15px;letter-spacing:4px;color:white;}
+.tn-logo em{color:#c53030;font-style:normal;}
+.tn-links{display:flex;align-items:stretch;}
+.tn-link{padding:0 16px;display:flex;align-items:center;font-size:13px;font-weight:700;color:rgba(255,255,255,.45);border-right:1px solid rgba(255,255,255,.08);text-decoration:none;letter-spacing:.5px;transition:color .1s;white-space:nowrap;}
+.tn-link:hover{color:rgba(255,255,255,.8);}
+.tn-link.here{color:#FFD700;background:rgba(255,215,0,.06);}
+.tn-space{flex:1;}
+.tn-right{display:flex;align-items:center;gap:8px;padding:0 14px;border-left:1px solid rgba(255,255,255,.08);}
+.tn-season{font-family:var(--M);font-size:9px;color:rgba(255,255,255,.25);letter-spacing:2px;}
+</style>
+</head>
+<body>
+<nav style="display:flex;gap:4px;padding:6px 12px;background:#1a1f2e;border-bottom:1px solid #2d3748;flex-shrink:0;">
+  <a href="/" style="font-family:'Share Tech Mono',monospace;font-size:0.62rem;letter-spacing:1.5px;
+     color:#3a5a3a;border:1px solid #2a322a;padding:4px 12px;border-radius:2px;text-decoration:none;"
+     onmouseover="this.style.color='#c8d8c8'" onmouseout="this.style.color='#3a5a3a'">⚾ HUB</a>
+  <a href="/draft_v7.html" style="font-family:'Share Tech Mono',monospace;font-size:0.62rem;letter-spacing:1.5px;
+     color:#e8c547;background:rgba(232,197,71,0.08);border:1px solid rgba(232,197,71,0.25);
+     padding:4px 12px;border-radius:2px;text-decoration:none;">🏟 DRAFT ROOM</a>
+  <a href="/draft_board.html" style="font-family:'Share Tech Mono',monospace;font-size:0.62rem;letter-spacing:1.5px;
+     color:#3a5a3a;border:1px solid #2a322a;padding:4px 12px;border-radius:2px;text-decoration:none;"
+     onmouseover="this.style.color='#c8d8c8'" onmouseout="this.style.color='#3a5a3a'">📋 DRAFT BOARD</a>
+</nav>
+
+<!-- OTC STRIP -->
+<!-- TOP NAV -->
+<nav class="topnav">
+  <a class="tn-brand" href="/"><div class="tn-logo">THE <em>DUGOUT</em></div></a>
+  <div class="tn-links">
+    <a class="tn-link" href="/">MAIN APP</a>
+    <a class="tn-link here" href="/draft_v7.html">DRAFT ROOM</a>
+    <a class="tn-link" href="/draft_board.html">DRAFT PLANNER</a>
+  </div>
+  <div class="tn-space"></div>
+  <div class="tn-right"><div class="tn-season">SEASON 2026</div></div>
+</nav>
+<div class="otc">
+  <div class="otc-left">
+    <div>
+      <div class="otc-rnd" id="otcRnd">RND — OF 23</div>
+      <div class="otc-timer" id="otcTimer">—:——</div>
+    </div>
+    <div class="otc-info">
+      <div class="otc-lbl">ON THE CLOCK</div>
+      <div class="otc-team" id="otcTeam">Connecting…</div>
+    </div>
+  </div>
+  <div class="otc-picks" id="otcPicks"></div>
+  <div class="otc-status">
+    <div class="os-dot loading" id="osDot"></div>
+    <div class="os-lbl" id="osLbl">CONNECTING</div>
+  </div>
+  <div class="otc-proj">
+    <div class="proj-tag" id="projTag" onclick="openProj()">⚡ PROJECTIONS</div>
+    <div class="proj-tag" style="margin-left:6px;font-size:9px;" onclick="showDebug()">🔍 DEBUG</div>
+  </div>
+</div>
+
+<!-- BODY -->
+<div class="body">
+
+  <!-- LEFT ROSTER -->
+  <aside class="left">
+    <div class="left-hdr">
+      <div class="lh-title">Roster</div>
+      <div class="lh-sub" id="lhSub">0/23</div>
+    </div>
+    <div class="lh-team">WE'RE THE MILLERS</div>
+    <div class="roster-scroll" id="rosterScroll"></div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- BANNER -->
+    <div class="banner" id="banner">
+      <div class="ban-icon" id="banIcon">⚾</div>
+      <div class="ban-text">
+        <div class="ban-title" id="banTitle">Connecting to ESPN draft…</div>
+        <div class="ban-sub" id="banSub">Setting up draft session</div>
+      </div>
+      <div class="ban-noproj" id="banNoproj" style="display:none;">Generate projections for War Room analysis</div>
+      <div class="ban-verdict wait" id="banVerdict" style="display:none;">WAR ROOM LOADING…</div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('players',this)">Players</div>
+      <div class="tab" onclick="switchTab('history',this)">Pick History</div>
+      <div class="tab" onclick="switchTab('board',this)">Board</div>
+      <div class="tab-space"></div>
+      <div class="filter-pill active" onclick="cycleProj(this)" id="projFilter">2026 Projected ▾</div>
+      <div class="filter-pill" onclick="cyclePos(this)" id="posFilter">All Pos. ▾</div>
+      <div class="filter-pill" onclick="cycleTeam(this)" id="teamFilter">All Teams ▾</div>
+      <div class="show-drafted">
+        <div class="sd-toggle" id="draftedToggle" onclick="toggleDrafted()">
+          <div class="sd-thumb" id="draftedThumb"></div>
+        </div>
+        Show Drafted
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="tbl-wrap" id="tblWrap">
+      <div class="tbl-empty" id="tblEmpty">Connecting to ESPN draft feed…</div>
+      <table id="mainTable" style="display:none;">
+        <thead>
+          <tr>
+            <th class="left" onclick="sortBy('rank')">RK</th>
+            <th class="left" style="min-width:180px;">PLAYER</th>
+            <th></th>
+            <th onclick="sortBy('R')">R</th>
+            <th onclick="sortBy('HR')">HR</th>
+            <th onclick="sortBy('RBI')">RBI</th>
+            <th onclick="sortBy('SB')">SB</th>
+            <th onclick="sortBy('AVG')">AVG</th>
+            <th onclick="sortBy('OPS')">OPS</th>
+            <th onclick="sortBy('K')">K</th>
+            <th onclick="sortBy('ERA')">ERA</th>
+            <th onclick="sortBy('QS')">QS</th>
+            <th onclick="sortBy('SV')">SV</th>
+            <th class="our" style="min-width:140px;text-align:right;">THE DUGOUT</th>
+            <th class="our" style="text-align:center;">HEALTH</th>
+          </tr>
+        </thead>
+        <tbody id="mainTbody"></tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- PROJECTIONS POPUP -->
+<div class="ov" id="projOv" onclick="closePopups()">
+  <div class="popup" onclick="event.stopPropagation()">
+    <div class="pop-h">
+      <div class="pop-t">PROJECTIONS</div>
+      <div class="pop-x" onclick="closePopups()">CLOSE</div>
+    </div>
+    <div class="pop-b">
+      <div class="pj-info">
+        <div class="pj-title" id="pjTitle">Checking…</div>
+        <div class="pj-sub" id="pjSub">Loading…</div>
+      </div>
+      <div class="pj-cost">ONE SONNET CALL · ~$0.27 · CACHED ALL DAY · ~10 SECONDS</div>
+    </div>
+    <div class="pop-f">
+      <button class="mbtn primary" id="pjRunBtn" onclick="runProj()">GENERATE PROJECTIONS</button>
+      <button class="mbtn" onclick="closePopups()">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+// CONSTANTS
+// ════════════════════════════════════════
+const MY_TEAM   = "We're the Millers";
+const NUM_TEAMS = 12;
+const CATS      = ['R','HR','RBI','SB','AVG','OPS','K','ERA','QS','SV'];
+
+// Projections loaded from server cache — populated on boot
+let LIVE_PROJ = {};        // { playerName: {R,HR,...} }
+let LIVE_PROJ_LOWER = {};  // { lowercased name: {R,HR,...} } for fuzzy lookup
+
+async function loadProjections() {
+  try {
+    const r = await fetch('/api/draft/projections');
+    const d = await r.json();
+    if (d.projections && Object.keys(d.projections).length > 0) {
+      LIVE_PROJ = d.projections;
+      // Build lowercase index for fuzzy matching
+      LIVE_PROJ_LOWER = {};
+      for (const [k, v] of Object.entries(LIVE_PROJ)) {
+        LIVE_PROJ_LOWER[k.toLowerCase().trim()] = v;
+      }
+      console.log(`✅ Loaded ${d.player_count} projections. Sample keys:`, Object.keys(LIVE_PROJ).slice(0,5));
+    } else {
+      console.warn('No projections in cache — click ⚡ PROJECTIONS to generate');
+    }
+  } catch(e) {
+    console.warn('Could not load projections:', e);
+  }
+}
+
+function getProj(name) {
+  if (!name) return {};
+  // Exact match first
+  if (LIVE_PROJ[name]) return LIVE_PROJ[name];
+  // Lowercase match
+  const lower = name.toLowerCase().trim();
+  if (LIVE_PROJ_LOWER[lower]) return LIVE_PROJ_LOWER[lower];
+  // Partial match — last name + first initial
+  const parts = lower.split(/\s+/);
+  if (parts.length >= 2) {
+    const lastName = parts[parts.length - 1];
+    for (const [k, v] of Object.entries(LIVE_PROJ_LOWER)) {
+      if (k.includes(lastName) && k[0] === parts[0][0]) return v;
+    }
+  }
+  return {};
+}
+
+// Fallback ADP for players not in projections
+const MOCK_ADP = {
+  "Aaron Judge":1,"Bobby Witt Jr.":3,"Juan Soto":4,"José Ramírez":5,
+  "Ronald Acuña Jr.":6,"Kyle Tucker":8,"Tarik Skubal":9,"Paul Skenes":10,
+  "Garrett Crochet":11,"Corbin Carroll":12,"F. Tatís Jr.":14,
+  "Julio Rodríguez":15,"Adley Rutschman":17,"Gunnar Henderson":38,
+  "Freddie Freeman":32,"Jazz Chisholm":22,"Logan Webb":37,
+  "Framber Valdez":47,"Ryan Helsley":96,"Manny Machado":45,
+  "Corbin Burnes":50,"Zack Wheeler":62,"Francisco Lindor":24,
+  "Elly De La Cruz":42,"Vladimir Guerrero Jr.":35,"Yordan Alvarez":33,
+  "Jackson Chourio":25,"Trea Turner":55,"Junior Caminero":40,
+  "Kyle Schwarber":48,"Mason Miller":126,"Jackson Holliday":185,
+};
+
+const TC={NYY:'#0C2340',LAD:'#005A9C',ATL:'#CE1141',HOU:'#002D62',SDP:'#2F241D',
+  SEA:'#005C5C',KCR:'#004687',TBR:'#092C5C',CIN:'#C6011F',PHI:'#E81828',
+  CLE:'#002B5C',BAL:'#DF4601',BOS:'#BD3039',DET:'#0C2340',MIN:'#002B5C',
+  STL:'#C41E3A',PIT:'#27251F',SFG:'#FD5A1E',TOR:'#134A8E',WSN:'#AB0003',
+  MIL:'#12284b',TEX:'#003278',OAK:'#003831',ARI:'#A71930',CHC:'#003087',
+  LAA:'#BA0021',NYM:'#002D72',CHW:'#27251F',PHO:'#A71930',ATH:'#003831',
+  KC:'#004687',TB:'#092C5C',LAD:'#005A9C'};
+
+const ROSTER_SLOTS=[
+  {p:'C',t:'bat'},{p:'1B',t:'bat'},{p:'2B',t:'bat'},{p:'3B',t:'bat'},
+  {p:'SS',t:'bat'},{p:'OF',t:'bat'},{p:'OF',t:'bat'},{p:'OF',t:'bat'},
+  {p:'UTIL',t:'bat'},{p:'UTIL',t:'bat'},
+  {p:'SP',t:'pit'},{p:'SP',t:'pit'},{p:'SP',t:'pit'},
+  {p:'P',t:'pit'},{p:'P',t:'pit'},{p:'RP',t:'pit'},{p:'RP',t:'pit'},
+  {p:'BN',t:'bnc'},{p:'BN',t:'bnc'},{p:'BN',t:'bnc'},
+  {p:'BN',t:'bnc'},{p:'BN',t:'bnc'},{p:'IL',t:'il'},
+];
+
+function tc(t){return TC[(t||'').toUpperCase().replace(/\s.*/,'')]||'#4a5568';}
+function ini(n){const p=(n||'').trim().split(/\s+/);return p.length>=2?(p[0][0]+p[p.length-1][0]).toUpperCase():(n||'??').slice(0,2).toUpperCase();}
+function isMe(s){return(s?.onClock||'').toLowerCase().includes(MY_TEAM.toLowerCase());}
+function fmtStat(v,cat){
+  if(!v||v===0){return'<span class="stat dash">—</span>';}
+  if(cat==='AVG'||cat==='OPS'){return`<span class="stat val">${v.toFixed(3)}</span>`;}
+  if(cat==='ERA'){return`<span class="stat val">${v.toFixed(2)}</span>`;}
+  return`<span class="stat val">${Math.round(v)}</span>`;
+}
+function adpInfo(adp,pick){
+  const d=adp-pick;
+  if(d<-10)return{cls:'reach',tag:'REACH',txt:`${Math.abs(d)} PICKS EARLY`};
+  if(d>18)return{cls:'late',tag:'WAIT',txt:'TAKE LATER'};
+  if(Math.abs(d)<=8)return{cls:'ok',tag:'IN RANGE',txt:'GOOD VALUE'};
+  return{cls:'near',tag:'SOON',txt:'AVAILABLE SOON'};
+}
+
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
+let appState   = null;
+let engineData = null;
+let projFresh  = false;
+let wasMyTurn  = false;
+let countdown  = 90;
+let cdTimer    = null;
+let showDrafted= false;
+let posFilter  = 'all';
+let sortCol    = 'rank';
+let sortDir    = 1;
+let activeTab  = 'players';
+
+// ════════════════════════════════════════
+// BOOT
+// ════════════════════════════════════════
+async function boot(){
+  setStatus('loading','CONNECTING');
+  try{
+    await fetch('/api/draft/init',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({leagueId:904188626,year:2026,teamName:MY_TEAM})});
+  }catch(e){}
+  await loadProjections();
+  const ps = await checkProjStatus();
+  await poll();
+  setInterval(poll,5000);
+  // Projections are NOT auto-generated — click ⚡ PROJECTIONS to run manually
+}
+
+async function autoGenProj(){
+  const avail = appState?.available||[];
+  if(!avail.length) return;
+  setBanner('info','Generating 2026 projections…','One-time Sonnet call · ~10 seconds · $0.27');
+  const players = avail.slice(0,400).map(p=>({name:p.name,pos:p.position,team:p.proTeam}));
+  try{
+    const r = await fetch('/api/draft/projections',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({players})});
+    const d = await r.json();
+    if(d.success){
+      await checkProjStatus();
+      projFresh = true;
+      if(appState) renderTable(appState);
+      if(isMe(appState)) await fetchEngine(appState);
+    }
+  }catch(e){}
+}
+
+// ════════════════════════════════════════
+// POLL
+// ════════════════════════════════════════
+async function poll(){
+  try{
+    const r=await fetch('/api/draft/state');
+    const d=await r.json();
+    if(d.error){setStatus('err','ESPN ERR');setBanner('error',d.error,'Check ESPN connection');return;}
+    const myTurn=isMe(d);
+    const newTurn=!wasMyTurn&&myTurn;
+    appState=d;
+    setStatus('live','LIVE');
+    renderOtc(d);
+    renderRoster(d);
+    if(newTurn){resetCd();if(projFresh)await fetchEngine(d);}
+    renderTable(d);
+    if(myTurn&&engineData){renderBannerOnclock();}
+    else if(myTurn){renderBannerWaiting(d);}
+    else{renderBannerIdle(d);}
+    wasMyTurn=myTurn;
+  }catch(e){setStatus('err','OFFLINE');setBanner('error','Could not reach server','Is python3 server.py running?');}
+}
+
+// ════════════════════════════════════════
+// ENGINE
+// ════════════════════════════════════════
+async function fetchEngine(d){
+  try{
+    const picks=(d.myPicks||[]).map(p=>({name:p.playerName,pos:'?',team:'?'}));
+    const avail =(d.available||[]).slice(0,60);
+    const r=await fetch('/api/draft/on-clock',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({currentPicks:picks,available:avail,
+        pickNum:d.overallPick||1,roundNum:d.round||1,
+        slotsRemaining:23-picks.length})});
+    const ed=await r.json();
+    if(!ed.error){engineData=ed;renderBannerOnclock();renderTable(d);}
+  }catch(e){}
+}
+
+// ════════════════════════════════════════
+// COUNTDOWN
+// ════════════════════════════════════════
+function resetCd(){
+  clearInterval(cdTimer);countdown=90;
+  cdTimer=setInterval(()=>{
+    countdown--;
+    const el=document.getElementById('otcTimer');
+    if(countdown<=0){clearInterval(cdTimer);el.textContent='0:00';return;}
+    el.textContent=Math.floor(countdown/60)+':'+String(countdown%60).padStart(2,'0');
+    el.className='otc-timer'+(countdown<=20?' urgent':'');
+  },1000);
+}
+
+// ════════════════════════════════════════
+// OTC STRIP
+// ════════════════════════════════════════
+function renderOtc(d){
+  document.getElementById('otcRnd').textContent=`RND ${d.round||'—'} OF ${d.numTeams||12}`;
+  const teamEl=document.getElementById('otcTeam');
+  teamEl.textContent=d.onClock||'—';
+  teamEl.className='otc-team'+(isMe(d)?' mine':'');
+  if(!isMe(d)){document.getElementById('otcTimer').textContent='—:——';}
+
+  // upcoming picks strip
+  const ups=d.upcoming||[];
+  document.getElementById('otcPicks').innerHTML=ups.slice(0,14).map(u=>{
+    let cls='otp';
+    if(u.isDone)cls+=' done';
+    else if(u.isCurrent)cls+=' current';
+    else if(u.isMine)cls+=' mine';
+    return`<div class="${cls}">
+      <div class="otp-n">PICK ${u.overallPick}</div>
+      <div class="otp-team">${u.teamName.split(' ').slice(-1)[0]||u.teamName}</div>
+      <div class="otp-pick">${u.playerName||(u.isMine?'YOUR PICK':'')}</div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════
+// BANNER
+// ════════════════════════════════════════
+function setBanner(type,title,sub){
+  document.getElementById('banTitle').textContent=title;
+  document.getElementById('banSub').textContent=sub;
+  document.getElementById('banVerdict').style.display='none';
+  document.getElementById('banNoproj').style.display='none';
+  document.getElementById('banIcon').textContent='⚾';
+}
+
+function renderBannerIdle(d){
+  const up=(d.upcoming||[]).find(u=>u.isMine&&!u.isDone);
+  const picks=d.picks||[];
+  const last=picks.length?picks[picks.length-1]:null;
+  document.getElementById('banTitle').textContent=
+    last?`${last.playerName} taken by ${last.teamName.split(' ').pop()}`
+        :'Waiting for draft to begin…';
+  document.getElementById('banSub').textContent=
+    up?`Your next pick: #${up.overallPick} · Round ${up.round} · ${up.overallPick-(d.overallPick||1)} picks away`
+      :'Watching the board…';
+  document.getElementById('banVerdict').style.display='none';
+  document.getElementById('banNoproj').style.display=projFresh?'none':'block';
+  document.getElementById('banIcon').textContent='⚾';
+}
+
+function renderBannerWaiting(d){
+  document.getElementById('banTitle').textContent="You are on the clock!";
+  document.getElementById('banSub').textContent='Loading War Room analysis…';
+  document.getElementById('banVerdict').style.display='none';
+  document.getElementById('banNoproj').style.display=projFresh?'none':'block';
+  document.getElementById('banIcon').textContent='🔴';
+}
+
+function renderBannerOnclock(){
+  document.getElementById('banTitle').textContent="You are on the clock!";
+  const top=engineData?.topPicks?.[0];
+  if(top){
+    document.getElementById('banSub').textContent=
+      `War Room: ${top.name} — ${top.verdict||'best available'}`;
+    const vEl=document.getElementById('banVerdict');
+    vEl.textContent=`Take ${top.name.split(' ').pop()} →`;
+    vEl.className='ban-verdict';
+    vEl.style.display='block';
+  }
+  document.getElementById('banNoproj').style.display='none';
+  document.getElementById('banIcon').textContent='🔴';
+}
+
+// ════════════════════════════════════════
+// ROSTER
+// ════════════════════════════════════════
+function renderRoster(d){
+  const picks=d.myPicks||[];
+  document.getElementById('lhSub').textContent=picks.length+'/23';
+  let html='',idx=0;
+  ROSTER_SLOTS.forEach(slot=>{
+    const p=picks[idx];
+    if(p){
+      idx++;
+      html+=`<div class="r-row filled">
+        <div class="r-pos">${slot.p}</div>
+        <div class="r-av" style="background:${tc('')}">${ini(p.playerName)}</div>
+        <div class="r-info">
+          <div class="r-name">${p.playerName}</div>
+          <div class="r-meta">Rnd ${p.round} · Pk ${p.overall}</div>
+        </div>
+      </div>`;
+    }else{
+      html+=`<div class="r-row empty">
+        <div class="r-pos">${slot.p}</div>
+        <div class="r-ec">${slot.p[0]}</div>
+        <div class="r-info"><div class="r-name">Empty</div></div>
+      </div>`;
+    }
+  });
+  document.getElementById('rosterScroll').innerHTML=html;
+}
+
+// ════════════════════════════════════════
+// TABLE
+// ════════════════════════════════════════
+function renderTable(d){
+  if(activeTab!=='players')return;
+
+  const available=d.available||[];
+  const drafted  =new Set((d.picks||[]).map(p=>p.playerName));
+  const pick     =d.overallPick||1;
+
+  // Engine lookup by name
+  const engMap={};
+  (engineData?.topPicks||[]).forEach((p,i)=>{engMap[p.name]={...p,warRank:i+1};});
+  const gapMap={};
+  (engineData?.gaps||[]).forEach(g=>{gapMap[g.cat]=g;});
+
+  // Build rows from available players
+  let rows=available.map((p,i)=>{
+    const proj  = getProj(p.name);
+    const adp   = proj.adp || MOCK_ADP[p.name] || (i + 1);
+    const stats = proj;   // R, HR, RBI, SB, AVG, OPS, K, ERA, QS, SV, WHIP
+    const eng   = engMap[p.name];
+    const ai    = adpInfo(adp, pick);
+    return{...p, adp, stats, eng, ai, rank:adp, isDrafted:drafted.has(p.name)};
+  });
+
+  // Filter drafted
+  if(!showDrafted) rows=rows.filter(r=>!r.isDrafted);
+
+  // Filter position
+  if(posFilter!=='all'){
+    rows=rows.filter(r=>(r.position||'').toUpperCase().includes(posFilter.toUpperCase()));
+  }
+
+  // Sort
+  rows.sort((a,b)=>{
+    if(sortCol==='rank')return(a.rank-b.rank)*sortDir;
+    const sa=a.stats[sortCol]||0, sb=b.stats[sortCol]||0;
+    return(sa-sb)*-sortDir;
+  });
+
+  if(!rows.length){
+    document.getElementById('mainTable').style.display='none';
+    document.getElementById('tblEmpty').textContent='No players available — connect to ESPN first.';
+    document.getElementById('tblEmpty').style.display='block';
+    return;
+  }
+
+  document.getElementById('mainTable').style.display='table';
+  document.getElementById('tblEmpty').style.display='none';
+
+  document.getElementById('mainTbody').innerHTML=rows.slice(0,80).map(p=>{
+    const s=p.stats;
+    const pos=(p.position||'').toLowerCase().replace('/','-');
+    const posTag=`<span class="pos-tag pos-${pos.split('-')[0]}">${p.position||'?'}</span>`;
+    const injTag=p.injuryStatus&&p.injuryStatus!=='ACTIVE'&&p.injuryStatus!=='NORMAL'
+      ?`<span class="inj-tag">${p.injuryStatus}</span>`:'';
+    const isRec=p.eng?.warRank===1;
+    const rowCls=p.isDrafted?'drafted':isRec?'rec':'';
+
+    // Dugout column
+    let dugHtml='';
+    if(p.eng){
+      const sigs=(p.eng.signals||[]).slice(0,2).map(sig=>{
+        const txt=sig.replace(/[✅🏥⚠️📈📉⚡🏆⏰🌐]/gu,'').trim();
+        const cls=sig.includes('✅')||sig.includes('📈')||sig.includes('⚡')||sig.includes('🏆')?'df-grn':
+                  sig.includes('🏥')||sig.includes('⚠️')||sig.includes('📉')?'df-red':'df-sec';
+        return`<span class="dflag ${cls}">${txt.slice(0,18)}</span>`;
+      });
+      dugHtml=`<div style="text-align:right;">
+        <div class="dug-status ${p.ai.cls}">ADP ${p.adp} · ${p.ai.tag}</div>
+        <div class="dug-flags">${isRec?'<span class="dflag df-grn">WAR ROOM #1</span>':''}${sigs.join('')}</div>
+      </div>`;
+    }else{
+      dugHtml=`<div class="dug-status ${p.ai.cls}" style="text-align:right;">ADP ${p.adp} · ${p.ai.tag}</div>`;
+    }
+
+    const health=p.eng?.health;
+    const hlthCls=!health?'dim':health>=90?'good':health>=75?'risk':'bad';
+    const hlthHtml=health?`<div class="hlth ${hlthCls}">${health}%</div>`:'<span class="stat dash">—</span>';
+
+    return`<tr class="${rowCls}" onclick="selectPlayer('${p.name.replace(/'/g,"\\'")}')">
+      <td class="left rk-cell">${p.rank}</td>
+      <td class="left">
+        <div class="pc">
+          <div class="pc-av" style="background:${tc(p.proTeam)}">${ini(p.name)}</div>
+          <div class="pc-info">
+            <div class="pc-name">${p.name}</div>
+            <div class="pc-meta"><span class="pc-team">${p.proTeam||'?'}</span>${posTag}${injTag}</div>
+          </div>
+        </div>
+      </td>
+      <td><button class="draft-btn" onclick="draftPick('${p.name.replace(/'/g,"\\'")}');event.stopPropagation();">DRAFT</button></td>
+      <td>${fmtStat(s.R,'R')}</td>
+      <td>${fmtStat(s.HR,'HR')}</td>
+      <td>${fmtStat(s.RBI,'RBI')}</td>
+      <td>${fmtStat(s.SB,'SB')}</td>
+      <td>${fmtStat(s.AVG,'AVG')}</td>
+      <td>${fmtStat(s.OPS,'OPS')}</td>
+      <td>${fmtStat(s.K,'K')}</td>
+      <td>${fmtStat(s.ERA,'ERA')}</td>
+      <td>${fmtStat(s.QS,'QS')}</td>
+      <td>${fmtStat(s.SV,'SV')}</td>
+      <td class="our-cell">${dugHtml}</td>
+      <td class="health-cell" style="text-align:center;">${hlthHtml}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════
+// INTERACTIONS
+// ════════════════════════════════════════
+function selectPlayer(name){
+  // Highlight row — future: open detail panel
+  document.querySelectorAll('#mainTbody tr').forEach(tr=>{
+    tr.style.outline=tr.textContent.includes(name)?'2px solid var(--blu) inset':'';
+  });
+}
+
+function draftPick(name){
+  // Future: submit to ESPN API
+  alert(`Draft ${name}?\n\nIn a future update this will submit directly to ESPN.\nFor now, use the ESPN interface to confirm your pick.`);
+}
+
+function switchTab(tab,el){
+  activeTab=tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  // Pick History and Board are ESPN-side features; redirect for now
+  if(tab==='history'||tab==='board'){
+    document.getElementById('tblEmpty').textContent='Use ESPN\'s draft room for this view — this tab will be built in a future update.';
+    document.getElementById('tblEmpty').style.display='block';
+    document.getElementById('mainTable').style.display='none';
+  }else if(appState){
+    renderTable(appState);
+  }
+}
+
+function sortBy(col){
+  if(sortCol===col)sortDir*=-1;
+  else{sortCol=col;sortDir=1;}
+  document.querySelectorAll('thead th').forEach(th=>{
+    th.classList.remove('sort-asc','sort-desc');
+  });
+  if(appState)renderTable(appState);
+}
+
+function toggleDrafted(){
+  showDrafted=!showDrafted;
+  document.getElementById('draftedThumb').style.left=showDrafted?'16px':'2px';
+  document.getElementById('draftedToggle').style.background=showDrafted?'var(--grn)':'var(--rule)';
+  if(appState)renderTable(appState);
+}
+
+const POS_CYCLE=['all','SP','RP','OF','SS','3B','2B','1B','C'];
+let posCycleIdx=0;
+function cyclePos(el){
+  posCycleIdx=(posCycleIdx+1)%POS_CYCLE.length;
+  posFilter=POS_CYCLE[posCycleIdx];
+  el.textContent=posFilter==='all'?'All Pos. ▾':posFilter+' ▾';
+  el.classList.toggle('active',posFilter!=='all');
+  if(appState)renderTable(appState);
+}
+
+function cycleProj(){} // ESPN stat columns only for now
+function cycleTeam(){}
+
+// ════════════════════════════════════════
+// PROJECTIONS
+// ════════════════════════════════════════
+async function checkProjStatus(){
+  try{
+    const r=await fetch('/api/draft/projections/status');
+    const d=await r.json();
+    projFresh=d.fresh;
+    const tag=document.getElementById('projTag');
+    if(d.fresh){tag.textContent=`PROJECTIONS (${d.player_count})`;tag.className='proj-tag ready';}
+    else{tag.textContent='⚡ PROJECTIONS';tag.className='proj-tag';}
+    return d;
+  }catch(e){return{fresh:false};}
+}
+
+async function openProj(){
+  const d=await checkProjStatus();
+  const title=document.getElementById('pjTitle');
+  const sub=document.getElementById('pjSub');
+  if(d.fresh){
+    title.textContent=`Ready — ${d.player_count} players projected`;
+    title.className='pj-title pj-fresh';
+    sub.textContent='Generated today. Valid for the whole draft.';
+  }else{
+    title.textContent='No projections yet';
+    title.className='pj-title pj-stale';
+    sub.textContent='Click Generate to make one Sonnet call for all available players. This runs once and caches for the day.';
+  }
+  document.getElementById('projOv').classList.add('open');
+}
+
+async function runProj(){
+  const btn=document.getElementById('pjRunBtn');
+  btn.textContent='GENERATING…';btn.disabled=true;
+  try{
+    const avail=appState?.available||[];
+    const players=avail.slice(0,400).map(p=>({name:p.name,pos:p.position,team:p.proTeam}));
+    if(!players.length){alert('Connect to ESPN first — no players loaded yet.');return;}
+    const r=await fetch('/api/draft/projections',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify({players})});
+    const d=await r.json();
+    if(d.success){
+      closePopups();
+      await loadProjections();   // pull fresh data into LIVE_PROJ immediately
+      await checkProjStatus();
+      if(appState) renderTable(appState);
+      alert(`Done — ${d.player_count} players projected. Valid all week.`);
+    }
+    else alert('Error: '+(d.error||'Unknown'));
+  }catch(e){alert('Failed: '+e.message);}
+  btn.textContent='GENERATE PROJECTIONS';btn.disabled=false;
+}
+
+function showDebug() {
+  const projKeys  = Object.keys(LIVE_PROJ);
+  const espnNames = (appState?.available || []).slice(0, 5).map(p => p.name);
+  const sampleProj = projKeys.length ? LIVE_PROJ[projKeys[0]] : {};
+  
+  const msg = [
+    `PROJ COUNT: ${projKeys.length}`,
+    `PROJ SAMPLE KEYS: ${projKeys.slice(0,5).join(', ')}`,
+    ``,
+    `ESPN SAMPLE NAMES: ${espnNames.join(', ')}`,
+    ``,
+    `SAMPLE PROJ DATA (${projKeys[0]}):`,
+    JSON.stringify(sampleProj, null, 2),
+  ].join('\n');
+  
+  alert(msg);
+}
+
+function closePopups(){
+  document.getElementById('projOv').classList.remove('open');
+}
+
+function setStatus(s,msg){
+  document.getElementById('osDot').className=`os-dot ${s}`;
+  document.getElementById('osLbl').textContent=msg;
+}
+
+// ════════════════════════════════════════
+// GO
+// ════════════════════════════════════════
+boot();
+</script>
+</body>
+</html>

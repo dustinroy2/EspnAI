@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Draft Board Layout Options</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: #f4f5f7; color: #1a1a1a; padding: 24px; }
+  h1 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+  h2 { font-size: 15px; font-weight: 700; margin: 28px 0 12px; color: #d00; }
+  .desc { font-size: 12px; color: #6b7280; margin-bottom: 16px; }
+
+  .board { background: white; border: 1px solid #e2e5ea; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+  /* Layout 1: Position Columns */
+  .pos-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 0;
+  }
+  .pos-col {
+    border-right: 1px solid #e2e5ea;
+    min-width: 0;
+  }
+  .pos-col:last-child { border-right: none; }
+  .pos-col-header {
+    padding: 8px 6px; text-align: center; font-size: 11px; font-weight: 700;
+    color: white; position: sticky; top: 0;
+  }
+  .pos-player {
+    padding: 5px 6px; border-bottom: 1px solid #f3f4f6; font-size: 10px;
+    cursor: pointer; transition: all 0.1s;
+  }
+  .pos-player:hover { background: #f9fafb; }
+  .pos-player.drafted { opacity: 0.15; text-decoration: line-through; }
+  .pos-player .pp-name { font-weight: 600; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pos-player .pp-stats { font-size: 9px; color: #6b7280; }
+  .pos-player .pp-adp { font-size: 9px; color: #9ca3af; }
+  .pos-player .pp-tier { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 3px; }
+
+  /* Layout 2: Tier Rows x Position Columns */
+  .tier-grid {
+    display: grid;
+    grid-template-columns: 60px repeat(8, 1fr);
+    font-size: 10px;
+  }
+  .tier-label {
+    padding: 8px 6px; font-size: 10px; font-weight: 700; color: white;
+    writing-mode: vertical-lr; text-orientation: mixed; text-align: center;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tier-cell {
+    padding: 4px; border-right: 1px solid #f3f4f6; border-bottom: 1px solid #e2e5ea;
+    min-height: 60px;
+  }
+  .tier-cell:last-child { border-right: none; }
+  .tc-player {
+    padding: 3px 4px; border-radius: 3px; margin-bottom: 2px; font-size: 10px;
+    background: #f9fafb; border: 1px solid #e2e5ea;
+  }
+  .tc-player.drafted { opacity: 0.15; text-decoration: line-through; }
+  .tc-player .tc-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tc-player .tc-adp { font-size: 8px; color: #9ca3af; }
+
+  /* Layout 3: Cheat Sheet Rows */
+  .cs-grid {
+    display: grid;
+    grid-template-columns: 36px 1fr 1fr 1fr 1fr 1fr;
+    font-size: 10px;
+  }
+  .cs-header {
+    padding: 6px 8px; font-weight: 700; font-size: 10px; color: white;
+    text-align: center;
+  }
+  .cs-rank {
+    padding: 4px; text-align: center; font-weight: 700; color: #9ca3af;
+    border-bottom: 1px solid #f3f4f6; font-size: 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cs-cell {
+    padding: 3px 6px; border-bottom: 1px solid #f3f4f6; border-right: 1px solid #f3f4f6;
+    font-size: 10px;
+  }
+  .cs-cell:last-child { border-right: none; }
+  .cs-cell .cs-name { font-weight: 600; font-size: 10px; }
+  .cs-cell .cs-stat { font-size: 8px; color: #6b7280; }
+  .cs-cell.drafted { opacity: 0.15; text-decoration: line-through; }
+  .cs-cell.empty { color: #d1d5db; font-style: italic; }
+</style>
+</head>
+<body>
+
+<h1>Draft Board — Pick Your Layout</h1>
+<div class="desc">3 options for the live board. Players fade out when drafted. Click one to use in the app.</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2>Layout 1: Position Columns</h2>
+<div class="desc">Each column = a position. Players ranked top to bottom by AI rank. Color dot = tier. You scan down each column to see who's left.</div>
+<div class="board" style="max-height:420px;overflow-y:auto">
+  <div class="pos-grid">
+    <!-- C -->
+    <div class="pos-col">
+      <div class="pos-col-header" style="background:#d97706">C</div>
+      <div class="pos-player"><div class="pp-name"><span class="pp-tier" style="background:#059669"></span>William Contreras</div><div class="pp-stats">82R 22HR 85RBI .270</div><div class="pp-adp">ADP 52</div></div>
+      <div class="pos-player"><div class="pp-name"><span class="pp-tier" style="background:#059669"></span>Cal Raleigh</div><div class="pp-stats">75R 32HR 90RBI .228</div><div class="pp-adp">ADP 38</div></div>
+      <div class="pos-player"><div class="pp-name"><span class="pp-tier" style="background:#d97706"></span>Adley Rutschman</div><div class="pp-stats">68R 20HR 72RBI .265</div><div class="pp-adp">ADP 120</div></div>
+      <div class="pos-player drafted"><div class="pp-name">Drake Baldwin</div><div class="pp-stats">60R 15HR .255</div><div class="pp-adp">ADP 95</div></div>
+    </div>
+    <!-- 1B -->
+    <div class="pos-col">
+      <div class="pos-col-header" style="background:#2563eb">1B</div>
+      <div class="pos-player"><div class="pp-name"><span class="pp-tier" style="background:#d00"></span>Bryce Harper</div><div class="pp-stats">89R 32HR 95RBI .280</div><div class="pp-adp">ADP 18</div></div>
+      <div class="pos-player drafted"><div class="pp-name">Freddie Freeman</div><div class="pp-stats">95R 25HR 90RBI .290</div><div class="pp-adp">ADP 28</div></div>
+      <div class="pos-player"><div class="pp-name"><span class="pp-tier" style="background:#059669"></span>Pete Alonso</div><div class="pp-stats">80R 40HR 110RBI .245</div><div class="pp-adp">ADP 45</div></div>
+      <div class="pos-player"><div class="pp-name"><span class="pp-tier" style="background:#d97706"></span>Josh Naylor</div><div class="pp-stats">75R 28HR 95RBI .260</div><div class="pp-adp">ADP 65</div></div>
+    </div>
+    <!-- 2B -->
+    <div class="pos-col">
+      <div class="pos-col-header" style="background:#059669">2B</div>
+      <div class="pos-player"><div class="pp-name"><span class="pp-tier" style="background:#d00"></span>Ketel Marte</div><div class="pp-stats">98R 32HR 18SB .278</div><div class="pp-adp">ADP 16</div></div>
+      <div class="pos-player"><div class="pp-name"><span class="pp-tier" style="background:#059669"></span>Marcus Semien</div><div class="pp-stats">82R 24HR 10SB .265</div><div class="pp-adp">ADP 80</div></div>
+      <div class="pos-player"><div class="pp-name"><span class="pp-tier" style="background:#d97706"></span>Brice Turang</div><div class="pp-stats">75R 8HR 25SB .270</div><div class="pp-adp">ADP 110</div></div>
+    </div>
+    <!-- SS -->
+    <div class="pos-col">
+      <div class="pos-col-header" style="background:#7c3aed">SS</div>
+      <div class="pos-player drafted"><div class="pp-name">Jose Ramirez</div><div class="pp-stats">102R 35HR 25SB .275</div><div class="pp-adp">ADP 6</div></div>
+      <div class="pos-player"><div class="pp-name"><span class="pp-tier" style="background:#d00"></span>Gunnar Henderson</div><div class="pp-stats">105R 32HR 22SB .270</div><div class="pp-adp">ADP 12</div></div>
+      <div class="pos-player"><div class="pp-name"><span class="pp-tier" style="background:#d00"></span>Trea Turner</div><div class="pp-stats">95R 22HR 28SB .280</div><div class="pp-adp">ADP 15</div></div>
+      <div class="pos-player"><div class="pp-name"><span class="pp-tier" style="background:#059669"></span>Mookie Betts</div><div class="pp-stats">88R 25HR 18SB .275</div><div class="pp-adp">ADP 41</div></div>
+    </div>
+    <!-- 3B -->
+    <div class="pos-col">
+      <div class="pos-col-header" style="background:#d00">3B</div>
+      <div class="pos-player drafted"><div class="pp-name">Rafael Devers</div><div class="pp-stats">92R 33HR 105RBI .280</div><div class="pp-adp">ADP 20</div></div>
+      <div class="pos-player"><div class="pp-name"><span class="pp-tier" style="background:#059669"></span>Alex Bregman</div><div class="pp-stats">85R 24HR 90RBI .272</div><div class="pp-adp">ADP 55</div></div>
+      <div class="pos-player"><div class="pp-name"><span class="pp-tier" style="background:#d97706"></span>Matt Chapman</div><div class="pp-stats">78R 28HR 80RBI .248</div><div class="pp-adp">ADP 90</div></div>
+    </div>
+    <!-- OF -->
+    <div class="pos-col">
+      <div class="pos-col-header" style="background:#059669">OF</div>
+      <div class="pos-player"><div class="pp-name"><span class="pp-tier" style="background:#d00"></span>Ronald Acuna Jr.</div><div class="pp-stats">112R 38HR 48SB .282</div><div class="pp-adp">ADP 10</div></div>
+      <div class="pos-player"><div class="pp-name"><span class="pp-tier" style="background:#d00"></span>Kyle Tucker</div><div class="pp-stats">105R 35HR 28SB .285</div><div class="pp-adp">ADP 12</div></div>
+      <div class="pos-player"><div class="pp-name"><span class="pp-tier" style="background:#059669"></span>Jarren Duran</div><div class="pp-stats">88R 20HR 30SB .270</div><div class="pp-adp">ADP 56</div></div>
+      <div class="pos-player"><div class="pp-name"><span class="pp-tier" style="background:#d97706"></span>Seiya Suzuki</div><div class="pp-stats">75R 22HR 8SB .268</div><div class="pp-adp">ADP 82</div></div>
+    </div>
+    <!-- SP -->
+    <div class="pos-col">
+      <div class="pos-col-header" style="background:#2563eb">SP</div>
+      <div class="pos-player"><div class="pp-name"><span class="pp-tier" style="background:#d00"></span>Paul Skenes</div><div class="pp-stats">225K 18QS 2.95ERA</div><div class="pp-adp">ADP 5</div></div>
+      <div class="pos-player drafted"><div class="pp-name">Tarik Skubal</div><div class="pp-stats">218K 19QS 3.15ERA</div><div class="pp-adp">ADP 6</div></div>
+      <div class="pos-player"><div class="pp-name"><span class="pp-tier" style="background:#059669"></span>George Kirby</div><div class="pp-stats">198K 18QS 3.42ERA</div><div class="pp-adp">ADP 67</div></div>
+      <div class="pos-player"><div class="pp-name"><span class="pp-tier" style="background:#d97706"></span>Shota Imanaga</div><div class="pp-stats">165K 18QS 3.25ERA</div><div class="pp-adp">ADP 95</div></div>
+    </div>
+    <!-- RP -->
+    <div class="pos-col">
+      <div class="pos-col-header" style="background:#d00">RP</div>
+      <div class="pos-player"><div class="pp-name"><span class="pp-tier" style="background:#d00"></span>Mason Miller</div><div class="pp-stats">85K 42SV 2.65ERA</div><div class="pp-adp">ADP 40</div></div>
+      <div class="pos-player"><div class="pp-name"><span class="pp-tier" style="background:#059669"></span>Edwin Diaz</div><div class="pp-stats">95K 35SV 2.85ERA</div><div class="pp-adp">ADP 45</div></div>
+      <div class="pos-player"><div class="pp-name"><span class="pp-tier" style="background:#059669"></span>Ryan Helsley</div><div class="pp-stats">90K 30SV 2.80ERA</div><div class="pp-adp">ADP 75</div></div>
+      <div class="pos-player"><div class="pp-name"><span class="pp-tier" style="background:#d97706"></span>Carlos Estevez</div><div class="pp-stats">68K 25SV 3.28ERA</div><div class="pp-adp">ADP 100</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2>Layout 2: Tier Rows x Position Columns</h2>
+<div class="desc">Rows = tiers (Elite → Sleeper). Columns = positions. Each cell has the players available in that tier/position. Quick scan: what's left in each tier?</div>
+<div class="board" style="overflow-x:auto">
+  <div class="tier-grid">
+    <!-- Header row -->
+    <div style="background:#1a1a1a"></div>
+    <div class="cs-header" style="background:#d97706">C</div>
+    <div class="cs-header" style="background:#2563eb">1B</div>
+    <div class="cs-header" style="background:#059669">2B</div>
+    <div class="cs-header" style="background:#7c3aed">SS</div>
+    <div class="cs-header" style="background:#d00">3B</div>
+    <div class="cs-header" style="background:#059669">OF</div>
+    <div class="cs-header" style="background:#2563eb">SP</div>
+    <div class="cs-header" style="background:#d00">RP</div>
+    <!-- Tier 1: Elite -->
+    <div class="tier-label" style="background:#d00">ELITE<br>R1-2</div>
+    <div class="tier-cell"></div>
+    <div class="tier-cell"><div class="tc-player"><div class="tc-name">Bryce Harper</div><div class="tc-adp">ADP 18</div></div></div>
+    <div class="tier-cell"><div class="tc-player"><div class="tc-name">Ketel Marte</div><div class="tc-adp">ADP 16</div></div></div>
+    <div class="tier-cell"><div class="tc-player drafted"><div class="tc-name">Jose Ramirez</div></div><div class="tc-player"><div class="tc-name">Gunnar Henderson</div><div class="tc-adp">ADP 12</div></div><div class="tc-player"><div class="tc-name">Trea Turner</div><div class="tc-adp">ADP 15</div></div></div>
+    <div class="tier-cell"></div>
+    <div class="tier-cell"><div class="tc-player"><div class="tc-name">Acuna Jr.</div><div class="tc-adp">ADP 10</div></div><div class="tc-player"><div class="tc-name">Kyle Tucker</div><div class="tc-adp">ADP 12</div></div></div>
+    <div class="tier-cell"><div class="tc-player"><div class="tc-name">Paul Skenes</div><div class="tc-adp">ADP 5</div></div><div class="tc-player drafted"><div class="tc-name">Tarik Skubal</div></div></div>
+    <div class="tier-cell"></div>
+    <!-- Tier 2: Solid -->
+    <div class="tier-label" style="background:#2563eb">SOLID<br>R3-6</div>
+    <div class="tier-cell"><div class="tc-player"><div class="tc-name">Cal Raleigh</div><div class="tc-adp">ADP 38</div></div><div class="tc-player"><div class="tc-name">W. Contreras</div><div class="tc-adp">ADP 52</div></div></div>
+    <div class="tier-cell"><div class="tc-player"><div class="tc-name">Pete Alonso</div><div class="tc-adp">ADP 45</div></div></div>
+    <div class="tier-cell"><div class="tc-player"><div class="tc-name">Marcus Semien</div><div class="tc-adp">ADP 80</div></div></div>
+    <div class="tier-cell"><div class="tc-player"><div class="tc-name">Mookie Betts</div><div class="tc-adp">ADP 41</div></div><div class="tc-player"><div class="tc-name">CJ Abrams</div><div class="tc-adp">ADP 55</div></div></div>
+    <div class="tier-cell"><div class="tc-player"><div class="tc-name">Alex Bregman</div><div class="tc-adp">ADP 55</div></div></div>
+    <div class="tier-cell"><div class="tc-player"><div class="tc-name">Jarren Duran</div><div class="tc-adp">ADP 56</div></div></div>
+    <div class="tier-cell"><div class="tc-player"><div class="tc-name">George Kirby</div><div class="tc-adp">ADP 67</div></div><div class="tc-player"><div class="tc-name">Dylan Cease</div><div class="tc-adp">ADP 53</div></div></div>
+    <div class="tier-cell"><div class="tc-player"><div class="tc-name">Mason Miller</div><div class="tc-adp">ADP 40</div></div><div class="tc-player"><div class="tc-name">Edwin Diaz</div><div class="tc-adp">ADP 45</div></div></div>
+    <!-- Tier 3: Mid -->
+    <div class="tier-label" style="background:#059669">MID<br>R7-12</div>
+    <div class="tier-cell"><div class="tc-player"><div class="tc-name">Rutschman</div><div class="tc-adp">ADP 120</div></div></div>
+    <div class="tier-cell"><div class="tc-player"><div class="tc-name">Josh Naylor</div><div class="tc-adp">ADP 65</div></div></div>
+    <div class="tier-cell"><div class="tc-player"><div class="tc-name">Brice Turang</div><div class="tc-adp">ADP 110</div></div></div>
+    <div class="tier-cell"><div class="tc-player"><div class="tc-name">Anthony Volpe</div><div class="tc-adp">ADP 140</div></div></div>
+    <div class="tier-cell"><div class="tc-player"><div class="tc-name">Matt Chapman</div><div class="tc-adp">ADP 90</div></div></div>
+    <div class="tier-cell"><div class="tc-player"><div class="tc-name">Seiya Suzuki</div><div class="tc-adp">ADP 82</div></div><div class="tc-player"><div class="tc-name">Luis Robert</div><div class="tc-adp">ADP 95</div></div></div>
+    <div class="tier-cell"><div class="tc-player"><div class="tc-name">Shota Imanaga</div><div class="tc-adp">ADP 95</div></div><div class="tc-player"><div class="tc-name">Aaron Nola</div><div class="tc-adp">ADP 110</div></div></div>
+    <div class="tier-cell"><div class="tc-player"><div class="tc-name">Ryan Helsley</div><div class="tc-adp">ADP 75</div></div><div class="tc-player"><div class="tc-name">Carlos Estevez</div><div class="tc-adp">ADP 100</div></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<h2>Layout 3: Category Cheat Sheet</h2>
+<div class="desc">Columns = the categories that win you matchups (SB, HR/RBI, AVG/OPS, Aces, Closers). Rows = ranked best to worst. The "what do I need" view — if your team is weak in SB, scan that column.</div>
+<div class="board" style="overflow-x:auto">
+  <div class="cs-grid">
+    <!-- Headers -->
+    <div style="background:#1a1a1a"></div>
+    <div class="cs-header" style="background:#059669">SB<br>Sources</div>
+    <div class="cs-header" style="background:#7c3aed">HR/RBI<br>Power</div>
+    <div class="cs-header" style="background:#d97706">AVG/OPS<br>Contact</div>
+    <div class="cs-header" style="background:#2563eb">Ace<br>SPs</div>
+    <div class="cs-header" style="background:#d00">Save<br>Sources</div>
+    <!-- Row 1 -->
+    <div class="cs-rank">1</div>
+    <div class="cs-cell"><div class="cs-name">Acuna Jr.</div><div class="cs-stat">48 SB · .282 · ADP 10</div></div>
+    <div class="cs-cell"><div class="cs-name">Aaron Judge</div><div class="cs-stat">52 HR 128 RBI · ADP 2</div></div>
+    <div class="cs-cell"><div class="cs-name">Juan Soto</div><div class="cs-stat">.295 / .985 · ADP 5</div></div>
+    <div class="cs-cell"><div class="cs-name">Paul Skenes</div><div class="cs-stat">225K 18QS 2.95 · ADP 5</div></div>
+    <div class="cs-cell"><div class="cs-name">Mason Miller</div><div class="cs-stat">42 SV 2.65 · ADP 40</div></div>
+    <!-- Row 2 -->
+    <div class="cs-rank">2</div>
+    <div class="cs-cell"><div class="cs-name">Bobby Witt Jr.</div><div class="cs-stat">42 SB · .298 · ADP 6</div></div>
+    <div class="cs-cell drafted"><div class="cs-name">Jose Ramirez</div><div class="cs-stat">35 HR 105 RBI</div></div>
+    <div class="cs-cell"><div class="cs-name">Ketel Marte</div><div class="cs-stat">.278 / .870 · ADP 16</div></div>
+    <div class="cs-cell drafted"><div class="cs-name">Tarik Skubal</div><div class="cs-stat">218K 19QS 3.15</div></div>
+    <div class="cs-cell"><div class="cs-name">Edwin Diaz</div><div class="cs-stat">35 SV 2.85 · ADP 45</div></div>
+    <!-- Row 3 -->
+    <div class="cs-rank">3</div>
+    <div class="cs-cell"><div class="cs-name">Tatis Jr.</div><div class="cs-stat">32 SB · .275 · ADP 15</div></div>
+    <div class="cs-cell"><div class="cs-name">Bryce Harper</div><div class="cs-stat">32 HR 95 RBI · ADP 18</div></div>
+    <div class="cs-cell"><div class="cs-name">Kyle Tucker</div><div class="cs-stat">.285 / .880 · ADP 12</div></div>
+    <div class="cs-cell"><div class="cs-name">Garrett Crochet</div><div class="cs-stat">195K 16QS 3.45 · ADP 10</div></div>
+    <div class="cs-cell"><div class="cs-name">Cade Smith</div><div class="cs-stat">38 SV 2.75 · ADP 62</div></div>
+    <!-- Row 4 -->
+    <div class="cs-rank">4</div>
+    <div class="cs-cell"><div class="cs-name">Kyle Tucker</div><div class="cs-stat">28 SB · .285 · ADP 12</div></div>
+    <div class="cs-cell"><div class="cs-name">Pete Alonso</div><div class="cs-stat">40 HR 110 RBI · ADP 45</div></div>
+    <div class="cs-cell"><div class="cs-name">Trea Turner</div><div class="cs-stat">.280 / .845 · ADP 15</div></div>
+    <div class="cs-cell"><div class="cs-name">George Kirby</div><div class="cs-stat">198K 18QS 3.42 · ADP 67</div></div>
+    <div class="cs-cell"><div class="cs-name">Jhoan Duran</div><div class="cs-stat">34 SV 2.95 · ADP 69</div></div>
+    <!-- Row 5 -->
+    <div class="cs-rank">5</div>
+    <div class="cs-cell"><div class="cs-name">Trea Turner</div><div class="cs-stat">28 SB · .280 · ADP 15</div></div>
+    <div class="cs-cell"><div class="cs-name">Brent Rooker</div><div class="cs-stat">35 HR 95 RBI · ADP 32</div></div>
+    <div class="cs-cell"><div class="cs-name">Mookie Betts</div><div class="cs-stat">.275 / .840 · ADP 41</div></div>
+    <div class="cs-cell"><div class="cs-name">Dylan Cease</div><div class="cs-stat">224K 19QS 3.28 · ADP 53</div></div>
+    <div class="cs-cell"><div class="cs-name">Ryan Helsley</div><div class="cs-stat">30 SV 2.80 · ADP 75</div></div>
+    <!-- Row 6 -->
+    <div class="cs-rank">6</div>
+    <div class="cs-cell"><div class="cs-name">Jarren Duran</div><div class="cs-stat">30 SB · .270 · ADP 56</div></div>
+    <div class="cs-cell"><div class="cs-name">Matt Olson</div><div class="cs-stat">30 HR 95 RBI · ADP 48</div></div>
+    <div class="cs-cell"><div class="cs-name">Gunnar Henderson</div><div class="cs-stat">.270 / .850 · ADP 12</div></div>
+    <div class="cs-cell"><div class="cs-name">Shota Imanaga</div><div class="cs-stat">165K 18QS 3.25 · ADP 95</div></div>
+    <div class="cs-cell"><div class="cs-name">Andres Munoz</div><div class="cs-stat">32 SV 2.80 · ADP 61</div></div>
+    <!-- Row 7 -->
+    <div class="cs-rank">7</div>
+    <div class="cs-cell"><div class="cs-name">Brice Turang</div><div class="cs-stat">25 SB · .270 · ADP 110</div></div>
+    <div class="cs-cell"><div class="cs-name">Seiya Suzuki</div><div class="cs-stat">22 HR 78 RBI · ADP 82</div></div>
+    <div class="cs-cell"><div class="cs-name">Marcus Semien</div><div class="cs-stat">.265 / .790 · ADP 80</div></div>
+    <div class="cs-cell"><div class="cs-name">Aaron Nola</div><div class="cs-stat">180K 14QS 3.60 · ADP 110</div></div>
+    <div class="cs-cell"><div class="cs-name">Carlos Estevez</div><div class="cs-stat">25 SV 3.28 · ADP 100</div></div>
+  </div>
+</div>
+
+<div style="margin-top:32px;padding:16px;background:white;border-radius:8px;border:1px solid #e2e5ea">
+  <h2 style="color:#1a1a1a;margin-top:0">Which Layout?</h2>
+  <div style="font-size:13px;color:#6b7280;line-height:1.7">
+    <strong>Layout 1 (Position Columns):</strong> Best for "do I have a SS yet?" — scan each position column to see who's left. Classic cheat sheet feel.<br>
+    <strong>Layout 2 (Tier x Position Grid):</strong> Best for "what tier am I drafting in?" — see which positions still have elite/solid/mid options at a glance.<br>
+    <strong>Layout 3 (Category Cheat Sheet):</strong> Best for H2H categories — organized by what wins you matchups. "I need SB" → scan the SB column. Shows the same player in multiple columns if they contribute to multiple categories.
+  </div>
+</div>
+
+</body>
+</html>

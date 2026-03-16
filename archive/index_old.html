@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Dugout</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --grass: #2d5a1b;
+    --grass-light: #3d7a28;
+    --chalk: #f5f0e8;
+    --night: #0a0e0a;
+    --scoreboard: #1a1f1a;
+    --accent: #e8c547;
+    --dim: #5a6b5a;
+    --green: #4caf50;
+    --red: #e05050;
+    --blue: #5090e0;
+    --orange: #e09050;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--night);
+    color: var(--chalk);
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(45,90,27,0.03) 40px, rgba(45,90,27,0.03) 41px),
+      repeating-linear-gradient(-45deg, transparent, transparent 40px, rgba(45,90,27,0.03) 40px, rgba(45,90,27,0.03) 41px);
+    pointer-events: none; z-index: 0;
+  }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+  /* ── Header ── */
+  header {
+    border-bottom: 2px solid var(--grass);
+    padding: 20px 0 16px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .logo { display: flex; align-items: center; gap: 14px; }
+  .logo-icon {
+    width: 48px; height: 48px; background: var(--accent); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+    animation: spin-slow 12s linear infinite; flex-shrink: 0;
+  }
+  @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  h1 { font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; letter-spacing: 3px; color: var(--accent); line-height: 1; }
+  h1 span { color: var(--chalk); }
+
+  .header-right { display: flex; align-items: center; gap: 10px; }
+
+  .status-pill {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem;
+    padding: 4px 12px; border-radius: 20px; border: 1px solid var(--dim);
+    color: var(--dim); letter-spacing: 1px; transition: all 0.3s;
+  }
+  .status-pill.connected { border-color: var(--grass-light); color: #6dbb4a; background: rgba(45,90,27,0.2); }
+
+  .btn-sm {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem; letter-spacing: 1px;
+    padding: 4px 10px; background: transparent; border: 1px solid #3a3a2a;
+    color: var(--dim); border-radius: 2px; cursor: pointer; transition: all 0.15s;
+  }
+  .btn-sm:hover { border-color: var(--dim); color: var(--chalk); }
+
+  /* ── Setup ── */
+  .setup-card {
+    background: var(--scoreboard); border: 1px solid #2a322a; border-radius: 4px;
+    padding: 36px; margin: 40px auto; max-width: 520px; text-align: center;
+  }
+  .setup-card h2 { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 3px; color: var(--accent); margin-bottom: 10px; }
+  .setup-card .subtitle { color: var(--dim); font-size: 0.85rem; margin-bottom: 28px; line-height: 1.6; }
+
+  .setup-step {
+    background: rgba(0,0,0,0.2); border: 1px solid #2a322a; border-radius: 3px;
+    padding: 16px 20px; margin-bottom: 12px; text-align: left;
+  }
+  .setup-step-label {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem; letter-spacing: 1.5px;
+    color: var(--dim); text-transform: uppercase; margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .step-num {
+    width: 18px; height: 18px; background: var(--grass); border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.65rem; color: #fff; flex-shrink: 0;
+  }
+  .step-done .step-num { background: #4caf50; }
+
+  .btn-espn {
+    width: 100%; background: #cc0000; color: #fff;
+    font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; font-size: 1.05rem;
+    padding: 13px 24px; border: none; border-radius: 3px; cursor: pointer;
+    transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-espn:hover { background: #e00; }
+  .btn-espn:disabled { background: #4a2020; color: #8a5a5a; cursor: not-allowed; }
+
+  .saved-row {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 0.82rem; color: #6dbb4a;
+  }
+
+  .fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field-group { display: flex; flex-direction: column; gap: 5px; }
+  .field-group.full { grid-column: 1 / -1; }
+
+  label { font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem; letter-spacing: 1.5px; color: var(--dim); text-transform: uppercase; }
+
+  input {
+    background: #0d120d; border: 1px solid #2a322a; color: var(--chalk);
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem;
+    padding: 9px 12px; border-radius: 3px; outline: none; width: 100%; transition: border-color 0.2s;
+  }
+  input:focus { border-color: var(--grass-light); }
+  input::placeholder { color: #3a4a3a; }
+
+  .btn-primary {
+    width: 100%; background: var(--grass); color: var(--chalk);
+    font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; font-size: 1rem;
+    padding: 13px; border: none; border-radius: 3px; cursor: pointer; margin-top: 4px;
+    transition: background 0.2s;
+  }
+  .btn-primary:hover { background: var(--grass-light); }
+  .btn-primary:disabled { background: #2a3a2a; color: var(--dim); cursor: not-allowed; }
+
+  .error-msg {
+    background: rgba(192,57,43,0.1); border: 1px solid rgba(192,57,43,0.25);
+    border-radius: 3px; padding: 10px 14px; color: #e07060; font-size: 0.82rem; margin-top: 10px;
+  }
+
+  .login-status { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--accent); margin-top: 8px; min-height: 18px; }
+
+  /* ── Dashboard ── */
+  #dashboard { display: none; padding-bottom: 40px; }
+
+  .dashboard-header {
+    padding: 24px 0 16px;
+    display: flex; align-items: flex-end; justify-content: space-between;
+  }
+  .team-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.4rem; letter-spacing: 3px; }
+  .team-record { font-family: 'IBM Plex Mono', monospace; color: var(--accent); font-size: 1rem; margin-top: 4px; }
+  .week-badge { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--dim); letter-spacing: 1px; }
+
+  .matchup-bar {
+    background: var(--scoreboard); border: 1px solid #2a322a; border-radius: 4px;
+    padding: 14px 24px; margin-bottom: 20px;
+    display: none; align-items: center; justify-content: center; gap: 32px;
+    font-family: 'Bebas Neue', sans-serif;
+  }
+  .matchup-team { text-align: center; }
+  .matchup-team .mname { font-size: 0.9rem; letter-spacing: 2px; color: var(--dim); }
+  .matchup-team .mscore { font-size: 2.2rem; color: var(--chalk); line-height: 1; }
+  .matchup-team.mine .mscore { color: var(--accent); }
+  .matchup-vs { font-size: 0.9rem; color: var(--dim); letter-spacing: 3px; }
+
+  /* ── Decision Center ── */
+  .decision-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .decision-title {
+    font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 3px; color: var(--accent);
+  }
+
+  .btn-refresh {
+    font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; font-size: 0.9rem;
+    padding: 10px 24px; background: var(--grass); color: var(--chalk);
+    border: none; border-radius: 3px; cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .btn-refresh:hover { background: var(--grass-light); }
+  .btn-refresh:disabled { background: #2a3a2a; color: var(--dim); cursor: not-allowed; }
+
+  .summary-card {
+    background: rgba(232,197,71,0.07); border: 1px solid rgba(232,197,71,0.2);
+    border-radius: 4px; padding: 16px 20px; margin-bottom: 20px;
+    font-size: 0.88rem; line-height: 1.7; color: var(--chalk);
+    display: none;
+  }
+  .summary-card .summary-label {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem; letter-spacing: 1.5px;
+    color: var(--accent); margin-bottom: 8px; text-transform: uppercase;
+  }
+
+  .decisions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .decision-card {
+    background: var(--scoreboard); border: 1px solid #2a322a; border-radius: 4px; overflow: hidden;
+  }
+
+  .decision-card-header {
+    padding: 10px 16px; background: rgba(0,0,0,0.3);
+    border-bottom: 1px solid #2a322a;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .decision-card-header .icon { font-size: 1rem; }
+  .decision-card-header .title {
+    font-family: 'Bebas Neue', sans-serif; font-size: 0.9rem; letter-spacing: 2px;
+  }
+  .title-start { color: #6dbb4a; }
+  .title-sit { color: var(--red); }
+  .title-pickup { color: var(--blue); }
+  .title-drop { color: var(--orange); }
+
+  .decision-items { padding: 4px 0; }
+
+  .decision-item {
+    padding: 10px 16px; border-bottom: 1px solid #161e16;
+    animation: fadeUp 0.3s ease;
+  }
+  .decision-item:last-child { border-bottom: none; }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .di-player { font-weight: 600; font-size: 0.88rem; margin-bottom: 3px; }
+  .di-reason { font-size: 0.78rem; color: var(--dim); line-height: 1.4; }
+  .di-drop-hint {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem;
+    color: var(--orange); margin-top: 3px;
+  }
+
+  /* Matchup card */
+  .matchup-decision-card {
+    background: var(--scoreboard); border: 1px solid #2a322a; border-radius: 4px;
+    padding: 16px 20px; margin-bottom: 20px; display: none;
+  }
+  .matchup-decision-card .mdh {
+    font-family: 'Bebas Neue', sans-serif; font-size: 0.9rem; letter-spacing: 2px; color: var(--dim); margin-bottom: 10px;
+  }
+  .matchup-projection {
+    display: inline-block;
+    font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; letter-spacing: 2px;
+    padding: 4px 14px; border-radius: 2px; margin-bottom: 8px;
+  }
+  .proj-win { background: rgba(76,175,80,0.15); color: #6dbb4a; border: 1px solid rgba(76,175,80,0.3); }
+  .proj-loss { background: rgba(224,80,80,0.15); color: var(--red); border: 1px solid rgba(224,80,80,0.3); }
+  .proj-toss { background: rgba(232,197,71,0.1); color: var(--accent); border: 1px solid rgba(232,197,71,0.2); }
+  .matchup-edge { font-size: 0.85rem; color: var(--chalk); line-height: 1.6; }
+
+  /* Bottom grid: roster + standings */
+  .bottom-grid {
+    display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-top: 20px;
+  }
+
+  .panel { background: var(--scoreboard); border: 1px solid #2a322a; border-radius: 4px; overflow: hidden; }
+  .panel-header {
+    font-family: 'Bebas Neue', sans-serif; font-size: 0.9rem; letter-spacing: 2px; color: var(--dim);
+    padding: 10px 16px; background: rgba(0,0,0,0.3); border-bottom: 1px solid #2a322a;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .panel-header .count { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; color: #3a4a3a; }
+
+  .roster-table { width: 100%; border-collapse: collapse; }
+  .roster-table th { font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem; letter-spacing: 1px; color: #3a5a3a; text-transform: uppercase; padding: 7px 14px; text-align: left; border-bottom: 1px solid #1a221a; }
+  .roster-table td { padding: 8px 14px; font-size: 0.8rem; border-bottom: 1px solid #161e16; }
+  .roster-table tr:last-child td { border-bottom: none; }
+  .roster-table tr:hover td { background: rgba(45,90,27,0.08); }
+  .player-name { font-weight: 600; }
+  .player-pos { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; padding: 2px 6px; border-radius: 2px; background: rgba(45,90,27,0.3); color: #6dbb4a; border: 1px solid rgba(45,90,27,0.4); }
+  .injury-badge { font-family: 'IBM Plex Mono', monospace; font-size: 0.63rem; padding: 2px 6px; border-radius: 2px; background: rgba(192,57,43,0.2); color: #e07060; border: 1px solid rgba(192,57,43,0.3); }
+  .pro-team { color: var(--dim); font-size: 0.76rem; }
+
+  .standing-row { display: flex; align-items: center; padding: 8px 16px; border-bottom: 1px solid #161e16; gap: 10px; font-size: 0.82rem; }
+  .standing-row:last-child { border-bottom: none; }
+  .standing-row.mine { background: rgba(232,197,71,0.06); }
+  .rank { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; color: var(--dim); width: 20px; flex-shrink: 0; }
+  .standing-row.mine .rank { color: var(--accent); }
+  .standing-name { flex: 1; font-weight: 500; }
+  .standing-row.mine .standing-name { color: var(--accent); }
+  .wl { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--dim); }
+
+  /* Loading skeleton */
+  .skeleton { background: linear-gradient(90deg, #1a221a 25%, #222a22 50%, #1a221a 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 3px; }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  .placeholder-cards {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  }
+  .placeholder-card { background: var(--scoreboard); border: 1px solid #2a322a; border-radius: 4px; padding: 16px; }
+  .ph-line { height: 12px; margin-bottom: 10px; border-radius: 2px; }
+
+  @media (max-width: 700px) {
+    .decisions-grid { grid-template-columns: 1fr; }
+    .bottom-grid { grid-template-columns: 1fr; }
+    .fields-grid { grid-template-columns: 1fr; }
+    h1 { font-size: 1.6rem; }
+  }
+
+  /* ── Tab Navigation ───────────────────────────────────────── */
+  .tab-nav { display:flex; gap:4px; margin:20px 0 0; border-bottom:1px solid #2a322a; }
+  .tab-btn { 
+    font-family:'IBM Plex Mono',monospace; font-size:0.65rem; letter-spacing:1.5px;
+    color:#3a5a3a; background:none; border:none; padding:8px 16px; cursor:pointer;
+    border-bottom:2px solid transparent; margin-bottom:-1px; transition:all 0.2s;
+  }
+  .tab-btn:hover { color:#8ab88a; }
+  .tab-btn.active { color:#e8c547; border-bottom-color:#e8c547; }
+  .tab-panel { display:none; }
+  .tab-panel.active { display:block; }
+
+  /* ── Wire Tab ─────────────────────────────────────────────── */
+  .wire-alert {
+    display:flex; gap:12px; align-items:flex-start;
+    padding:12px 16px; border-bottom:1px solid #1a221a;
+    transition: background 0.2s;
+  }
+  .wire-alert:hover { background:rgba(45,90,27,0.08); }
+  .wire-alert:last-child { border-bottom:none; }
+  .wire-emoji { font-size:1.2rem; min-width:24px; }
+  .wire-content { flex:1; }
+  .wire-title { font-family:'IBM Plex Mono',monospace; font-size:0.7rem; 
+                color:#e8c547; letter-spacing:1px; margin-bottom:3px; }
+  .wire-msg { font-size:0.8rem; color:#c8d8c8; line-height:1.5; }
+  .wire-time { font-size:0.65rem; color:#3a5a3a; margin-top:3px; }
+  .wire-empty { padding:32px; text-align:center; color:#3a5a3a; 
+                font-family:'IBM Plex Mono',monospace; font-size:0.7rem; }
+
+  /* ── Farm Tab ─────────────────────────────────────────────── */
+  .farm-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; padding:16px 0; }
+  @media(max-width:600px){ .farm-grid { grid-template-columns:1fr; } }
+  .farm-card {
+    background:var(--scoreboard); border:1px solid #2a322a;
+    border-radius:4px; overflow:hidden;
+  }
+  .farm-card-header {
+    font-family:'IBM Plex Mono',monospace; font-size:0.65rem; letter-spacing:1.5px;
+    color:#3a5a3a; padding:10px 14px; border-bottom:1px solid #1a221a;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .farm-row {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:9px 14px; border-bottom:1px solid #161e16; font-size:0.8rem;
+  }
+  .farm-row:last-child { border-bottom:none; }
+  .farm-name { color:#c8d8c8; font-weight:500; }
+  .farm-team { font-size:0.65rem; color:#3a5a3a; margin-top:2px; }
+  .farm-stat { font-family:'IBM Plex Mono',monospace; font-size:0.75rem; }
+  .farm-stat.hot { color:#e8c547; }
+  .farm-stat.good { color:#4a9a4a; }
+
+  /* ── Two-Start Banner ─────────────────────────────────────── */
+  .two-start-banner {
+    background:rgba(232,197,71,0.08); border:1px solid rgba(232,197,71,0.3);
+    border-radius:4px; padding:12px 16px; margin-bottom:16px;
+  }
+  .two-start-label { font-family:'IBM Plex Mono',monospace; font-size:0.65rem;
+                     color:#e8c547; letter-spacing:1.5px; margin-bottom:8px; }
+  .two-start-row { display:flex; justify-content:space-between; 
+                   font-size:0.8rem; padding:4px 0; border-bottom:1px solid rgba(232,197,71,0.1); }
+  .two-start-row:last-child { border-bottom:none; }
+
+  /* ── Statcast Panel ──────────────────────────────────────── */
+  .statcast-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px; }
+  @media(max-width:640px){ .statcast-grid { grid-template-columns:1fr; } }
+
+  .sc-card {
+    background:var(--scoreboard); border:1px solid #2a322a; border-radius:4px; overflow:hidden;
+  }
+  .sc-header {
+    padding:10px 14px; border-bottom:1px solid #1a221a;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .sc-title {
+    font-family:'IBM Plex Mono',monospace; font-size:0.65rem;
+    letter-spacing:1.5px; text-transform:uppercase;
+  }
+  .sc-title.green  { color:#6dbb4a; }
+  .sc-title.red    { color:var(--red); }
+  .sc-title.blue   { color:var(--blue); }
+  .sc-title.orange { color:var(--orange); }
+
+  .sc-subtitle { font-size:0.6rem; color:#3a5a3a; font-family:'IBM Plex Mono',monospace; }
+
+  .sc-row {
+    display:flex; align-items:center; padding:8px 14px;
+    border-bottom:1px solid #161e16; gap:10px; font-size:0.8rem;
+  }
+  .sc-row:last-child { border-bottom:none; }
+  .sc-name { flex:1; color:#c8d8c8; font-weight:500; }
+  .sc-vals { display:flex; gap:10px; font-family:'IBM Plex Mono',monospace; font-size:0.7rem; }
+  .sc-val  { text-align:right; min-width:38px; }
+  .sc-val.dim { color:#3a5a3a; }
+  .sc-diff { font-family:'IBM Plex Mono',monospace; font-size:0.72rem; font-weight:600; min-width:52px; text-align:right; }
+  .sc-diff.pos-big  { color:#e8c547; }  /* overperforming / lucky — yellow caution */
+  .sc-diff.neg-big  { color:#5090e0; }  /* underperforming / unlucky — blue upside */
+  .sc-diff.pos-sm   { color:#6dbb4a; }
+  .sc-diff.neg-sm   { color:var(--dim); }
+
+  .sc-col-headers {
+    display:flex; align-items:center; padding:5px 14px;
+    border-bottom:1px solid #1e281e; gap:10px;
+    font-family:'IBM Plex Mono',monospace; font-size:0.58rem;
+    color:#3a4a3a; letter-spacing:1px; text-transform:uppercase;
+  }
+  .sc-col-name { flex:1; }
+
+  .sc-banner {
+    background:rgba(80,144,224,0.06); border:1px solid rgba(80,144,224,0.2);
+    border-radius:4px; padding:10px 14px; margin-bottom:12px;
+    font-size:0.75rem; color:#8ab8e8; line-height:1.6;
+  }
+  .sc-banner strong { color:var(--blue); font-family:'IBM Plex Mono',monospace; }
+
+  .sc-empty { padding:24px; text-align:center; color:#3a5a3a;
+              font-family:'IBM Plex Mono',monospace; font-size:0.7rem; }
+  .sc-loading { padding:24px; text-align:center; color:#3a5a3a;
+                font-family:'IBM Plex Mono',monospace; font-size:0.7rem; }
+
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">⚾</div>
+      <div>
+        <h1>THE <span>DUGOUT</span></h1>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.63rem;color:var(--dim);letter-spacing:2px;margin-top:2px;">ESPN FANTASY BASEBALL</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="btn-sm" id="reloginBtn" style="display:none" onclick="relogin()">RE-LOGIN ESPN</button>
+      <div class="status-pill" id="statusPill">● NOT CONNECTED</div>
+    </div>
+  </header>
+
+  <!-- App Nav -->
+  <nav style="display:flex; gap:4px; padding:10px 0; border-bottom:1px solid #1a221a; margin-bottom:4px;">
+    <a href="/" style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;letter-spacing:1.5px;
+       color:#e8c547;background:rgba(232,197,71,0.08);border:1px solid rgba(232,197,71,0.25);
+       padding:5px 14px;border-radius:2px;text-decoration:none;">⚾ HUB</a>
+    <a href="/draft_v7.html" style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;letter-spacing:1.5px;
+       color:#3a5a3a;border:1px solid #2a322a;
+       padding:5px 14px;border-radius:2px;text-decoration:none;transition:all 0.2s;"
+       onmouseover="this.style.color='#c8d8c8'" onmouseout="this.style.color='#3a5a3a'">🏟 DRAFT ROOM</a>
+    <a href="/draft_board.html" style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;letter-spacing:1.5px;
+       color:#3a5a3a;border:1px solid #2a322a;
+       padding:5px 14px;border-radius:2px;text-decoration:none;transition:all 0.2s;"
+       onmouseover="this.style.color='#c8d8c8'" onmouseout="this.style.color='#3a5a3a'">📋 DRAFT BOARD</a>
+  </nav>
+
+  <!-- Setup -->
+  <div class="setup-card" id="setupPanel">
+    <h2>SETUP</h2>
+    <p class="subtitle">Connect your ESPN league to get started. Everything stays on your machine.</p>
+
+    <!-- Step 1: ESPN Login -->
+    <div class="setup-step" id="step1">
+      <div class="setup-step-label">
+        <span class="step-num" id="step1num">1</span> ESPN LOGIN
+      </div>
+      <div id="espnLoginArea">
+        <button class="btn-espn" id="loginBtn" onclick="espnLogin()">
+          🦊 CONNECT FIREFOX
+        </button>
+        <div class="login-status" id="loginStatus"></div>
+      </div>
+      <div id="espnSavedArea" style="display:none">
+        <div class="saved-row">
+          <span>✅ ESPN account connected</span>
+          <button class="btn-sm" onclick="relogin()">RE-LOGIN</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: API Key -->
+    <div class="setup-step" id="step2">
+      <div class="setup-step-label">
+        <span class="step-num" id="step2num">2</span> ANTHROPIC API KEY
+      </div>
+      <div id="apiKeyArea">
+        <div class="field-group" style="margin-bottom:8px;">
+          <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-...">
+        </div>
+        <button class="btn-primary" style="margin-top:0" onclick="saveApiKey()">SAVE KEY</button>
+        <div style="font-size:0.72rem;color:var(--dim);margin-top:8px;">Get yours free at console.anthropic.com · Set a $5 monthly cap to never get charged</div>
+      </div>
+      <div id="apiKeySavedArea" style="display:none">
+        <div class="saved-row">
+          <span>✅ API key saved</span>
+          <button class="btn-sm" onclick="resetApiKey()">CHANGE</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: League -->
+    <div class="setup-step">
+      <div class="setup-step-label">
+        <span class="step-num">3</span> YOUR LEAGUE
+      </div>
+      <div class="fields-grid" style="margin-bottom:10px;">
+        <div class="field-group">
+          <label>League ID</label>
+          <input type="text" id="leagueId" placeholder="904188626">
+        </div>
+        <div class="field-group">
+          <label>Season Year</label>
+          <input type="text" id="year" value="2026">
+        </div>
+        <div class="field-group full">
+          <label>Your Team Name (partial)</label>
+          <input type="text" id="teamName" placeholder="e.g. Tax Man">
+        </div>
+      </div>
+    </div>
+
+    <div id="connectError"></div>
+    <button class="btn-primary" id="connectBtn" onclick="connectLeague()">LOAD MY TEAM →</button>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard">
+    <div class="dashboard-header">
+      <div>
+        <div class="team-title" id="teamTitle">—</div>
+        <div class="team-record" id="teamRecord"></div>
+      </div>
+      <div class="week-badge" id="weekBadge"></div>
+    </div>
+
+    <div class="matchup-bar" id="matchupBar">
+      <div class="matchup-team mine">
+        <div class="mname" id="myMatchupName"></div>
+        <div class="mscore" id="myMatchupScore">0</div>
+      </div>
+      <div class="matchup-vs">VS</div>
+      <div class="matchup-team">
+        <div class="mname" id="oppMatchupName"></div>
+        <div class="mscore" id="oppMatchupScore">0</div>
+      </div>
+    </div>
+
+    <!-- Decision Center -->
+    <div class="decision-header">
+      <div class="decision-title">⚡ DECISION CENTER</div>
+      <button class="btn-refresh" id="refreshBtn" onclick="runAnalysis()">
+        <span id="refreshIcon">▶</span> <span id="refreshLabel">GET RECOMMENDATIONS</span>
+      </button>
+    </div>
+
+    <div class="summary-card" id="summaryCard">
+      <div class="summary-label">📋 WEEKLY SUMMARY</div>
+      <div id="summaryText"></div>
+    </div>
+
+    <div class="matchup-decision-card" id="matchupDecisionCard">
+      <div class="mdh">⚔️ MATCHUP PREVIEW</div>
+      <div id="matchupProjection"></div>
+      <div class="matchup-edge" id="matchupEdge"></div>
+    </div>
+
+    <div id="decisionsArea">
+      <!-- Placeholder shown before first analysis -->
+      <div id="decisionPlaceholder" class="placeholder-cards">
+        <div class="placeholder-card">
+          <div class="ph-line skeleton" style="width:60%"></div>
+          <div class="ph-line skeleton" style="width:90%"></div>
+          <div class="ph-line skeleton" style="width:75%"></div>
+        </div>
+        <div class="placeholder-card">
+          <div class="ph-line skeleton" style="width:55%"></div>
+          <div class="ph-line skeleton" style="width:85%"></div>
+          <div class="ph-line skeleton" style="width:70%"></div>
+        </div>
+        <div class="placeholder-card">
+          <div class="ph-line skeleton" style="width:65%"></div>
+          <div class="ph-line skeleton" style="width:80%"></div>
+          <div class="ph-line skeleton" style="width:60%"></div>
+        </div>
+        <div class="placeholder-card">
+          <div class="ph-line skeleton" style="width:50%"></div>
+          <div class="ph-line skeleton" style="width:88%"></div>
+          <div class="ph-line skeleton" style="width:72%"></div>
+        </div>
+      </div>
+
+      <div class="decisions-grid" id="decisionsGrid" style="display:none"></div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="switchTab('team')">⚾ MY TEAM</button>
+      <button class="tab-btn" onclick="switchTab('wire')">📡 WIRE</button>
+      <button class="tab-btn" onclick="switchTab('farm')">🌱 FARM SYSTEM</button>
+    </div>
+
+    <!-- Tab: My Team (Roster + Standings) -->
+    <div class="tab-panel active" id="tab-team">
+      <!-- Two-Start Alert -->
+      <div class="two-start-banner" id="twoStartBanner" style="display:none;margin-top:16px;">
+        <div class="two-start-label">⚡ TWO-START PITCHERS THIS WEEK</div>
+        <div id="twoStartList"></div>
+      </div>
+      <div class="bottom-grid" style="margin-top:16px;">
+        <div class="panel">
+          <div class="panel-header">ROSTER <span class="count" id="rosterCount"></span></div>
+          <table class="roster-table">
+            <thead><tr><th>Player</th><th>Pos</th><th>Team</th><th>Games</th><th>Status</th></tr></thead>
+            <tbody id="rosterBody"></tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <div class="panel-header">STANDINGS</div>
+          <div id="standingsList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Wire (Scalper alerts) -->
+    <div class="tab-panel" id="tab-wire">
+      <div class="panel" style="margin-top:16px;">
+        <div class="panel-header">
+          📡 THE WIRE <span class="count" id="wireCount"></span>
+          <button class="btn-sm" style="margin-left:auto;" onclick="loadWire()">↻ REFRESH</button>
+        </div>
+        <div id="wireList">
+          <div class="wire-empty">No alerts yet — The Scalper is monitoring 24/7</div>
+        </div>
+      </div>
+
+      <!-- ── Statcast Intelligence Panel ── -->
+      <div style="margin-top:8px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin:20px 0 10px;">
+          <div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:3px;color:#5090e0;">⚡ STATCAST INTELLIGENCE</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:0.6rem;color:#3a5a3a;letter-spacing:1px;margin-top:2px;">Baseball Savant · xBA / xERA · <span id="scYear">2025</span> Season</div>
+          </div>
+          <button class="btn-sm" onclick="loadStatcast()">↻ REFRESH</button>
+        </div>
+
+        <div class="sc-banner">
+          <strong>HOW TO READ THIS:</strong> xBA uses exit velocity + launch angle to predict true batting average. 
+          <strong>BA &gt;&gt; xBA</strong> → sell high, regression coming. 
+          <strong>xBA &gt;&gt; BA</strong> → buy low, breakout candidate. 
+          Same logic applies for pitchers: <strong>ERA &gt;&gt; xERA</strong> → unlucky, buy low wire target.
+        </div>
+
+        <div id="statcastLoading" class="sc-loading" style="display:none;">⏳ Loading Baseball Savant data...</div>
+        <div id="statcastError"  style="display:none;" class="error-msg"></div>
+
+        <div class="statcast-grid" id="scGrid">
+          <!-- Sell High: Batters -->
+          <div class="sc-card">
+            <div class="sc-header">
+              <div>
+                <div class="sc-title red">📉 SELL HIGH — Batters</div>
+                <div class="sc-subtitle">BA &gt;&gt; xBA · Regression Coming</div>
+              </div>
+              <div id="scSellCount" class="sc-subtitle"></div>
+            </div>
+            <div class="sc-col-headers">
+              <div class="sc-col-name">Name</div>
+              <div style="min-width:38px;text-align:right;">BA</div>
+              <div style="min-width:38px;text-align:right;">xBA</div>
+              <div style="min-width:52px;text-align:right;">Gap</div>
+            </div>
+            <div id="scSellList"><div class="sc-empty">—</div></div>
+          </div>
+
+          <!-- Buy Low: Batters -->
+          <div class="sc-card">
+            <div class="sc-header">
+              <div>
+                <div class="sc-title blue">📈 BUY LOW — Batters</div>
+                <div class="sc-subtitle">xBA &gt;&gt; BA · Breakout Candidate</div>
+              </div>
+              <div id="scBuyCount" class="sc-subtitle"></div>
+            </div>
+            <div class="sc-col-headers">
+              <div class="sc-col-name">Name</div>
+              <div style="min-width:38px;text-align:right;">BA</div>
+              <div style="min-width:38px;text-align:right;">xBA</div>
+              <div style="min-width:52px;text-align:right;">Gap</div>
+            </div>
+            <div id="scBuyList"><div class="sc-empty">—</div></div>
+          </div>
+
+          <!-- Unlucky: Pitchers (Buy Low) -->
+          <div class="sc-card">
+            <div class="sc-header">
+              <div>
+                <div class="sc-title blue">🎯 UNLUCKY ARMS — Buy Low</div>
+                <div class="sc-subtitle">ERA &gt;&gt; xERA · Wire Adds</div>
+              </div>
+              <div id="scUnluckyCount" class="sc-subtitle"></div>
+            </div>
+            <div class="sc-col-headers">
+              <div class="sc-col-name">Name</div>
+              <div style="min-width:40px;text-align:right;">ERA</div>
+              <div style="min-width:40px;text-align:right;">xERA</div>
+              <div style="min-width:52px;text-align:right;">Gap</div>
+            </div>
+            <div id="scUnluckyList"><div class="sc-empty">—</div></div>
+          </div>
+
+          <!-- Lucky: Pitchers (Sell High) -->
+          <div class="sc-card">
+            <div class="sc-header">
+              <div>
+                <div class="sc-title orange">⚠️ LUCKY ARMS — Regression</div>
+                <div class="sc-subtitle">xERA &gt;&gt; ERA · Avoid or Sell</div>
+              </div>
+              <div id="scLuckyCount" class="sc-subtitle"></div>
+            </div>
+            <div class="sc-col-headers">
+              <div class="sc-col-name">Name</div>
+              <div style="min-width:40px;text-align:right;">ERA</div>
+              <div style="min-width:40px;text-align:right;">xERA</div>
+              <div style="min-width:52px;text-align:right;">Gap</div>
+            </div>
+            <div id="scLuckyList"><div class="sc-empty">—</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Farm System -->
+    <div class="tab-panel" id="tab-farm">
+      <div style="margin-top:16px;">
+        <div class="farm-grid">
+          <div class="farm-card">
+            <div class="farm-card-header">
+              <span>🔥 AAA HITTERS — TOP OPS</span>
+              <span id="aaaHitterCount" style="color:#3a5a3a;font-size:0.65rem;"></span>
+            </div>
+            <div id="aaaHitterList"></div>
+          </div>
+          <div class="farm-card">
+            <div class="farm-card-header">
+              <span>🔥 AAA ARMS — LOWEST ERA</span>
+              <span id="aaaPitcherCount" style="color:#3a5a3a;font-size:0.65rem;"></span>
+            </div>
+            <div id="aaaPitcherList"></div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:16px;">
+          <div class="panel-header">📋 RECENT TRANSACTIONS</div>
+          <div id="transactionList"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+<script>
+  const API = 'http://localhost:5050/api';
+  let teamData = null;
+
+  window.addEventListener('load', async () => {
+    try {
+      const res = await fetch(`${API}/status`);
+      const s = await res.json();
+      if (s.hasSavedCookies) showEspnSaved();
+      if (s.hasApiKey) showApiKeySaved();
+      if (s.hasCachedAnalysis) {
+        // Will show after team loads
+      }
+    } catch(e) {}
+  });
+
+  // ── Setup Flows ────────────────────────────────────────────────────────────
+
+  async function espnLogin() {
+    const btn = document.getElementById('loginBtn');
+    const status = document.getElementById('loginStatus');
+    btn.disabled = true;
+    btn.innerHTML = '⏳ READING FIREFOX COOKIES...';
+    status.textContent = 'Reading your ESPN cookies from Firefox...';
+    try {
+      const res = await fetch(`${API}/login`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      showEspnSaved();
+      status.textContent = '';
+    } catch(e) {
+      btn.disabled = false;
+      btn.innerHTML = '🦊 CONNECT FIREFOX';
+      status.textContent = '';
+      showError('connectError', e.message);
+    }
+  }
+
+  function showEspnSaved() {
+    document.getElementById('espnLoginArea').style.display = 'none';
+    document.getElementById('espnSavedArea').style.display = 'block';
+    document.getElementById('step1num').parentElement.classList.add('step-done');
+    document.getElementById('reloginBtn').style.display = 'block';
+  }
+
+  async function relogin() {
+    await fetch(`${API}/cookies/clear`, { method: 'POST' });
+    document.getElementById('espnLoginArea').style.display = 'block';
+    document.getElementById('espnSavedArea').style.display = 'none';
+    document.getElementById('loginBtn').disabled = false;
+    document.getElementById('loginBtn').innerHTML = '🦊 CONNECT FIREFOX';
+    document.getElementById('reloginBtn').style.display = 'none';
+  }
+
+  async function saveApiKey() {
+    const key = document.getElementById('apiKeyInput').value.trim();
+    if (!key) return;
+    const res = await fetch(`${API}/apikey`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ key })
+    });
+    const data = await res.json();
+    if (!res.ok) { showError('connectError', data.error); return; }
+    showApiKeySaved();
+  }
+
+  function showApiKeySaved() {
+    document.getElementById('apiKeyArea').style.display = 'none';
+    document.getElementById('apiKeySavedArea').style.display = 'block';
+    document.getElementById('step2num').parentElement.classList.add('step-done');
+  }
+
+  function resetApiKey() {
+    document.getElementById('apiKeyArea').style.display = 'block';
+    document.getElementById('apiKeySavedArea').style.display = 'none';
+    document.getElementById('apiKeyInput').value = '';
+  }
+
+  async function connectLeague() {
+    const btn = document.getElementById('connectBtn');
+    btn.textContent = 'LOADING...'; btn.disabled = true;
+    document.getElementById('connectError').innerHTML = '';
+
+    const leagueId = document.getElementById('leagueId').value.trim();
+    const year = document.getElementById('year').value.trim() || '2026';
+    const teamName = document.getElementById('teamName').value.trim();
+
+    if (!leagueId) { showError('connectError', 'League ID is required.'); btn.textContent = 'LOAD MY TEAM →'; btn.disabled = false; return; }
+
+    try {
+      const res = await fetch(`${API}/connect`, {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ leagueId, year, teamName })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      teamData = data;
+      renderDashboard(data);
+
+      // Load cached analysis if available
+      const cacheRes = await fetch(`${API}/cache`);
+      const cacheData = await cacheRes.json();
+      if (cacheData.decisions) renderDecisions(cacheData.decisions);
+
+    } catch(e) {
+      showError('connectError', e.message);
+      btn.textContent = 'LOAD MY TEAM →'; btn.disabled = false;
+    }
+  }
+
+  // ── Dashboard ──────────────────────────────────────────────────────────────
+
+  function renderDashboard(data) {
+    document.getElementById('setupPanel').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    loadTwoStarters();
+    document.getElementById('statusPill').textContent = '● CONNECTED';
+    document.getElementById('statusPill').classList.add('connected');
+
+    const team = data.team;
+    document.getElementById('teamTitle').textContent = team.teamName.toUpperCase();
+    document.getElementById('teamRecord').textContent = `${team.wins}W — ${team.losses}L  ·  #${team.standing} IN LEAGUE`;
+    if (data.currentWeek) document.getElementById('weekBadge').textContent = `WEEK ${data.currentWeek}`;
+
+    if (data.matchup) {
+      const m = data.matchup;
+      const isHome = m.homeTeam === team.teamName;
+      document.getElementById('myMatchupName').textContent = team.teamName.toUpperCase();
+      document.getElementById('myMatchupScore').textContent = isHome ? m.homeScore : m.awayScore;
+      document.getElementById('oppMatchupName').textContent = (isHome ? m.awayTeam : m.homeTeam).toUpperCase();
+      document.getElementById('oppMatchupScore').textContent = isHome ? m.awayScore : m.homeScore;
+      document.getElementById('matchupBar').style.display = 'flex';
+    }
+
+    // Roster
+    const tbody = document.getElementById('rosterBody');
+    tbody.innerHTML = '';
+    team.roster.forEach(p => {
+      const injury = p.injuryStatus && !['ACTIVE','NORMAL'].includes(p.injuryStatus);
+      tbody.innerHTML += `<tr>
+        <td class="player-name">${p.name}</td>
+        <td><span class="player-pos">${p.position}</span></td>
+        <td class="pro-team">${p.proTeam || '—'}</td>
+        <td>${injury ? `<span class="injury-badge">${p.injuryStatus}</span>` : '<span style="color:var(--dim);font-size:0.72rem;">Active</span>'}</td>
+      </tr>`;
+    });
+    document.getElementById('rosterCount').textContent = `${team.roster.length} players`;
+
+    // Standings
+    const sl = document.getElementById('standingsList');
+    sl.innerHTML = '';
+    data.standings.forEach((t, i) => {
+      const mine = t.name === team.teamName;
+      sl.innerHTML += `<div class="standing-row ${mine?'mine':''}">
+        <span class="rank">${i+1}</span>
+        <span class="standing-name">${t.name}</span>
+        <span class="wl">${t.wins}-${t.losses}</span>
+      </div>`;
+    });
+  }
+
+  // ── Decision Center ────────────────────────────────────────────────────────
+
+  async function runAnalysis() {
+    if (!teamData) return;
+    const btn = document.getElementById('refreshBtn');
+    btn.disabled = true;
+    document.getElementById('refreshIcon').textContent = '⏳';
+    document.getElementById('refreshLabel').textContent = 'ANALYZING...';
+
+    // Show loading skeletons
+    document.getElementById('decisionsGrid').style.display = 'none';
+    document.getElementById('decisionPlaceholder').style.display = 'grid';
+    document.getElementById('summaryCard').style.display = 'none';
+    document.getElementById('matchupDecisionCard').style.display = 'none';
+
+    try {
+      const res = await fetch(`${API}/analyze`, {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ teamData })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      renderDecisions(data.decisions);
+    } catch(e) {
+      document.getElementById('decisionPlaceholder').style.display = 'none';
+      showError('decisionsArea', e.message);
+    } finally {
+      btn.disabled = false;
+      document.getElementById('refreshIcon').textContent = '↺';
+      document.getElementById('refreshLabel').textContent = 'REFRESH';
+    }
+  }
+
+  function renderDecisions(d) {
+    document.getElementById('decisionPlaceholder').style.display = 'none';
+    document.getElementById('decisionsGrid').style.display = 'grid';
+
+    // Summary
+    if (d.summary) {
+      document.getElementById('summaryText').textContent = d.summary;
+      document.getElementById('summaryCard').style.display = 'block';
+    }
+
+    // Matchup
+    if (d.matchup) {
+      const proj = d.matchup.projection || '';
+      const cls = proj.toLowerCase().includes('win') ? 'proj-win' : proj.toLowerCase().includes('loss') ? 'proj-loss' : 'proj-toss';
+      document.getElementById('matchupProjection').innerHTML = `<span class="matchup-projection ${cls}">${proj.toUpperCase()}</span>`;
+      document.getElementById('matchupEdge').textContent = d.matchup.edge || '';
+      document.getElementById('matchupDecisionCard').style.display = 'block';
+    }
+
+    const grid = document.getElementById('decisionsGrid');
+    grid.innerHTML = '';
+
+    const sections = [
+      { key: 'start', icon: '🟢', title: 'START THESE', titleClass: 'title-start' },
+      { key: 'sit',   icon: '🔴', title: 'SIT THESE',   titleClass: 'title-sit' },
+      { key: 'pickup',icon: '📈', title: 'PICK UP',      titleClass: 'title-pickup' },
+      { key: 'drop',  icon: '📉', title: 'CONSIDER DROPPING', titleClass: 'title-drop' },
+    ];
+
+    sections.forEach(s => {
+      const items = d[s.key] || [];
+      const card = document.createElement('div');
+      card.className = 'decision-card';
+      card.innerHTML = `
+        <div class="decision-card-header">
+          <span class="icon">${s.icon}</span>
+          <span class="title ${s.titleClass}">${s.title}</span>
+        </div>
+        <div class="decision-items">
+          ${items.length ? items.map(item => `
+            <div class="decision-item">
+              <div class="di-player">${item.player}</div>
+              <div class="di-reason">${item.reason}</div>
+              ${item.drop ? `<div class="di-drop-hint">↓ Drop ${item.drop}</div>` : ''}
+            </div>`).join('') : '<div class="decision-item"><div class="di-reason" style="color:var(--dim)">No recommendations</div></div>'}
+        </div>`;
+      grid.appendChild(card);
+    });
+  }
+
+  function showError(containerId, msg) {
+    const el = document.getElementById(containerId);
+    if (el) el.innerHTML += `<div class="error-msg">⚠ ${msg}</div>`;
+  }
+
+  // ── Tab Switching ─────────────────────────────────────────────────────────
+  function switchTab(name) {
+    document.querySelectorAll('.tab-btn').forEach((b,i) => {
+      b.classList.toggle('active', ['team','wire','farm'][i] === name);
+    });
+    document.querySelectorAll('.tab-panel').forEach(p => {
+      p.classList.toggle('active', p.id === 'tab-' + name);
+    });
+    if (name === 'wire')  { loadWire(); loadStatcast(); }
+    if (name === 'farm')  loadFarm();
+  }
+
+  // ── Wire Tab ──────────────────────────────────────────────────────────────
+  async function loadWire() {
+    const list = document.getElementById('wireList');
+    try {
+      const res  = await fetch(`${API}/wire`);
+      const data = await res.json();
+      const alerts = data.alerts || [];
+      document.getElementById('wireCount').textContent = alerts.length ? `(${alerts.length})` : '';
+      if (!alerts.length) {
+        list.innerHTML = '<div class="wire-empty">No alerts yet — The Scalper is monitoring 24/7</div>';
+        return;
+      }
+      const priorityEmoji = {
+        'CALLUP':'🚨','CLOSER_GONE':'⚡','RETURN_FROM_IL':'🔵',
+        'VELO_DROP':'⚠️','DFA':'📉','HOT_STREAK':'📈','AAA_TRENDING':'⚾'
+      };
+      list.innerHTML = alerts.map(a => {
+        const emoji = priorityEmoji[a.type] || '⚾';
+        const time  = new Date(a.timestamp).toLocaleString();
+        return `<div class="wire-alert">
+          <div class="wire-emoji">${emoji}</div>
+          <div class="wire-content">
+            <div class="wire-title">${a.title}</div>
+            <div class="wire-msg">${a.message}</div>
+            <div class="wire-time">${time}</div>
+          </div>
+        </div>`;
+      }).join('');
+    } catch(e) {
+      list.innerHTML = '<div class="wire-empty">Could not load alerts</div>';
+    }
+  }
+
+  // ── Statcast Tab ──────────────────────────────────────────────────────────
+  let scLoaded = false;
+  async function loadStatcast(force = false) {
+    if (scLoaded && !force) return;
+    const loadEl = document.getElementById('statcastLoading');
+    const errEl  = document.getElementById('statcastError');
+    const grid   = document.getElementById('scGrid');
+    loadEl.style.display = 'block';
+    errEl.style.display  = 'none';
+    grid.style.display   = 'none';
+
+    try {
+      const res  = await fetch(`${API}/statcast?year=2025`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Statcast fetch failed');
+
+      const s = data.signals;
+      document.getElementById('scYear').textContent = data.year;
+
+      renderScBatters('scSellList',   s.regression_risks,    'sell', 'scSellCount');
+      renderScBatters('scBuyList',    s.breakout_candidates, 'buy',  'scBuyCount');
+      renderScPitchers('scUnluckyList', s.unlucky_pitchers,  'unlucky', 'scUnluckyCount');
+      renderScPitchers('scLuckyList',   s.lucky_pitchers,    'lucky',   'scLuckyCount');
+
+      scLoaded = true;
+      loadEl.style.display = 'none';
+      grid.style.display   = 'grid';
+    } catch(e) {
+      loadEl.style.display = 'none';
+      errEl.style.display  = 'block';
+      errEl.textContent = `⚠ ${e.message}`;
+    }
+  }
+
+  function renderScBatters(listId, players, mode, countId) {
+    const el = document.getElementById(listId);
+    const ct = document.getElementById(countId);
+    if (ct) ct.textContent = players.length ? `${players.length} players` : '';
+    if (!players.length) {
+      el.innerHTML = '<div class="sc-empty">No qualifying players</div>';
+      return;
+    }
+    el.innerHTML = players.map(p => {
+      const diff  = p.ba_diff;
+      const abs   = Math.abs(diff);
+      const sign  = diff > 0 ? '+' : '';
+      const cls   = mode === 'sell'
+        ? (abs >= 0.04 ? 'pos-big' : 'pos-sm')
+        : (abs >= 0.04 ? 'neg-big' : 'neg-sm');
+      return `
+        <div class="sc-row">
+          <div class="sc-name">${p.name}</div>
+          <div class="sc-vals">
+            <div class="sc-val">${p.ba.toFixed(3)}</div>
+            <div class="sc-val dim">${p.xba.toFixed(3)}</div>
+            <div class="sc-diff ${cls}">${sign}${diff.toFixed(3)}</div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function renderScPitchers(listId, pitchers, mode, countId) {
+    const el = document.getElementById(listId);
+    const ct = document.getElementById(countId);
+    if (ct) ct.textContent = pitchers.length ? `${pitchers.length} pitchers` : '';
+    if (!pitchers.length) {
+      el.innerHTML = '<div class="sc-empty">No qualifying pitchers</div>';
+      return;
+    }
+    el.innerHTML = pitchers.map(p => {
+      const diff = p.era_diff;
+      const abs  = Math.abs(diff);
+      const sign = diff > 0 ? '+' : '';
+      const cls  = mode === 'unlucky'
+        ? (abs >= 1.0 ? 'neg-big' : 'neg-sm')
+        : (abs >= 1.0 ? 'pos-big' : 'pos-sm');
+      return `
+        <div class="sc-row">
+          <div class="sc-name">${p.name}</div>
+          <div class="sc-vals">
+            <div class="sc-val">${p.era.toFixed(2)}</div>
+            <div class="sc-val dim">${p.xera.toFixed(2)}</div>
+            <div class="sc-diff ${cls}">${sign}${diff.toFixed(2)}</div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Farm Tab ──────────────────────────────────────────────────────────────
+  async function loadFarm() {
+    try {
+      const res  = await fetch(`${API}/farm`);
+      const data = await res.json();
+
+      // AAA Hitters
+      const hitters = data.aaa_hitters || [];
+      document.getElementById('aaaHitterCount').textContent = `${hitters.length} players`;
+      document.getElementById('aaaHitterList').innerHTML = hitters.slice(0,12).map(p => `
+        <div class="farm-row">
+          <div>
+            <div class="farm-name">${p.name}</div>
+            <div class="farm-team">${p.mlbTeam || '—'}</div>
+          </div>
+          <div class="farm-stat ${p.ops > 1.0 ? 'hot' : 'good'}">${p.ops.toFixed(3)} OPS</div>
+        </div>`).join('');
+
+      // AAA Pitchers
+      const pitchers = data.aaa_pitchers || [];
+      document.getElementById('aaaPitcherCount').textContent = `${pitchers.length} players`;
+      document.getElementById('aaaPitcherList').innerHTML = pitchers.slice(0,12).map(p => `
+        <div class="farm-row">
+          <div>
+            <div class="farm-name">${p.name}</div>
+            <div class="farm-team">${p.mlbTeam || '—'}</div>
+          </div>
+          <div class="farm-stat ${p.era < 2.5 ? 'hot' : 'good'}">${p.era.toFixed(2)} ERA</div>
+        </div>`).join('');
+
+      // Recent Transactions
+      const txns = data.transactions || [];
+      document.getElementById('transactionList').innerHTML = txns.slice(0,20).map(t => `
+        <div class="wire-alert">
+          <div class="wire-content">
+            <div class="wire-msg">${t.description}</div>
+            <div class="wire-time">${t.date} · ${t.type}</div>
+          </div>
+        </div>`).join('') || '<div class="wire-empty">No recent transactions</div>';
+
+    } catch(e) {
+      console.error('Farm load error:', e);
+    }
+  }
+
+  // ── Two-Start Pitcher Banner ──────────────────────────────────────────────
+  async function loadTwoStarters() {
+    try {
+      const res  = await fetch(`${API}/two-starters`);
+      const data = await res.json();
+      const list = data.pitchers || [];
+      if (!list.length) return;
+      document.getElementById('twoStartBanner').style.display = 'block';
+      document.getElementById('twoStartList').innerHTML = list.map(p => `
+        <div class="two-start-row">
+          <span>${p.name} <span style="color:#3a5a3a;font-size:0.7rem;">(${p.team})</span></span>
+          <span style="color:#e8c547;font-size:0.7rem;">${p.starts.join(' · ')}</span>
+        </div>`).join('');
+    } catch(e) {}
+  }
+
+</script>
+</body>
+</html>

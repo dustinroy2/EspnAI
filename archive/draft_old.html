@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Dugout — Draft Board</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red:#CC0000; --red-dk:#990000;
+  --dark:#1a1a1a; --sidebar:#1e1e1e;
+  --white:#fff; --gray:#f5f5f5;
+  --border:#e0e0e0; --muted:#888;
+  --gold:#e8c547; --green:#2d9a2d;
+  --pos-c:#607D8B; --pos-1b:#1976D2; --pos-2b:#0097A7;
+  --pos-3b:#E64A19; --pos-ss:#388E3C; --pos-of:#F57C00;
+  --pos-sp:#C2185B; --pos-rp:#7B1FA2; --pos-dh:#F9A825;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Source Sans 3',sans-serif;background:var(--white);color:var(--dark);height:100vh;display:flex;flex-direction:column;overflow:hidden;font-size:13px;}
+
+/* ── PICK BAR ── */
+.pick-bar{background:var(--red);color:#fff;height:50px;display:flex;align-items:center;flex-shrink:0;overflow:hidden;}
+.timer-wrap{background:rgba(0,0,0,.3);height:100%;padding:0 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:66px;border-right:1px solid rgba(255,255,255,.15);gap:0;}
+.timer-lbl{font-size:.48rem;letter-spacing:2px;opacity:.7;font-family:'Oswald',sans-serif;}
+.timer-val{font-family:'Oswald',sans-serif;font-size:1.35rem;font-weight:700;font-variant-numeric:tabular-nums;}
+.pick-scroll{display:flex;overflow-x:auto;flex:1;height:100%;scrollbar-width:none;}
+.pick-scroll::-webkit-scrollbar{display:none;}
+.pslot{min-width:76px;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid rgba(255,255,255,.1);padding:3px 6px;cursor:default;transition:background .15s;gap:1px;}
+.pslot.my-pick{background:rgba(232,197,71,.22);border-bottom:3px solid var(--gold);}
+.pslot.active{background:rgba(255,255,255,.25);animation:blink .9s ease-in-out infinite;}
+.pslot.done{opacity:.55;}
+.pslot.rnd-sep{background:rgba(0,0,0,.3);min-width:44px;font-family:'Oswald',sans-serif;font-size:.55rem;letter-spacing:1px;}
+.p-num{font-size:.5rem;letter-spacing:1px;opacity:.65;font-family:'Oswald',sans-serif;}
+.p-team{font-size:.62rem;font-weight:600;font-family:'Oswald',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70px;}
+.p-status{font-size:.55rem;opacity:.65;}
+@keyframes blink{0%,100%{background:rgba(255,255,255,.25);}50%{background:rgba(255,255,255,.4);}}
+
+/* ── LAYOUT ── */
+.layout{display:flex;flex:1;overflow:hidden;}
+
+/* ── SIDEBAR ── */
+.sidebar{width:205px;background:var(--sidebar);color:#fff;display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;}
+.sb-head{padding:8px 12px 6px;border-bottom:1px solid rgba(255,255,255,.07);}
+.sb-label{font-family:'Oswald',sans-serif;font-size:.55rem;letter-spacing:2px;color:rgba(255,255,255,.4);margin-bottom:4px;}
+.roster-list{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.08) transparent;}
+.r-row{display:flex;align-items:center;padding:4px 12px;gap:7px;border-bottom:1px solid rgba(255,255,255,.035);min-height:26px;}
+.r-pos{font-family:'Oswald',sans-serif;font-size:.6rem;color:rgba(255,255,255,.4);min-width:30px;}
+.r-name{font-size:.68rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.r-name.filled{color:rgba(255,255,255,.9);}
+.r-name.empty{color:rgba(255,255,255,.22);font-style:italic;}
+.r-elig{font-size:.58rem;color:rgba(255,255,255,.3);}
+.sb-limits{padding:7px 12px;border-top:1px solid rgba(255,255,255,.07);font-size:.58rem;color:rgba(255,255,255,.35);line-height:1.9;}
+
+/* ── CONTENT ── */
+.content{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.draft-hdr{padding:10px 18px 0;border-bottom:1px solid var(--border);flex-shrink:0;}
+.clock-line{font-family:'Oswald',sans-serif;font-size:1rem;font-weight:600;line-height:1.2;}
+.clock-line .red{color:var(--red);}
+.clock-line .sub{font-size:.7rem;font-weight:400;color:var(--muted);font-family:'Source Sans 3',sans-serif;}
+.tabs{display:flex;margin-top:8px;}
+.tab-btn{padding:7px 14px;font-size:.75rem;font-weight:500;color:var(--muted);background:none;border:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;transition:all .15s;}
+.tab-btn.active{color:var(--red);border-bottom-color:var(--red);}
+.tab-btn:hover:not(.active){color:var(--dark);}
+
+/* ── FILTER BAR ── */
+.filter-bar{padding:8px 18px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;}
+.ppill{padding:3px 9px;border-radius:10px;font-size:.62rem;font-weight:600;cursor:pointer;border:1.5px solid #ddd;background:#fff;color:#555;font-family:'Oswald',sans-serif;letter-spacing:.3px;transition:all .12s;}
+.ppill.all.active{background:var(--red);border-color:var(--red);color:#fff;}
+.ppill[data-pos="C"].active{background:var(--pos-c);border-color:var(--pos-c);color:#fff;}
+.ppill[data-pos="1B"].active{background:var(--pos-1b);border-color:var(--pos-1b);color:#fff;}
+.ppill[data-pos="2B"].active{background:var(--pos-2b);border-color:var(--pos-2b);color:#fff;}
+.ppill[data-pos="3B"].active{background:var(--pos-3b);border-color:var(--pos-3b);color:#fff;}
+.ppill[data-pos="SS"].active{background:var(--pos-ss);border-color:var(--pos-ss);color:#fff;}
+.ppill[data-pos="OF"].active{background:var(--pos-of);border-color:var(--pos-of);color:#fff;}
+.ppill[data-pos="SP"].active{background:var(--pos-sp);border-color:var(--pos-sp);color:#fff;}
+.ppill[data-pos="RP"].active{background:var(--pos-rp);border-color:var(--pos-rp);color:#fff;}
+.ml-auto{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.show-drafted{font-size:.68rem;color:var(--muted);display:flex;align-items:center;gap:5px;cursor:pointer;user-select:none;}
+.show-drafted input{cursor:pointer;}
+.search-inp{padding:4px 9px;border:1px solid var(--border);border-radius:3px;font-size:.72rem;width:150px;outline:none;}
+.search-inp:focus{border-color:var(--red);}
+
+/* ── PLAYER TABLE ── */
+.tbl-wrap{flex:1;overflow-y:auto;scrollbar-width:thin;}
+.tab-pane{display:none;flex-direction:column;flex:1;overflow:hidden;}
+.tab-pane.active{display:flex;}
+table.pt{width:100%;border-collapse:collapse;font-size:.72rem;}
+table.pt thead th{position:sticky;top:0;background:var(--gray);padding:5px 7px;text-align:right;font-family:'Oswald',sans-serif;font-size:.58rem;letter-spacing:.4px;color:var(--muted);border-bottom:1px solid var(--border);cursor:pointer;white-space:nowrap;z-index:5;user-select:none;}
+table.pt thead th:first-child,table.pt thead th:nth-child(2),table.pt thead th:nth-child(3){text-align:left;}
+table.pt thead th:hover{color:var(--dark);}
+table.pt thead th.sorted{color:var(--red);}
+table.pt thead th.sorted::after{content:" ↓";}
+table.pt thead th.sorted.asc::after{content:" ↑";}
+table.pt tbody tr{border-bottom:1px solid #f2f2f2;transition:background .08s;}
+table.pt tbody tr:hover{background:#fafafa;}
+table.pt tbody tr.drafted-row{opacity:.32;}
+table.pt tbody tr.rec1{background:rgba(232,197,71,.13);}
+table.pt tbody tr.rec2{background:rgba(232,197,71,.08);}
+table.pt tbody tr.rec3{background:rgba(232,197,71,.04);}
+table.pt tbody tr.slipping{background:rgba(255,100,30,.07);}
+table.pt td{padding:6px 7px;text-align:right;white-space:nowrap;}
+table.pt td.left{text-align:left;}
+table.pt td.rk{color:var(--muted);font-size:.62rem;text-align:center;min-width:28px;}
+
+.player-cell{display:flex;align-items:center;gap:8px;min-width:185px;}
+.avatar{width:27px;height:27px;border-radius:50%;background:var(--gray);display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:700;color:var(--muted);flex-shrink:0;}
+.pname{font-weight:600;font-size:.78rem;color:var(--dark);}
+.pmeta{font-size:.62rem;color:var(--muted);display:flex;align-items:center;gap:4px;margin-top:1px;flex-wrap:wrap;}
+
+.pbadge{display:inline-block;padding:1px 4px;border-radius:2px;font-family:'Oswald',sans-serif;font-size:.58rem;font-weight:600;color:#fff;letter-spacing:.3px;}
+.pbadge.C{background:var(--pos-c);}
+.pbadge.1B{background:var(--pos-1b);}
+.pbadge.2B{background:var(--pos-2b);}
+.pbadge.3B{background:var(--pos-3b);}
+.pbadge.SS{background:var(--pos-ss);}
+.pbadge.OF{background:var(--pos-of);}
+.pbadge.SP{background:var(--pos-sp);}
+.pbadge.RP{background:var(--pos-rp);}
+.pbadge.DH{background:var(--pos-dh);}
+.pbadge.UTIL,.pbadge.P{background:#888;}
+
+.iflags{display:flex;gap:2px;flex-wrap:wrap;margin-top:2px;}
+.iflag{font-size:.53rem;padding:1px 4px;border-radius:2px;font-weight:700;letter-spacing:.2px;white-space:nowrap;}
+.iflag.roy{background:rgba(232,197,71,.18);color:#a07c00;border:1px solid rgba(232,197,71,.35);}
+.iflag.wbc{background:rgba(56,142,60,.15);color:#1b5e20;border:1px solid rgba(56,142,60,.3);}
+.iflag.st{background:rgba(25,118,210,.12);color:#0d47a1;border:1px solid rgba(25,118,210,.25);}
+.iflag.cyr{background:rgba(123,31,162,.12);color:#4a148c;border:1px solid rgba(123,31,162,.25);}
+.iflag.neg{background:rgba(204,0,0,.1);color:#8b0000;border:1px solid rgba(204,0,0,.25);}
+.iflag.slip{background:rgba(255,87,34,.18);color:#bf360c;border:1px solid rgba(255,87,34,.4);animation:flsh .8s ease-in-out infinite;}
+@keyframes flsh{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+.wrs{font-family:'Oswald',sans-serif;font-size:.82rem;font-weight:700;}
+.wrs.t1{color:var(--red);}
+.wrs.t2{color:#E65100;}
+.wrs.t3{color:#2E7D32;}
+.wrs.t4{color:var(--muted);}
+
+.dft-btn{background:var(--red);color:#fff;border:none;padding:4px 11px;border-radius:2px;font-family:'Oswald',sans-serif;font-size:.62rem;letter-spacing:.8px;cursor:pointer;transition:all .12s;white-space:nowrap;}
+.dft-btn:hover{background:var(--red-dk);}
+.dft-btn:disabled,.dft-btn.taken{background:#bbb;cursor:default;}
+
+/* ── BOARD VIEW ── */
+.board-wrap{flex:1;overflow:auto;padding:12px 16px;}
+.board-grid{display:grid;gap:2px;width:max-content;}
+.bh{font-family:'Oswald',sans-serif;font-size:.58rem;letter-spacing:.5px;color:var(--muted);text-align:center;padding:5px 4px;background:var(--gray);border:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:92px;}
+.bh.mine{color:var(--red);font-weight:700;background:rgba(204,0,0,.06);}
+.bcell{background:#f9f9f9;border:1px solid #eaeaea;padding:4px 6px;min-height:42px;min-width:92px;font-size:.62rem;display:flex;flex-direction:column;justify-content:center;}
+.bcell.mine-pick{background:rgba(204,0,0,.05);border-color:rgba(204,0,0,.2);}
+.bcell.cur-pick{background:rgba(255,200,0,.18);border-color:rgba(255,200,0,.6);animation:bcur 1s ease-in-out infinite;}
+.bcell-rn{font-size:.55rem;color:#bbb;}
+.bcell-pl{font-weight:600;color:var(--dark);font-size:.68rem;}
+.bcell-ps{color:var(--muted);font-size:.58rem;}
+@keyframes bcur{0%,100%{background:rgba(255,200,0,.18);}50%{background:rgba(255,200,0,.32);}}
+
+/* ── WAR ROOM ── */
+.warroom{width:272px;background:var(--dark);color:#fff;display:flex;flex-direction:column;flex-shrink:0;border-left:1px solid #2a2a2a;overflow:hidden;}
+.wr-hdr{padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.07);background:rgba(232,197,71,.07);}
+.wr-title{font-family:'Oswald',sans-serif;font-size:.8rem;letter-spacing:2px;color:var(--gold);}
+.wr-sub{font-size:.62rem;color:rgba(255,255,255,.45);margin-top:1px;}
+.wr-body{flex:1;overflow-y:auto;padding:10px 13px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.08) transparent;}
+.wr-sec{font-family:'Oswald',sans-serif;font-size:.57rem;letter-spacing:2px;color:rgba(255,255,255,.35);margin:12px 0 7px;}
+.wr-sec:first-child{margin-top:0;}
+
+.rec-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:3px;padding:9px 11px;margin-bottom:7px;transition:border .15s;}
+.rec-card.top{background:rgba(232,197,71,.09);border-color:rgba(232,197,71,.28);}
+.rec-rk{font-family:'Oswald',sans-serif;font-size:.57rem;letter-spacing:1px;color:rgba(255,255,255,.35);margin-bottom:3px;}
+.rec-rk.gold{color:var(--gold);}
+.rec-name{font-size:.82rem;font-weight:600;color:#fff;margin-bottom:1px;}
+.rec-info{font-size:.62rem;color:rgba(255,255,255,.45);margin-bottom:5px;}
+.rec-why{font-size:.68rem;color:rgba(255,255,255,.72);line-height:1.5;}
+.rec-cats{display:flex;gap:3px;flex-wrap:wrap;margin-top:5px;}
+.rc{font-size:.53rem;padding:2px 5px;background:rgba(74,154,74,.18);color:#7ecb7e;border-radius:2px;font-family:'Oswald',sans-serif;}
+
+.adv-btn{display:block;width:100%;padding:9px;background:var(--red);color:#fff;border:none;font-family:'Oswald',sans-serif;font-size:.68rem;letter-spacing:2px;cursor:pointer;border-radius:2px;margin-bottom:8px;transition:background .15s;}
+.adv-btn:hover{background:var(--red-dk);}
+.adv-btn.busy{background:#444;cursor:wait;}
+
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px;}
+.cat-item{display:flex;justify-content:space-between;align-items:center;padding:4px 7px;background:rgba(255,255,255,.04);border-radius:2px;}
+.cat-lbl{font-family:'Oswald',sans-serif;font-size:.58rem;letter-spacing:.5px;color:rgba(255,255,255,.45);}
+.cat-val{font-size:.62rem;font-weight:700;}
+.cat-val.low{color:#ff6b6b;}
+.cat-val.med{color:#ffd93d;}
+.cat-val.ok{color:#6bff6b;}
+
+.slip-card{background:rgba(255,100,30,.12);border:1px solid rgba(255,100,30,.35);border-radius:3px;padding:7px 10px;margin-bottom:6px;font-size:.68rem;color:#ffab91;}
+
+.wr-empty{padding:16px;text-align:center;font-size:.7rem;color:rgba(255,255,255,.3);}
+.dot-load span{display:inline-block;width:6px;height:6px;background:var(--gold);border-radius:50%;margin:0 2px;animation:dl .9s ease-in-out infinite;}
+.dot-load span:nth-child(2){animation-delay:.2s;}
+.dot-load span:nth-child(3){animation-delay:.4s;}
+@keyframes dl{0%,80%,100%{transform:scale(.6);opacity:.4;}40%{transform:scale(1);opacity:1;}}
+
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-thumb{background:#444;border-radius:2px;}
+</style>
+</head>
+<body>
+
+<!-- PICK BAR -->
+<div class="pick-bar">
+  <div class="timer-wrap">
+    <div class="timer-lbl">DRAFTING IN</div>
+    <div class="timer-val" id="timer">--:--</div>
+  </div>
+  <div class="pick-scroll" id="pickScroll"></div>
+</div>
+
+<div class="layout">
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sb-head">
+    <div class="sb-label">ROSTER — WE'RE THE MILLERS</div>
+  </div>
+  <div class="roster-list" id="rosterList"></div>
+  <div class="sb-limits" id="rosterLimits">0/23 Players<br>C 0/3 · 1B 0/5 · 2B 0/– · 3B 0/–<br>SS 0/– · OF 0/– · DH 0/– · SP 0/–<br>RP 0/–</div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+  <div class="draft-hdr">
+    <div class="clock-line" id="clockLine">Loading draft board...</div>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('players',this)">Players</button>
+      <button class="tab-btn" onclick="switchTab('history',this)">Pick History</button>
+      <button class="tab-btn" onclick="switchTab('board',this)">Board</button>
+    </div>
+  </div>
+
+  <!-- PLAYERS TAB -->
+  <div id="tab-players" class="tab-pane active" style="flex-direction:column;">
+    <div class="filter-bar">
+      <button class="ppill all active" data-pos="ALL" onclick="setFilter('ALL',this)">ALL</button>
+      <button class="ppill" data-pos="C" onclick="setFilter('C',this)">C</button>
+      <button class="ppill" data-pos="1B" onclick="setFilter('1B',this)">1B</button>
+      <button class="ppill" data-pos="2B" onclick="setFilter('2B',this)">2B</button>
+      <button class="ppill" data-pos="3B" onclick="setFilter('3B',this)">3B</button>
+      <button class="ppill" data-pos="SS" onclick="setFilter('SS',this)">SS</button>
+      <button class="ppill" data-pos="OF" onclick="setFilter('OF',this)">OF</button>
+      <button class="ppill" data-pos="SP" onclick="setFilter('SP',this)">SP</button>
+      <button class="ppill" data-pos="RP" onclick="setFilter('RP',this)">RP</button>
+      <div class="ml-auto">
+        <label class="show-drafted"><input type="checkbox" id="showDrafted" onchange="render()"> Show Drafted</label>
+        <input class="search-inp" type="text" placeholder="Search players…" oninput="render()" id="searchInp">
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table class="pt">
+        <thead>
+          <tr>
+            <th class="rk" onclick="sortBy('wrScore')">RK</th>
+            <th onclick="sortBy('name')">PLAYER</th>
+            <th>INTEL</th>
+            <th></th>
+            <th onclick="sortBy('wrScore')" class="sorted">WAR RM</th>
+            <th onclick="sortBy('r')">R</th>
+            <th onclick="sortBy('hr')">HR</th>
+            <th onclick="sortBy('rbi')">RBI</th>
+            <th onclick="sortBy('sb')">SB</th>
+            <th onclick="sortBy('avg')">AVG</th>
+            <th onclick="sortBy('ops')">OPS</th>
+            <th onclick="sortBy('k')">K</th>
+            <th onclick="sortBy('qs')">QS</th>
+            <th onclick="sortBy('sv')">SV</th>
+            <th onclick="sortBy('era')">ERA</th>
+            <th onclick="sortBy('whip')">WHIP</th>
+            <th onclick="sortBy('adp')">ADP</th>
+          </tr>
+        </thead>
+        <tbody id="playerTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- HISTORY TAB -->
+  <div id="tab-history" class="tab-pane">
+    <div class="tbl-wrap" style="padding:16px 20px;">
+      <table class="pt">
+        <thead><tr><th class="left">PICK</th><th class="left">PLAYER</th><th class="left">TEAM</th></tr></thead>
+        <tbody id="historyTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- BOARD TAB -->
+  <div id="tab-board" class="tab-pane">
+    <div class="board-wrap">
+      <div class="board-grid" id="boardGrid" style="grid-template-columns:repeat(13,1fr);"></div>
+    </div>
+  </div>
+</div>
+
+<!-- WAR ROOM -->
+<div class="warroom">
+  <div class="wr-hdr">
+    <div class="wr-title">⚡ WAR ROOM</div>
+    <div class="wr-sub" id="wrSub">Loading...</div>
+  </div>
+  <div class="wr-body" id="wrBody">
+    <div class="wr-empty">Run analysis to get recommendations</div>
+  </div>
+</div>
+</div>
+
+<script>
+const API = 'http://localhost:5050/api';
+
+// ── LEAGUE / DRAFT SETUP ──────────────────────────────────────────────────
+const TEAMS = [
+  "We're the Millers","Analytically Amazing","G SOLDIERS","Don't Bet On It",
+  "Team beitzel","Zak aka EZ Money","Flying Chanclas","Ball Busters",
+  "Team Name","Tchopa Style","Young Gunnarz","Team 12"
+];
+const MY_TEAM_IDX = 0;
+const TOTAL_ROUNDS = 23;
+const TOTAL_TEAMS  = 12;
+
+// Snake draft — pre-compute all picks
+function buildPickOrder(){
+  const order=[];
+  for(let r=1;r<=TOTAL_ROUNDS;r++){
+    const round=[];
+    for(let t=0;t<TOTAL_TEAMS;t++){
+      const teamIdx = r%2===1 ? t : (TOTAL_TEAMS-1-t);
+      round.push({round:r, pickInRound:t+1, overallPick:(r-1)*TOTAL_TEAMS+(t+1), teamIdx});
+    }
+    order.push(...round);
+  }
+  return order;
+}
+const PICK_ORDER = buildPickOrder();
+// Find my picks
+const MY_PICKS = PICK_ORDER.filter(p=>p.teamIdx===MY_TEAM_IDX).map(p=>p.overallPick);
+
+// ── ROSTER SLOTS ─────────────────────────────────────────────────────────
+const ROSTER_SLOTS = [
+  {pos:'C',key:'c'},{pos:'1B',key:'1b'},{pos:'2B',key:'2b'},{pos:'3B',key:'3b'},
+  {pos:'SS',key:'ss'},{pos:'OF',key:'of'},{pos:'OF',key:'of2'},{pos:'OF',key:'of3'},
+  {pos:'UTIL',key:'util'},{pos:'UTIL',key:'util2'},
+  {pos:'P',key:'p'},{pos:'P',key:'p2'},
+  {pos:'SP',key:'sp'},{pos:'SP',key:'sp2'},{pos:'SP',key:'sp3'},
+  {pos:'RP',key:'rp'},{pos:'RP',key:'rp2'},
+  {pos:'BE',key:'be1'},{pos:'BE',key:'be2'},{pos:'BE',key:'be3'},{pos:'BE',key:'be4'},
+  {pos:'IL',key:'il1'},{pos:'IL',key:'il2'},{pos:'IL',key:'il3'},
+];
+
+// ── PLAYER DATABASE ───────────────────────────────────────────────────────
+const PLAYERS = [
+  // id, name, team, pos (primary), pos2, adp, r, hr, rbi, sb, avg, ops, k, qs, w, sv, era, whip, flags[], wrScore(auto)
+  {id:1, name:"Shohei Ohtani",    team:"LAD", pos:"DH",  pos2:"SP",  adp:1.5,  r:131,hr:50, rbi:109,sb:23, avg:.287,ops:.998,k:184,qs:17,w:11,sv:0,  era:3.25,whip:1.04, flags:[]},
+  {id:2, name:"Aaron Judge",      team:"NYY", pos:"OF",  pos2:"DH",  adp:2.3,  r:133,hr:53, rbi:126,sb:11, avg:.309,ops:1.097,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:[]},
+  {id:3, name:"Paul Skenes",      team:"PIT", pos:"SP",  pos2:null,  adp:5.1,  r:0,  hr:0,  rbi:0,  sb:0,  avg:null,ops:null,k:220,qs:27,w:16,sv:0,  era:2.61,whip:1.00, flags:["st"]},
+  {id:4, name:"Juan Soto",        team:"NYM", pos:"OF",  pos2:null,  adp:4.7,  r:119,hr:43, rbi:110,sb:19, avg:.276,ops:.973,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:[]},
+  {id:5, name:"Jose Ramirez",     team:"CLE", pos:"3B",  pos2:"DH",  adp:6.3,  r:102,hr:31, rbi:90, sb:42, avg:.281,ops:.860,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:["cyr"]},
+  {id:6, name:"Tarik Skubal",     team:"DET", pos:"SP",  pos2:null,  adp:6.1,  r:0,  hr:0,  rbi:0,  sb:0,  avg:null,ops:null,k:253,qs:26,w:17,sv:0,  era:2.73,whip:0.94, flags:[]},
+  {id:7, name:"Bobby Witt Jr.",   team:"KC",  pos:"SS",  pos2:null,  adp:6.8,  r:108,hr:30, rbi:97, sb:37, avg:.303,ops:.897,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:["wbc"]},
+  {id:8, name:"Ronald Acuna Jr.", team:"ATL", pos:"OF",  pos2:null,  adp:10.5, r:115,hr:32, rbi:70, sb:15, avg:.297,ops:.933,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:[]},
+  {id:9, name:"Garrett Crochet",  team:"BOS", pos:"SP",  pos2:null,  adp:9.7,  r:0,  hr:0,  rbi:0,  sb:0,  avg:null,ops:null,k:251,qs:21,w:16,sv:0,  era:3.26,whip:1.07, flags:[]},
+  {id:10,name:"Kyle Tucker",      team:"LAD", pos:"OF",  pos2:null,  adp:12.6, r:97, hr:31, rbi:88, sb:25, avg:.269,ops:.875,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:[]},
+  {id:11,name:"Fernando Tatis Jr",team:"SD",  pos:"OF",  pos2:"SS",  adp:15.2, r:107,hr:27, rbi:76, sb:28, avg:.271,ops:.826,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:[]},
+  {id:12,name:"Yordan Alvarez",   team:"HOU", pos:"DH",  pos2:"OF",  adp:14.0, r:98, hr:38, rbi:105,sb:4,  avg:.283,ops:.960,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:[]},
+  {id:13,name:"Corbin Carroll",   team:"ARI", pos:"OF",  pos2:null,  adp:19.5, r:107,hr:28, rbi:77, sb:33, avg:.260,ops:.857,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:[]},
+  {id:14,name:"Julio Rodriguez",  team:"SEA", pos:"OF",  pos2:null,  adp:23.9, r:105,hr:29, rbi:95, sb:30, avg:.273,ops:.792,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:["roy"]},
+  {id:15,name:"Freddie Freeman",  team:"LAD", pos:"1B",  pos2:null,  adp:22.0, r:103,hr:28, rbi:99, sb:8,  avg:.290,ops:.905,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:[]},
+  {id:16,name:"Elly De La Cruz",  team:"CIN", pos:"SS",  pos2:null,  adp:33.4, r:105,hr:25, rbi:86, sb:43, avg:.258,ops:.787,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:["roy","wbc"]},
+  {id:17,name:"Gunnar Henderson", team:"BAL", pos:"SS",  pos2:"3B",  adp:25.8, r:102,hr:25, rbi:84, sb:25, avg:.273,ops:.818,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:["roy"]},
+  {id:18,name:"Francisco Lindor", team:"NYM", pos:"SS",  pos2:null,  adp:28.0, r:102,hr:27, rbi:81, sb:27, avg:.263,ops:.807,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:[]},
+  {id:19,name:"Zack Wheeler",     team:"PHI", pos:"SP",  pos2:null,  adp:18.0, r:0,  hr:0,  rbi:0,  sb:0,  avg:null,ops:null,k:218,qs:25,w:16,sv:0,  era:3.10,whip:1.04, flags:[]},
+  {id:20,name:"Logan Webb",       team:"SF",  pos:"SP",  pos2:null,  adp:24.0, r:0,  hr:0,  rbi:0,  sb:0,  avg:null,ops:null,k:190,qs:28,w:15,sv:0,  era:3.00,whip:1.10, flags:[]},
+  {id:21,name:"Jackson Chourio",  team:"MIL", pos:"OF",  pos2:null,  adp:47.0, r:100,hr:23, rbi:89, sb:25, avg:.275,ops:.782,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:["st","roy"]},
+  {id:22,name:"Jackson Holliday", team:"BAL", pos:"SS",  pos2:"2B",  adp:62.0, r:85, hr:18, rbi:70, sb:22, avg:.270,ops:.790,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:["st","roy"]},
+  {id:23,name:"Emmanuel Clase",   team:"CLE", pos:"RP",  pos2:null,  adp:31.0, r:0,  hr:0,  rbi:0,  sb:0,  avg:null,ops:null,k:72, qs:0, w:4, sv:42, era:1.92,whip:0.88, flags:[]},
+  {id:24,name:"Josh Hader",       team:"HOU", pos:"RP",  pos2:null,  adp:36.0, r:0,  hr:0,  rbi:0,  sb:0,  avg:null,ops:null,k:78, qs:0, w:4, sv:40, era:2.10,whip:0.82, flags:[]},
+  {id:25,name:"Pete Alonso",      team:"NYM", pos:"1B",  pos2:null,  adp:34.0, r:92, hr:38, rbi:107,sb:2,  avg:.248,ops:.840,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:["cyr"]},
+  {id:26,name:"Manny Machado",    team:"SD",  pos:"3B",  pos2:"SS",  adp:38.0, r:91, hr:26, rbi:90, sb:5,  avg:.268,ops:.828,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:[]},
+  {id:27,name:"Ozzie Albies",     team:"ATL", pos:"2B",  pos2:null,  adp:43.0, r:95, hr:22, rbi:84, sb:15, avg:.264,ops:.782,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:[]},
+  {id:28,name:"Marcus Semien",    team:"TEX", pos:"2B",  pos2:"SS",  adp:50.0, r:96, hr:21, rbi:80, sb:12, avg:.262,ops:.778,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:[]},
+  {id:29,name:"Adley Rutschman",  team:"BAL", pos:"C",   pos2:null,  adp:29.0, r:82, hr:18, rbi:72, sb:5,  avg:.268,ops:.810,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:[]},
+  {id:30,name:"Hunter Greene",    team:"CIN", pos:"SP",  pos2:null,  adp:41.0, r:0,  hr:0,  rbi:0,  sb:0,  avg:null,ops:null,k:235,qs:22,w:13,sv:0,  era:3.45,whip:1.12, flags:["wbc"]},
+  {id:31,name:"Trea Turner",      team:"PHI", pos:"SS",  pos2:null,  adp:80.2, r:93, hr:18, rbi:69, sb:33, avg:.283,ops:.777,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:[]},
+  {id:32,name:"Austin Riley",     team:"ATL", pos:"3B",  pos2:null,  adp:55.0, r:88, hr:29, rbi:94, sb:5,  avg:.258,ops:.830,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:[]},
+  {id:33,name:"Vladimir Guerrero",team:"TOR", pos:"1B",  pos2:"DH",  adp:48.0, r:97, hr:30, rbi:98, sb:5,  avg:.270,ops:.858,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:[]},
+  {id:34,name:"Ryan Helsley",     team:"STL", pos:"RP",  pos2:null,  adp:44.0, r:0,  hr:0,  rbi:0,  sb:0,  avg:null,ops:null,k:80, qs:0, w:5, sv:38, era:2.05,whip:0.92, flags:[]},
+  {id:35,name:"Framber Valdez",   team:"HOU", pos:"SP",  pos2:null,  adp:46.0, r:0,  hr:0,  rbi:0,  sb:0,  avg:null,ops:null,k:195,qs:26,w:15,sv:0,  era:3.20,whip:1.15, flags:[]},
+  {id:36,name:"Michael Harris II",team:"ATL", pos:"OF",  pos2:null,  adp:58.0, r:88, hr:22, rbi:78, sb:28, avg:.272,ops:.798,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:[]},
+  {id:37,name:"Jazz Chisholm Jr.",team:"NYY", pos:"OF",  pos2:"2B",  adp:60.0, r:92, hr:24, rbi:78, sb:30, avg:.254,ops:.800,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:["wbc"]},
+  {id:38,name:"Alexis Diaz",      team:"CIN", pos:"RP",  pos2:null,  adp:64.0, r:0,  hr:0,  rbi:0,  sb:0,  avg:null,ops:null,k:74, qs:0, w:4, sv:36, era:2.40,whip:0.98, flags:[]},
+  {id:39,name:"Spencer Strider",  team:"ATL", pos:"SP",  pos2:null,  adp:40.0, r:0,  hr:0,  rbi:0,  sb:0,  avg:null,ops:null,k:260,qs:24,w:15,sv:0,  era:3.05,whip:1.02, flags:[]},
+  {id:40,name:"J.T. Realmuto",    team:"PHI", pos:"C",   pos2:null,  adp:52.0, r:76, hr:16, rbi:68, sb:12, avg:.261,ops:.778,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:[]},
+  {id:41,name:"Cody Bellinger",   team:"CHC", pos:"OF",  pos2:"1B",  adp:72.0, r:84, hr:22, rbi:80, sb:15, avg:.269,ops:.798,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:[]},
+  {id:42,name:"Christian Yelich", team:"MIL", pos:"OF",  pos2:null,  adp:70.0, r:85, hr:20, rbi:75, sb:12, avg:.266,ops:.792,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:["cyr"]},
+  {id:43,name:"Junior Caminero",  team:"TB",  pos:"3B",  pos2:"SS",  adp:90.0, r:78, hr:22, rbi:78, sb:12, avg:.268,ops:.800,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:["st","roy","wbc"]},
+  {id:44,name:"Max Fried",        team:"NYY", pos:"SP",  pos2:null,  adp:68.0, r:0,  hr:0,  rbi:0,  sb:0,  avg:null,ops:null,k:175,qs:22,w:14,sv:0,  era:3.40,whip:1.18, flags:[]},
+  {id:45,name:"Felix Bautista",   team:"BAL", pos:"RP",  pos2:null,  adp:75.0, r:0,  hr:0,  rbi:0,  sb:0,  avg:null,ops:null,k:85, qs:0, w:5, sv:35, era:2.20,whip:0.95, flags:[]},
+  {id:46,name:"Dylan Cease",      team:"SD",  pos:"SP",  pos2:null,  adp:78.0, r:0,  hr:0,  rbi:0,  sb:0,  avg:null,ops:null,k:230,qs:20,w:12,sv:0,  era:3.55,whip:1.20, flags:[]},
+  {id:47,name:"Seiya Suzuki",     team:"CHC", pos:"OF",  pos2:null,  adp:84.0, r:80, hr:20, rbi:74, sb:10, avg:.274,ops:.802,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:["wbc"]},
+  {id:48,name:"Randy Arozarena",  team:"TB",  pos:"OF",  pos2:null,  adp:88.0, r:84, hr:19, rbi:72, sb:25, avg:.256,ops:.772,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:[]},
+  {id:49,name:"Nolan Arenado",    team:"STL", pos:"3B",  pos2:null,  adp:93.0, r:82, hr:24, rbi:90, sb:2,  avg:.262,ops:.798,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:[]},
+  {id:50,name:"Will Smith",       team:"LAD", pos:"C",   pos2:null,  adp:56.0, r:74, hr:19, rbi:70, sb:4,  avg:.255,ops:.790,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:[]},
+  {id:51,name:"Gerrit Cole",      team:"NYY", pos:"SP",  pos2:null,  adp:82.0, r:0,  hr:0,  rbi:0,  sb:0,  avg:null,ops:null,k:200,qs:22,w:13,sv:0,  era:3.35,whip:1.10, flags:[]},
+  {id:52,name:"Devin Williams",   team:"MIL", pos:"RP",  pos2:null,  adp:96.0, r:0,  hr:0,  rbi:0,  sb:0,  avg:null,ops:null,k:88, qs:0, w:4, sv:34, era:2.30,whip:0.96, flags:[]},
+  {id:53,name:"Jorge Polanco",    team:"SEA", pos:"2B",  pos2:"SS",  adp:100.0,r:82, hr:18, rbi:72, sb:10, avg:.260,ops:.778,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:[]},
+  {id:54,name:"Willy Adames",     team:"SF",  pos:"SS",  pos2:null,  adp:108.0,r:80, hr:22, rbi:78, sb:8,  avg:.245,ops:.772,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:[]},
+  {id:55,name:"Sandy Alcantara",  team:"MIA", pos:"SP",  pos2:null,  adp:110.0,r:0,  hr:0,  rbi:0,  sb:0,  avg:null,ops:null,k:185,qs:24,w:12,sv:0,  era:3.20,whip:1.12, flags:[]},
+  {id:56,name:"Luis Arraez",      team:"MIA", pos:"2B",  pos2:"1B",  adp:116.0,r:72, hr:8,  rbi:60, sb:4,  avg:.310,ops:.798,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:[]},
+  {id:57,name:"Luis Robert Jr.",  team:"CWS", pos:"OF",  pos2:null,  adp:118.0,r:78, hr:24, rbi:75, sb:20, avg:.254,ops:.790,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:["cyr"]},
+  {id:58,name:"Bryan Reynolds",   team:"PIT", pos:"OF",  pos2:null,  adp:120.0,r:80, hr:21, rbi:76, sb:14, avg:.265,ops:.795,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:[]},
+  {id:59,name:"Carlos Correa",    team:"MIN", pos:"SS",  pos2:null,  adp:125.0,r:78, hr:20, rbi:76, sb:5,  avg:.260,ops:.790,k:0,  qs:0, w:0, sv:0,  era:null,whip:null, flags:[]},
+  {id:60,name:"Jesus Luzardo",    team:"PHI", pos:"SP",  pos2:null,  adp:130.0,r:0,  hr:0,  rbi:0,  sb:0,  avg:null,ops:null,k:195,qs:20,w:12,sv:0,  era:3.50,whip:1.20, flags:[]},
+];
+
+// ── WAR ROOM SCORE ────────────────────────────────────────────────────────
+// Weighted by our H2H scoring cats + scarcity
+// SB weight 1.4x, QS 1.2x, OPS 1.1x (The Bookkeeper's scarcity insight)
+function calcWRScore(p){
+  if(p.pos==='RP'){
+    // SV value + ERA/WHIP + K
+    const svV  = Math.min(p.sv||0, 45) / 45 * 30;
+    const eraV = p.era!=null ? Math.max(0, (4.5-(p.era||4.5))/3) * 20 : 0;
+    const whipV= p.whip!=null ? Math.max(0,(1.5-(p.whip||1.5))/0.7)*15 : 0;
+    const kV   = Math.min(p.k||0,90)/90*15;
+    const adpBonus = Math.max(0, (200-p.adp)/200) * 10;
+    return Math.min(99, Math.round(svV+eraV+whipV+kV+adpBonus + flagBonus(p)));
+  }
+  if(p.pos==='SP'||p.pos2==='SP'){
+    const kV   = Math.min(p.k||0,260)/260*25;
+    const qsV  = Math.min(p.qs||0,30)/30*25 * 1.2;
+    const wV   = Math.min(p.w||0,20)/20*15;
+    const eraV = p.era!=null ? Math.max(0,(4.5-(p.era||4.5))/3)*20 : 0;
+    const whipV= p.whip!=null ? Math.max(0,(1.5-(p.whip||1.5))/0.7)*15 : 0;
+    const adpBonus = Math.max(0,(200-p.adp)/200)*8;
+    return Math.min(99, Math.round(kV+qsV+wV+eraV+whipV+adpBonus + flagBonus(p)));
+  }
+  // Hitter
+  const rV   = Math.min(p.r||0,135)/135*15;
+  const hrV  = Math.min(p.hr||0,55)/55*20;
+  const rbiV = Math.min(p.rbi||0,130)/130*15;
+  const sbV  = Math.min(p.sb||0,60)/60*20 * 1.4; // SB scarcity boost
+  const avgV = p.avg!=null ? Math.max(0,(p.avg-.240)/.080)*12 : 0;
+  const opsV = p.ops!=null ? Math.max(0,(p.ops-.700)/.400)*15 * 1.1 : 0;
+  const adpBonus = Math.max(0,(200-p.adp)/200)*5;
+  return Math.min(99, Math.round(rV+hrV+rbiV+sbV+avgV+opsV+adpBonus + flagBonus(p)));
+}
+function flagBonus(p){
+  let b=0;
+  if(p.flags.includes('roy')) b+=2;
+  if(p.flags.includes('wbc')) b+=2;
+  if(p.flags.includes('st'))  b+=2;
+  if(p.flags.includes('cyr')) b+=2;
+  if(p.flags.includes('neg')) b-=5;
+  return b;
+}
+PLAYERS.forEach(p=>{ p.wrScore=calcWRScore(p); });
+PLAYERS.sort((a,b)=>b.wrScore-a.wrScore);
+PLAYERS.forEach((p,i)=>{ p.rank=i+1; });
+
+// ── DRAFT STATE ───────────────────────────────────────────────────────────
+let state = {
+  currentPickIdx: 0,   // index into PICK_ORDER
+  picks: [],           // [{overallPick, teamIdx, playerId}]
+  myRoster: [],        // player ids I drafted
+  filterPos: 'ALL',
+  showDrafted: false,
+  search: '',
+  sortCol: 'wrScore',
+  sortDir: 'desc',
+  recs: [],
+  slips: [],
+};
+
+// Timer
+let timerSec = 90;
+let timerInt = null;
+function startTimer(){
+  clearInterval(timerInt);
+  timerSec = 90;
+  timerInt = setInterval(()=>{
+    timerSec = Math.max(0, timerSec-1);
+    document.getElementById('timer').textContent =
+      String(Math.floor(timerSec/60)).padStart(2,'0')+':'+String(timerSec%60).padStart(2,'0');
+  },1000);
+}
+
+// ── RENDER PICK BAR ───────────────────────────────────────────────────────
+function renderPickBar(){
+  const cur = PICK_ORDER[state.currentPickIdx];
+  const container = document.getElementById('pickScroll');
+  // Show a window of picks around current
+  const start = Math.max(0, state.currentPickIdx-2);
+  const end   = Math.min(PICK_ORDER.length-1, state.currentPickIdx+18);
+  let html='', lastRound=null;
+  for(let i=start;i<=end;i++){
+    const p = PICK_ORDER[i];
+    if(p.round !== lastRound){
+      html += `<div class="pslot rnd-sep">RD<br>${p.round}</div>`;
+      lastRound = p.round;
+    }
+    const isMine = p.teamIdx===MY_TEAM_IDX;
+    const isCur  = i===state.currentPickIdx;
+    const isDone = i<state.currentPickIdx;
+    const pick   = state.picks.find(pk=>pk.overallPick===p.overallPick);
+    let cls = 'pslot';
+    if(isMine) cls+=' my-pick';
+    if(isCur)  cls+=' active';
+    if(isDone) cls+=' done';
+    const shortName = TEAMS[p.teamIdx].split(' ')[0].substring(0,7)+'…';
+    const status = pick ? (PLAYERS.find(pl=>pl.id===pick.playerId)?.name.split(' ').pop()||'PICK') : (isCur?'ON CLOCK':'AUTO');
+    html += `<div class="${cls}">
+      <div class="p-num">PICK ${p.overallPick}</div>
+      <div class="p-team">${p.teamIdx===MY_TEAM_IDX?'⭐ WE\'RE THE M…':TEAMS[p.teamIdx].substring(0,10)}</div>
+      <div class="p-status">${status}</div>
+    </div>`;
+  }
+  container.innerHTML = html;
+  // Scroll active into view
+  const active = container.querySelector('.active');
+  if(active) active.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});
+}
+
+// ── RENDER CLOCK LINE ─────────────────────────────────────────────────────
+function renderClockLine(){
+  const cur = PICK_ORDER[state.currentPickIdx];
+  const nextMine = MY_PICKS.find(p=>p>state.currentPickIdx+1);
+  const el = document.getElementById('clockLine');
+  if(cur.teamIdx===MY_TEAM_IDX){
+    el.innerHTML=`<span class="red">YOU ARE ON THE CLOCK!</span> Round ${cur.round}, Pick ${cur.pickInRound} <span class="sub">— War Room analysis ready below</span>`;
+  } else {
+    const until = nextMine ? (nextMine - (state.currentPickIdx+1)) : '--';
+    el.innerHTML=`You're on the clock in: <span class="red">${until} picks</span> <span class="sub">Round ${cur.round}, Pick ${cur.pickInRound}</span>`;
+  }
+}
+
+// ── RENDER ROSTER SIDEBAR ─────────────────────────────────────────────────
+function renderRoster(){
+  const myPlayers = state.myRoster.map(id=>PLAYERS.find(p=>p.id===id)).filter(Boolean);
+  const rows = ROSTER_SLOTS.map(slot=>{
+    // Find a player for this slot
+    const eligible = myPlayers.filter(p=>{
+      const pp=[p.pos,p.pos2];
+      if(slot.pos==='UTIL') return pp.some(x=>['1B','2B','3B','SS','OF','DH','C'].includes(x));
+      if(slot.pos==='P')    return pp.includes('SP')||pp.includes('RP');
+      if(slot.pos==='BE')   return true;
+      if(slot.pos==='IL')   return false;
+      return pp.includes(slot.pos);
+    });
+    return {slot, player:eligible[0]||null};
+  });
+  let html='';
+  rows.forEach(({slot,player})=>{
+    if(player){
+      html+=`<div class="r-row"><div class="r-pos">${slot.pos}</div><div class="r-name filled">${player.name.split(' ').pop()}</div><div class="r-elig">${player.pos}</div></div>`;
+    } else {
+      html+=`<div class="r-row"><div class="r-pos">${slot.pos}</div><div class="r-name empty">Empty</div><div class="r-elig">—</div></div>`;
+    }
+  });
+  document.getElementById('rosterList').innerHTML=html;
+  document.getElementById('rosterLimits').innerHTML=`${state.myRoster.length}/23 Players<br>C ${myPlayers.filter(p=>p.pos==='C').length}/3 · 1B ${myPlayers.filter(p=>p.pos==='1B').length}/5<br>SS ${myPlayers.filter(p=>p.pos==='SS').length}/– · OF ${myPlayers.filter(p=>p.pos==='OF').length}/– · SP ${myPlayers.filter(p=>p.pos==='SP').length}/– · RP ${myPlayers.filter(p=>p.pos==='RP').length}/–`;
+}
+
+// ── RENDER PLAYER TABLE ───────────────────────────────────────────────────
+function render(){
+  const showDrafted = document.getElementById('showDrafted').checked;
+  const search      = document.getElementById('searchInp').value.toLowerCase();
+  const draftedIds  = state.picks.map(p=>p.playerId);
+
+  // Detect slipping (fallen 5+ spots past adp rank)
+  state.slips = [];
+  const pickedCount = state.picks.length;
+  PLAYERS.forEach(p=>{
+    if(draftedIds.includes(p.id)) return;
+    const adpPick = Math.round(p.adp);
+    if(pickedCount >= adpPick+4) state.slips.push(p.id);
+  });
+
+  let list = PLAYERS.filter(p=>{
+    if(!showDrafted && draftedIds.includes(p.id)) return false;
+    if(state.filterPos!=='ALL'){
+      if(![p.pos,p.pos2].includes(state.filterPos)) return false;
+    }
+    if(search && !p.name.toLowerCase().includes(search) && !p.team.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  // Sort
+  list.sort((a,b)=>{
+    let av=a[state.sortCol]??0, bv=b[state.sortCol]??0;
+    if(state.sortCol==='era'||state.sortCol==='whip'){
+      av=av||99; bv=bv||99;
+      return state.sortDir==='asc' ? av-bv : bv-av;
+    }
+    if(state.sortDir==='desc') return bv-av; return av-bv;
+  });
+
+  const recIds = state.recs.map(r=>r.id);
+
+  let html='';
+  list.forEach((p,i)=>{
+    const drafted  = draftedIds.includes(p.id);
+    const draftedBy= state.picks.find(pk=>pk.playerId===p.id);
+    const isRec1   = recIds[0]===p.id;
+    const isRec2   = recIds[1]===p.id;
+    const isRec3   = recIds[2]===p.id;
+    const isSlip   = state.slips.includes(p.id);
+    let cls='';
+    if(isRec1) cls='rec1';
+    else if(isRec2) cls='rec2';
+    else if(isRec3) cls='rec3';
+    else if(isSlip) cls='slipping';
+    if(drafted) cls=(cls+' drafted-row').trim();
+
+    const tier = p.wrScore>=85?'t1':p.wrScore>=70?'t2':p.wrScore>=55?'t3':'t4';
+    const posColors = [p.pos, p.pos2].filter(Boolean);
+    const badges = posColors.map(pos=>`<span class="pbadge ${pos}">${pos}</span>`).join(' ');
+    const iflags = p.flags.map(f=>{
+      const labels={roy:'🎰 ROY ODDS',wbc:'🌍 WBC',st:'📅 SERV TIME',cyr:'💰 CONTRACT',neg:'⚠️ NEWS',slip:'🔥 SLIPPING'};
+      return `<span class="iflag ${f}">${labels[f]||f}</span>`;
+    }).join('');
+    const slipBadge = isSlip && !drafted ? `<span class="iflag slip">🔥 SLIPPING</span>` : '';
+
+    const draftBtn = drafted
+      ? `<button class="dft-btn taken" disabled>${TEAMS[draftedBy.teamIdx].substring(0,8)}</button>`
+      : `<button class="dft-btn" onclick="draftPlayer(${p.id})">DRAFT</button>`;
+
+    const stat=(v,decimals=0)=>v!=null?(decimals?v.toFixed(decimals):v):'—';
+
+    html+=`<tr class="${cls}">
+      <td class="rk">${p.rank}</td>
+      <td class="left">
+        <div class="player-cell">
+          <div class="avatar">${p.name.split(' ').map(w=>w[0]).join('').substring(0,2)}</div>
+          <div>
+            <div class="pname">${p.name}</div>
+            <div class="pmeta">${badges} <span>${p.team}</span></div>
+          </div>
+        </div>
+      </td>
+      <td class="left"><div class="iflags">${iflags}${slipBadge}</div></td>
+      <td>${draftBtn}</td>
+      <td><span class="wrs ${tier}">${p.wrScore}</span></td>
+      <td>${stat(p.r)}</td>
+      <td>${stat(p.hr)}</td>
+      <td>${stat(p.rbi)}</td>
+      <td>${stat(p.sb)}</td>
+      <td>${stat(p.avg,3)}</td>
+      <td>${stat(p.ops,3)}</td>
+      <td>${stat(p.k)}</td>
+      <td>${stat(p.qs)}</td>
+      <td>${stat(p.sv)}</td>
+      <td>${stat(p.era,2)}</td>
+      <td>${stat(p.whip,2)}</td>
+      <td>${stat(p.adp,1)}</td>
+    </tr>`;
+  });
+
+  document.getElementById('playerTbody').innerHTML=html;
+}
+
+// ── RENDER HISTORY ────────────────────────────────────────────────────────
+function renderHistory(){
+  let html='';
+  state.picks.slice().reverse().forEach(pk=>{
+    const p=PLAYERS.find(pl=>pl.id===pk.playerId);
+    const po=PICK_ORDER[pk.pickIdx];
+    html+=`<tr>
+      <td class="left"><strong>R${po.round}.${po.pickInRound}</strong> — Pick ${po.overallPick}</td>
+      <td class="left">${p?.name||'?'} <span class="wrs ${p?.wrScore>=70?'t2':'t4'}" style="font-size:.65rem;">${p?.wrScore}</span></td>
+      <td class="left">${TEAMS[pk.teamIdx]}</td>
+    </tr>`;
+  });
+  document.getElementById('historyTbody').innerHTML=html||'<tr><td colspan="3" style="text-align:center;color:#aaa;padding:24px;">Draft hasn\'t started</td></tr>';
+}
+
+// ── RENDER BOARD ──────────────────────────────────────────────────────────
+function renderBoard(){
+  const rounds = 10; // show first 10 rounds
+  const cols   = TOTAL_TEAMS+1; // +1 for round label
+  let html='';
+  // Headers
+  html+='<div class="bh" style="min-width:44px;">RD</div>';
+  TEAMS.forEach((t,i)=>{
+    html+=`<div class="bh ${i===MY_TEAM_IDX?'mine':''}">${t.substring(0,10)}</div>`;
+  });
+  // Rows
+  for(let r=1;r<=rounds;r++){
+    html+=`<div class="bh" style="min-width:44px;font-weight:700;color:var(--red);">${r}</div>`;
+    for(let t=0;t<TOTAL_TEAMS;t++){
+      // Find this pick in pick order
+      const teamIdx = r%2===1?t:(TOTAL_TEAMS-1-t);
+      const overallPick=(r-1)*TOTAL_TEAMS+(t+1);
+      const pick=state.picks.find(p=>p.overallPick===overallPick);
+      const isMine=teamIdx===MY_TEAM_IDX;
+      const isCur=PICK_ORDER[state.currentPickIdx]?.overallPick===overallPick;
+      let cls='bcell';
+      if(isMine) cls+=' mine-pick';
+      if(isCur)  cls+=' cur-pick';
+      if(pick){
+        const pl=PLAYERS.find(p=>p.id===pick.playerId);
+        html+=`<div class="${cls}">
+          <div class="bcell-rn">${r}.${PICK_ORDER.find(p=>p.overallPick===overallPick)?.pickInRound}</div>
+          <div class="bcell-pl">${pl?.name.split(' ').pop()||'?'}</div>
+          <div class="bcell-ps">${pl?.pos||''}</div>
+        </div>`;
+      } else {
+        html+=`<div class="${cls}"><div class="bcell-rn">${r}.${PICK_ORDER.find(p=>p.overallPick===overallPick)?.pickInRound}</div></div>`;
+      }
+    }
+  }
+  const grid=document.getElementById('boardGrid');
+  grid.style.gridTemplateColumns=`44px repeat(${TOTAL_TEAMS},1fr)`;
+  grid.innerHTML=html;
+}
+
+// ── DRAFT A PLAYER ────────────────────────────────────────────────────────
+function draftPlayer(playerId, teamIdx){
+  const cur=PICK_ORDER[state.currentPickIdx];
+  const tid=teamIdx!==undefined?teamIdx:cur.teamIdx;
+  state.picks.push({overallPick:cur.overallPick,pickIdx:state.currentPickIdx,teamIdx:tid,playerId});
+  if(tid===MY_TEAM_IDX) state.myRoster.push(playerId);
+  state.currentPickIdx++;
+  if(state.currentPickIdx<PICK_ORDER.length) startTimer();
+  update();
+  // Auto-get advice when it's my pick
+  if(PICK_ORDER[state.currentPickIdx]?.teamIdx===MY_TEAM_IDX) getAdvice();
+}
+
+// Auto-advance other teams (simulation for demo)
+function advanceOthers(){
+  const cur=PICK_ORDER[state.currentPickIdx];
+  if(!cur||cur.teamIdx===MY_TEAM_IDX) return;
+  // Auto-pick best available by war room score
+  const taken=state.picks.map(p=>p.playerId);
+  const available=PLAYERS.filter(p=>!taken.includes(p.id));
+  if(available.length) draftPlayer(available[0].id, cur.teamIdx);
+}
+
+function update(){
+  renderPickBar();
+  renderClockLine();
+  renderRoster();
+  renderWRSub();
+  render();
+  renderHistory();
+  renderBoard();
+}
+
+// ── WAR ROOM ──────────────────────────────────────────────────────────────
+function renderWRSub(){
+  const cur=PICK_ORDER[state.currentPickIdx];
+  if(!cur){document.getElementById('wrSub').textContent='Draft complete';return;}
+  const nextMine=MY_PICKS.find(p=>p>state.currentPickIdx+1);
+  const until=nextMine?(nextMine-(state.currentPickIdx+1)):0;
+  if(cur.teamIdx===MY_TEAM_IDX){
+    document.getElementById('wrSub').innerHTML='<span style="color:var(--gold);">⚡ YOUR PICK NOW</span>';
+  } else {
+    document.getElementById('wrSub').textContent=`Your pick in ${until} selections`;
+  }
+}
+
+function renderWRBody(){
+  const draftedIds=state.picks.map(p=>p.playerId);
+  const available=PLAYERS.filter(p=>!draftedIds.includes(p.id));
+  const myPlayers=state.myRoster.map(id=>PLAYERS.find(p=>p.id===id)).filter(Boolean);
+
+  let html='';
+
+  // Slip alerts
+  if(state.slips.length){
+    state.slips.slice(0,2).forEach(id=>{
+      const p=PLAYERS.find(pl=>pl.id===id);
+      html+=`<div class="slip-card">🔥 <strong>${p.name}</strong> is slipping — ADP ${p.adp.toFixed(1)}, still available</div>`;
+    });
+  }
+
+  // Recs
+  html+='<div class="wr-sec">TOP RECOMMENDATIONS</div>';
+  if(state.recs.length){
+    state.recs.forEach((rec,i)=>{
+      const cls=i===0?'rec-card top':'rec-card';
+      const rkCls=i===0?'rec-rk gold':'rec-rk';
+      const rkLabel=i===0?'⭐ #1 PICK':'#'+(i+1);
+      html+=`<div class="${cls}">
+        <div class="${rkCls}">${rkLabel}</div>
+        <div class="rec-name">${rec.name}</div>
+        <div class="rec-info">${rec.pos} · ${rec.team} · WR:${rec.wrScore}</div>
+        <div class="rec-why">${rec.reason}</div>
+        <div class="rec-cats">${rec.cats.map(c=>`<span class="rc">${c}</span>`).join('')}</div>
+      </div>`;
+    });
+  } else {
+    html+='<div class="wr-empty" style="margin-bottom:8px;">Click GET ADVICE for AI recommendations</div>';
+  }
+
+  html+=`<button class="adv-btn" id="advBtn" onclick="getAdvice()">⚡ GET WAR ROOM ADVICE</button>`;
+
+  // Category needs
+  html+='<div class="wr-sec">MY CATEGORY COVERAGE</div>';
+  const catMap=[
+    {lbl:'R',   val:myPlayers.reduce((s,p)=>s+(p.r||0),0),  target:90},
+    {lbl:'HR',  val:myPlayers.reduce((s,p)=>s+(p.hr||0),0), target:180},
+    {lbl:'RBI', val:myPlayers.reduce((s,p)=>s+(p.rbi||0),0),target:350},
+    {lbl:'SB',  val:myPlayers.reduce((s,p)=>s+(p.sb||0),0), target:120},
+    {lbl:'K',   val:myPlayers.reduce((s,p)=>s+(p.k||0),0),  target:900},
+    {lbl:'QS',  val:myPlayers.reduce((s,p)=>s+(p.qs||0),0), target:80},
+    {lbl:'SV',  val:myPlayers.reduce((s,p)=>s+(p.sv||0),0), target:120},
+    {lbl:'ERA', val:myPlayers.filter(p=>p.era!=null).length, target:5},
+  ];
+  html+='<div class="cat-grid">';
+  catMap.forEach(c=>{
+    const pct=c.val/c.target;
+    const cls=pct<0.2?'low':pct<0.6?'med':'ok';
+    const disp=c.lbl==='ERA'?`${c.val} SP`:c.val;
+    html+=`<div class="cat-item"><span class="cat-lbl">${c.lbl}</span><span class="cat-val ${cls}">${disp}</span></div>`;
+  });
+  html+='</div>';
+
+  // Service time callups
+  html+='<div class="wr-sec">SERVICE TIME TARGETS</div>';
+  const stPlayers=available.filter(p=>p.flags.includes('st'));
+  if(stPlayers.length){
+    stPlayers.forEach(p=>{
+      html+=`<div style="font-size:.68rem;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.7);">📅 <strong>${p.name}</strong> <span style="color:rgba(255,255,255,.4)">${p.team} — April 14</span></div>`;
+    });
+  } else {
+    html+='<div class="wr-empty">All service time targets taken</div>';
+  }
+
+  document.getElementById('wrBody').innerHTML=html;
+}
+
+async function getAdvice(){
+  const btn=document.getElementById('advBtn');
+  if(btn) btn.className='adv-btn busy';
+  const draftedIds=state.picks.map(p=>p.playerId);
+  const available=PLAYERS.filter(p=>!draftedIds.includes(p.id)).slice(0,25);
+  const myPlayers=state.myRoster.map(id=>PLAYERS.find(p=>p.id===id)).filter(Boolean);
+  const cur=PICK_ORDER[state.currentPickIdx];
+  const nextMine=MY_PICKS.find(p=>p>state.currentPickIdx);
+  const picksUntil=nextMine?(nextMine-(state.currentPickIdx+1)):0;
+
+  const prompt=`You are the War Room analyst for a fantasy baseball draft.
+
+LEAGUE: 12-team H2H Each Category
+SCORING CATS: R, HR, RBI, SB, AVG, OPS | K, QS, W, SV, ERA, WHIP
+KEY: SB is scarcest (1.4x), QS rewards workhorses (1.2x), OPS rewards OBP+power (1.1x)
+
+CURRENT STATE:
+- Round ${cur?.round||1}, Pick ${cur?.pickInRound||1}
+- Picks until my turn: ${picksUntil}
+- My roster so far: ${myPlayers.map(p=>`${p.name} (${p.pos})`).join(', ')||'empty'}
+
+TOP 25 AVAILABLE PLAYERS (by war room score):
+${available.map(p=>`${p.name} (${p.pos}${p.pos2?'/'+p.pos2:''}, ${p.team}) WR:${p.wrScore} ADP:${p.adp}${p.flags.length?' FLAGS:'+p.flags.join(','):''}`).join('\n')}
+
+Give me my top 3 draft picks RIGHT NOW. For each, give:
+- Why they're the best choice given my roster needs and positional scarcity
+- Which of my 12 scoring categories they help
+- Any intelligence flags (ROY odds, WBC performance, service time, contract year)
+
+Respond ONLY with valid JSON, no markdown:
+{"picks":[{"id":1,"reason":"2 sentences max","cats":["SB","OPS"]},{"id":2,"reason":"...","cats":["K","QS"]},{"id":3,"reason":"...","cats":["HR","RBI"]}]}`;
+
+  try {
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:600,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const data=await res.json();
+    const text=data.content?.[0]?.text||'{}';
+    const clean=text.replace(/```json|```/g,'').trim();
+    const parsed=JSON.parse(clean);
+    state.recs=(parsed.picks||[]).map(r=>{
+      const p=PLAYERS.find(pl=>pl.id===r.id)||available[0];
+      return{id:p.id,name:p.name,pos:p.pos,team:p.team,wrScore:p.wrScore,reason:r.reason,cats:r.cats||[]};
+    });
+  } catch(e){
+    // Fallback: top 3 by war room score
+    const dIds=state.picks.map(p=>p.playerId);
+    const avail=PLAYERS.filter(p=>!dIds.includes(p.id));
+    state.recs=avail.slice(0,3).map(p=>({
+      id:p.id,name:p.name,pos:p.pos,team:p.team,wrScore:p.wrScore,
+      reason:`War Room Score ${p.wrScore}/99. ${p.flags.includes('st')?'Service time target — auto-add April 14. ':''} ${p.flags.includes('sb')||p.sb>20?'Elite SB contributor. ':''}Best available at position.`,
+      cats:p.pos==='RP'?['SV','ERA','WHIP']:p.pos==='SP'?['K','QS','W','ERA']:['R','HR','RBI']
+    }));
+  }
+  renderWRBody();
+  render(); // re-highlight recommended rows
+}
+
+// ── SORT + FILTER ─────────────────────────────────────────────────────────
+function setFilter(pos, btn){
+  state.filterPos=pos;
+  document.querySelectorAll('.ppill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function sortBy(col){
+  if(state.sortCol===col) state.sortDir=state.sortDir==='desc'?'asc':'desc';
+  else{state.sortCol=col;state.sortDir='desc';}
+  document.querySelectorAll('thead th').forEach(th=>{
+    th.classList.remove('sorted','asc');
+    if(th.getAttribute('onclick')===`sortBy('${col}')`){
+      th.classList.add('sorted');
+      if(state.sortDir==='asc') th.classList.add('asc');
+    }
+  });
+  render();
+}
+
+function switchTab(name, btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(name==='board') renderBoard();
+  if(name==='history') renderHistory();
+}
+
+// ── KEYBOARD SHORTCUT ─────────────────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  if(e.key==='n'&&e.metaKey){ e.preventDefault(); advanceOthers(); }
+  if(e.key==='a'&&e.metaKey){ e.preventDefault(); getAdvice(); }
+});
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+function init(){
+  startTimer();
+  update();
+  renderWRBody();
+  // Pre-fill some picks from the ESPN practice draft screenshots
+  // Bobby Witt Jr pick 1.1 (We're the Millers already picked him)
+  // In real use, user manually clicks DRAFT for each pick
+}
+
+init();
+</script>
+</body>
+</html>

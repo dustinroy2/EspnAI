@@ -1,0 +1,81 @@
+{
+  "generated": "2026-03-15T21:00:00",
+  "sources": ["Baseball Savant", "FanGraphs", "ESPN", "CBS Sports", "RotoBaller", "FantasyPros", "Yahoo Sports", "MLB.com", "SI", "Fantrax"],
+  "experts": {
+    "scout": {
+      "buy_low_hitters": [
+        {"name":"Ben Rice","team":"NYY","pos":"1B","barrel":15.4,"hard_hit":55.8,"xwoba":0.390,"woba":0.332,"delta":0.058,"xslg":0.557,"slg":0.499,"adp":140,"take":"xwOBA +.058 gap (4th largest in MLB). Hard-hit rate #7 in MLB. Expected .283/.951 vs actual .255/.836 — massive breakout imminent.","source":"Baseball Savant xStats"},
+        {"name":"Jo Adell","team":"LAA","pos":"OF","barrel":17.2,"hard_hit":49.6,"ev":91.7,"adp":70,"take":"Career-best barrel rate (17.2%), exit velo (91.7 mph), hard-hit rate (49.6%). The breakout is backed by elite contact quality.","source":"Baseball Savant"},
+        {"name":"Austin Riley","team":"ATL","pos":"3B","barrel":15.2,"hard_hit":53.4,"ev":93.3,"adp":50,"take":"Elite barrel rate and exit velo despite injuries. When healthy he's .280/35HR. The barrels haven't declined — just games played.","source":"Baseball Savant"},
+        {"name":"Vinnie Pasquantino","team":"KC","pos":"1B","barrel":10.8,"squared_up":30.1,"ev":90.9,"xslg":0.463,"adp":95,"take":".463 xSLG, 90.9 mph EV, 30.1% squared-up rate. ADP says R8, barrels say R4-5 power profile.","source":"Baseball Savant Bat Tracking"},
+        {"name":"Bryan Reynolds","team":"PIT","pos":"OF","xwoba":0.425,"woba":0.310,"delta":0.115,"ev":91.2,"adp":90,"take":"Career-best 91.2 mph avg EV and .425 xwOBA. Monthly wOBA of .282/.321/.308 was terrible luck. Largest xwOBA gap among OFs.","source":"FanGraphs"},
+        {"name":"Andres Gimenez","team":"CLE","pos":"2B","xba":0.252,"ba":0.210,"delta":0.042,"sb":30,"adp":100,"take":".210 BA vs .252 xBA. Career .253 hitter with 30-steal upside. Elite buy-low at scarcest position (2B).","source":"Baseball Savant"},
+        {"name":"Colson Montgomery","team":"CHW","pos":"SS","xwoba":0.341,"barrel":14.5,"bat_speed":77.0,"max_ev":111.4,"adp":155,"take":".341 xwOBA, 14.5% barrel rate, 77 mph bat speed, 111.4 mph max EV (top 8% MLB). 21 HR in 71 games — full season = 30+ HR.","source":"Baseball Savant Bat Tracking"},
+        {"name":"George Springer","team":"TOR","pos":"OF","barrel":15.8,"hard_hit":46.7,"adp":120,"take":"Career-high barrel rate (15.8%) and hard-hit rate (46.7%) at age 36. One more productive year at a massive discount.","source":"Baseball Savant"},
+        {"name":"Matt Wallner","team":"MIN","pos":"OF","ev50":"Comps to Vlad/Cruz","barrel":14.0,"adp":125,"take":"EV50 comps to Vladdy and Oneil Cruz. Hits the ball as hard as anyone but ADP is round 10.","source":"Baseball Savant EV50"},
+        {"name":"Marcell Ozuna","team":"ATL","pos":"DH","xwoba":0.354,"barrel":11.4,"adp":85,"take":".354 xwOBA (84th percentile), 11.4% barrel rate despite down year. 25+ HR hiding in the expected stats.","source":"Baseball Savant"},
+        {"name":"Salvador Perez","team":"KC","pos":"C","xwoba":0.403,"xba":0.331,"xslg":0.608,"slg":0.525,"adp":75,"take":".525 SLG vs .608 xSLG — largest gap in baseball. Elite xwOBA (.403) at catcher. 30+ HR with AVG bump incoming.","source":"Baseball Savant"},
+        {"name":"Marcus Semien","team":"NYM","pos":"2B","babip":0.251,"ld_rate":20.2,"adp":160,"take":".251 BABIP (5th-lowest among qualifiers) despite 20.2% line drive rate. Due for a major bounce playing half games at Globe Life.","source":"FanGraphs"}
+      ],
+      "sell_high_avoid": [
+        {"name":"Andrew Abbott","team":"CIN","pos":"SP","era":2.87,"siera":4.31,"k_rate":21,"gb_rate":31,"adp":90,"take":"2.87 ERA vs 4.31 SIERA — largest gap in MLB. 21% K rate (below avg), lowest GB rate in league (31%). Pitches at GABP. Massive regression incoming.","source":"FanGraphs SIERA"},
+        {"name":"Josh Naylor","team":"SEA","pos":"1B","babip":0.315,"barrel":"below avg","hard_hit":"below avg","adp":50,"take":"Below-avg barrel rate, below-avg hard-hit rate. .315 BABIP is 30pts above career norm. Projects .271/.771. Overvalued.","source":"Baseball Savant + FanGraphs"},
+        {"name":"Jose Altuve","team":"HOU","pos":"2B","xba_rank":"11th worst","xwoba_rank":"3rd worst","adp":100,"take":"Career-low exit velo. Barrel/hard-hit declining 3 years. xBA 11th worst, xwOBA 3rd worst among 600+ PA. Projects .237/.684.","source":"Baseball Savant"},
+        {"name":"Christian Yelich","team":"MIL","pos":"OF","ev":"career-low","hard_hit":"lowest since 2017","adp":85,"take":"29 HR masked career-low exit velo, lowest hard-hit since 2017. Projects .245/.769 vs actual .274/.795.","source":"Baseball Savant"},
+        {"name":"Nick Kurtz","team":"OAK","pos":"1B","adp":20,"take":"ADP 20 is absurdly high. First base is deep — Harper, Naylor, Walker all carry similar or better profiles at lower cost. Paying rookie premium.","source":"FantasyPros ADP Analysis"},
+        {"name":"Cal Raleigh","team":"SEA","pos":"C","adp":25,"take":"Overpriced for a limited-category contributor. K concerns, AVG/OPS drag. Large regression projected from career year.","source":"CBS Sports Bust Model"},
+        {"name":"Jacob deGrom","team":"TEX","pos":"SP","babip_against":0.194,"hr_per_9":1.4,"age":38,"adp":50,"take":"Age 38. 1.4 HR/9 masked by .194 BABIP against — that BABIP regresses hard. Premium price for premium risk.","source":"FanGraphs"},
+        {"name":"Logan Webb","team":"SF","pos":"SP","k_rate":"sub-23% 3 straight years","adp":60,"take":"Sub-23% K rate 3 consecutive seasons before spiking to 26.2%. Likely an outlier, not a new norm.","source":"FanGraphs"},
+        {"name":"Gavin Williams","team":"CLE","pos":"SP","era":3.06,"xera":4.30,"fip":4.39,"adp":100,"take":"3.06 ERA but 4.30 xERA and 4.39 FIP. Surface stats are deceiving.","source":"Baseball Savant + FanGraphs"},
+        {"name":"Jonathan Aranda","team":"TB","pos":"1B","babip":0.409,"adp":200,"take":".409 BABIP. Lacks speed/athleticism to sustain it. Regression to .250-.260 AVG coming.","source":"FanGraphs"}
+      ],
+      "buy_low_pitchers": [
+        {"name":"Dylan Cease","team":"TOR","pos":"SP","era":4.55,"xera":3.46,"kbb":20.0,"k9":10.5,"adp":80,"take":"4.55 ERA but 3.46 xERA — nearly a full run of bad luck. 20% K-BB%, 29.8% K rate. Blue Jays gave him $210M for a reason.","source":"Baseball Savant xERA"},
+        {"name":"Eury Perez","team":"MIA","pos":"SP","stuff_plus":118,"era":"3.86 2H","whip":"0.96 2H","k9":9.9,"adp":155,"take":"8th-highest Stuff+ (118) at age 22. Post-July: 3.86 ERA, 0.96 WHIP. Per-inning dominance is ace-caliber. ADP ~155 is criminal.","source":"FanGraphs Stuff+"},
+        {"name":"Shane Baz","team":"BAL","pos":"SP","stuff_plus":107,"stuff_curve":125,"velo":97,"adp":200,"take":"97 mph fastball, 107 Stuff+, 125 Stuff+ curveball. Environment upgrade to Baltimore. 175+ K upside at ADP 200.","source":"FanGraphs Stuff+"},
+        {"name":"Hunter Greene","team":"CIN","pos":"SP","stuff_plus":120,"stuff_fb":117,"stuff_sl":137,"sl_k_rate":37,"adp":25,"take":"Led all 90+ IP pitchers in Stuff+ (120). 117 Stuff+ FB, 137 Stuff+ slider (37% K rate). Cy Young dark horse.","source":"FanGraphs Stuff+"},
+        {"name":"MacKenzie Gore","team":"TEX","pos":"SP","swstr_sl":19.5,"swstr_ch":20.0,"swstr_ct":18.8,"kbb":"19% 1H","adp":125,"take":"Only SP with 3 pitches at 18%+ SwStr rate. 138:35 K:BB first half (3.02 ERA). Second half collapsed but stuff is SP2.","source":"Baseball Savant SwStr"},
+        {"name":"Emmet Sheehan","team":"LAD","pos":"SP","kbb":23.0,"era":2.82,"whip":0.97,"swstr":16.2,"adp":110,"take":"2.82 ERA, 0.97 WHIP, 23% K-BB%, 16.2% SwStr in 73 IP. Rare elite swing-and-miss plus command at a discount.","source":"FanGraphs K-BB%"},
+        {"name":"Kyle Bradish","team":"BAL","pos":"SP","kbb":25.9,"era":2.65,"whip":1.05,"k9":10.8,"adp":55,"take":"25.9% K-BB% (2nd only to Skubal) in 71 IP. If healthy, SP2 production at SP4 price.","source":"FanGraphs K-BB%"},
+        {"name":"Edward Cabrera","team":"MIA","pos":"SP","chase_rate":"upper-half","whiff_rate":"upper-half","k_rate":"upper-half","adp":192,"take":"Chase rate, whiff rate, K rate all above average. Results will catch up to stuff. ADP 192 = smash value.","source":"Baseball Savant Pitch Quality"},
+        {"name":"Cam Schlittler","team":"NYY","pos":"SP","era":2.96,"k_rate":27.6,"velo":98,"adp":134,"take":"2.96 ERA, 27.6% K rate, 98 mph fastball. Legitimate ace upside at ADP 134.","source":"ESPN Breakout Model"}
+      ],
+      "sprint_speed_sb": [
+        {"name":"Jose Caballero","team":"NYY","pos":"2B/SS","speed":30.0,"sb":49,"sb_games":126,"adp":155,"take":"Led MLB with 49 SB in 126 games — best SB/PA ratio in baseball. Pure steals cheat code.","source":"Savant Sprint Speed"},
+        {"name":"Victor Scott II","team":"STL","pos":"OF","speed":30.2,"sb":34,"sb_pct":89,"adp":180,"take":"30.2 ft/sec, 34/38 SB attempts (89%). Zero power (.216 BA) but steals are free.","source":"Savant Sprint Speed"},
+        {"name":"Chandler Simpson","team":"TB","pos":"CF","speed":30.5,"sb_proj":35,"adp":154,"take":"Elite speed. If he gets ABs, he steals 30+. Late-round SB fix.","source":"Savant Sprint Speed"},
+        {"name":"Daylen Lile","team":"MIL","pos":"OF","speed":29.7,"adp":220,"take":"29.7 ft/sec (tied 14th MLB). Hit .391 with 6 HR and 7 triples in Sept. Watch lineup spot.","source":"Savant Sprint Speed"},
+        {"name":"Nasim Nunez","team":"WAS","pos":"2B","speed":29.8,"sb_aaa":36,"sb_aaa_games":63,"adp":999,"take":"98th percentile sprint, 36 SB in 63 AAA games. Projects 30+ SB if he gets 300 AB. Essentially free.","source":"Savant Sprint Speed"},
+        {"name":"Brice Turang","team":"MIL","pos":"2B","bat_speed_gain":2.8,"adp":130,"take":"Gained more bat speed than any qualified hitter (+2.8 mph). wOBA jumped 52 points. Speed + emerging power.","source":"Savant Bat Tracking"}
+      ],
+      "spring_training": [
+        {"name":"Jac Caglianone","team":"KC","pos":"1B","signal":"120.2 mph double, 116.5 mph double, 115.2 mph/460-ft HR. EV90 of 116.5 mph — hitting harder than nearly anyone alive.","source":"MLB.com Spring Statcast"},
+        {"name":"Zac Veen","team":"COL","pos":"OF","signal":"Added 40+ lbs. 95.6 mph avg EV, 58.3% hard-hit rate. 113.3 mph, 468-ft walk-off HR (longest of spring).","source":"MLB.com Spring Statcast"},
+        {"name":"Roki Sasaki","team":"LAD","pos":"SP","signal":"Threw 11 cutters — completely new pitch replacing ineffective slider. Monitor closely.","source":"ESPN Spring Training"},
+        {"name":"Ryan Weathers","team":"NYY","pos":"SP","signal":"Big breakout candidate. Arsenal compares to Luzardo, Skubal, Crochet.","source":"ESPN Breakout Model"},
+        {"name":"Jordon Abell","team":"MIN","pos":"SP","signal":"Velo up 1-1.5 mph on FB and slider. 11 K, 0 BB in 6 spring IP. 2.20 ERA, 10.4 K/9 at Triple-A age 23.","source":"Baseball America"},
+        {"name":"Carlos Estevez","team":"KC","pos":"RP","signal":"WARNING: -6.9 mph velocity drop this spring. Major concern for closer role.","source":"RotoWire Velocity Tracker"},
+        {"name":"Mike Trout","team":"LAA","pos":"OF","signal":"Sprint speed 29.9 ft/sec, just below elite 30+. Health and athleticism appear restored.","source":"Savant Sprint Speed"}
+      ],
+      "injury_flags": [
+        {"name":"Pablo Lopez","team":"MIN","pos":"SP","injury":"Torn UCL","timeline":"Out entire 2026","action":"DO NOT DRAFT","source":"ESPN Injury DB"},
+        {"name":"Corbin Burnes","team":"ARI","pos":"SP","injury":"Tommy John surgery","timeline":"July 2026 earliest","action":"IL stash only — don't draft before R18","source":"CBS Sports"},
+        {"name":"Gerrit Cole","team":"NYY","pos":"SP","injury":"Elbow ligament tear / internal brace","timeline":"May-June 2026","action":"Discount ADP heavily, IL stash R15+","source":"ESPN"},
+        {"name":"Spencer Strider","team":"ATL","pos":"SP","injury":"UCL, limited to 79 IP in 2025","timeline":"Full season but risk","action":"Don't draft before R10 without 3 other SPs","source":"FantasyPros"},
+        {"name":"Josh Hader","team":"HOU","pos":"RP","injury":"Left biceps inflammation + 2025 shoulder strain","timeline":"Uncertain","action":"AVOID — Bryan Abreu is the real closer","source":"ESPN"},
+        {"name":"Blake Snell","team":"?","pos":"SP","injury":"Shoulder issues, only 11 starts in 2025","timeline":"50%+ chance sub-100 IP","action":"Fade in drafts","source":"FantasyPros"},
+        {"name":"Garrett Crochet","team":"BOS","pos":"SP","injury":"Career-high workload + deep playoff run","timeline":"Fatigue risk","action":"Still an ace but monitor pitch counts early","source":"Multiple"},
+        {"name":"Corbin Carroll","team":"ARI","pos":"OF","injury":"Hamate bone surgery","timeline":"Opening Day return target","action":"Hamate injuries sap power for months — discount","source":"ESPN"}
+      ],
+      "closer_situations": [
+        {"team":"HOU","closer":"Bryan Abreu","backup":"Josh Hader (injured)","status":"Abreu is THE closer. Hader has biceps + shoulder issues.","volatility":"low"},
+        {"team":"LAD","closer":"Robert Stephenson","backup":"Kirby Yates, Drew Pomeranz","status":"True committee. Could be streaming gold with 7 transactions.","volatility":"high"},
+        {"team":"MIL","closer":"Trevor Megill","backup":"Abner Uribe","status":"Uribe is top closer-in-waiting. Could take over by May.","volatility":"high"},
+        {"team":"TB","closer":"Griffin Jax","backup":"Garrett Cleavinger","status":"Committee split. Stream both.","volatility":"high"},
+        {"team":"CLE","closer":"Cade Smith","backup":"Emmanuel Clase (suspended)","status":"Smith has job. Monitor if Clase returns.","volatility":"medium"},
+        {"team":"DET","closer":"Kenley Jansen","backup":"Will Vest, Kyle Finnegan","status":"Jansen's job to lose. Age 38 concern.","volatility":"medium"},
+        {"team":"CHW","closer":"Seranthony Dominguez","backup":"Jordan Leasure","status":"Closer on bad team = limited save opps.","volatility":"low"}
+      ]
+    }
+  }
+}

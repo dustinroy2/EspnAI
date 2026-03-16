@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The Dugout — Next Level</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red:#cc0000; --red-soft:#fef2f2; --red-hover:#aa0000;
+    --green:#059669; --green-soft:#ecfdf5;
+    --blue:#2563eb; --blue-soft:#eff6ff;
+    --yellow:#d97706; --yellow-soft:#fffbeb;
+    --purple:#7c3aed;
+    --bg:#f5f6f8; --white:#ffffff; --card:#ffffff;
+    --border:#e5e7eb; --border-light:#f3f4f6;
+    --text:#111827; --text2:#374151; --text3:#6b7280; --text4:#9ca3af;
+    --radius:8px; --shadow:0 1px 3px rgba(0,0,0,0.06);
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); overflow:hidden; height:100vh; display:flex; flex-direction:column; }
+
+  /* ═══ TOP NAV ═══ */
+  .topnav {
+    height:44px; background:var(--white); border-bottom:1px solid var(--border);
+    display:flex; align-items:center; padding:0 16px; flex-shrink:0; z-index:100;
+  }
+  .logo { font-weight:800; font-size:15px; color:var(--red); letter-spacing:0.5px; margin-right:20px; }
+  .nav-tabs { display:flex; gap:0; height:100%; }
+  .ntab {
+    padding:0 16px; font-size:11px; font-weight:600; color:var(--text3);
+    display:flex; align-items:center; gap:5px; cursor:pointer;
+    border-bottom:2px solid transparent; transition:all 0.15s;
+  }
+  .ntab:hover { color:var(--text); }
+  .ntab.active { color:var(--red); border-bottom-color:var(--red); }
+  .ntab .dot { width:6px; height:6px; border-radius:50%; background:var(--green); }
+  .nav-right { margin-left:auto; display:flex; align-items:center; gap:12px; }
+  .nav-badge { font-size:9px; font-weight:700; padding:3px 8px; border-radius:10px; }
+  .nav-status { font-size:10px; color:var(--text3); }
+
+  /* ═══ OTC STRIP ═══ */
+  .otc {
+    background:var(--red); flex-shrink:0;
+    display:flex; align-items:center; padding:0 16px; height:52px;
+    transition:height 0.3s, opacity 0.3s; overflow:hidden;
+  }
+  .otc.hidden { height:0; opacity:0; padding:0; }
+  .otc-round { color:white; margin-right:16px; text-align:center; }
+  .otc-round .label { font-size:8px; font-weight:600; opacity:0.6; text-transform:uppercase; letter-spacing:1px; }
+  .otc-round .num { font-size:26px; font-weight:800; line-height:1; }
+  .otc-sep { width:1px; height:32px; background:rgba(255,255,255,0.2); margin:0 12px; }
+  .otc-picks { display:flex; gap:3px; flex:1; overflow-x:auto; padding:4px 0; }
+  .otc-picks::-webkit-scrollbar { display:none; }
+  .pk {
+    min-width:58px; padding:4px 6px; border-radius:5px; text-align:center;
+    background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.1);
+    flex-shrink:0; transition:all 0.15s;
+  }
+  .pk .pk-num { font-size:11px; font-weight:700; color:white; }
+  .pk .pk-name { font-size:8px; color:rgba(255,255,255,0.6); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:52px; }
+  .pk.done { opacity:0.25; }
+  .pk.current { background:rgba(255,255,255,0.25); border-color:rgba(255,255,255,0.4); }
+  .pk.mine { background:rgba(255,215,0,0.15); border-color:rgba(255,215,0,0.5); }
+  .pk.mine .pk-num { color:#ffd700; }
+  .pk.mine .pk-name { color:rgba(255,215,0,0.8); }
+  .otc-timer { color:white; font-size:28px; font-weight:800; font-variant-numeric:tabular-nums; margin-left:12px; min-width:56px; text-align:right; }
+
+  /* ═══ PANEL TOGGLES ═══ */
+  .toggles {
+    display:flex; align-items:center; gap:6px; padding:6px 16px;
+    background:var(--white); border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .toggle-btn {
+    padding:4px 10px; font-size:10px; font-weight:600; border-radius:4px;
+    border:1px solid var(--border); background:var(--white); cursor:pointer;
+    color:var(--text3); transition:all 0.15s; font-family:inherit;
+  }
+  .toggle-btn.active { background:var(--text); color:white; border-color:var(--text); }
+  .toggle-btn:hover { border-color:var(--text3); }
+  .toggles .sep { width:1px; height:16px; background:var(--border); margin:0 4px; }
+  .toggles .label { font-size:9px; font-weight:600; color:var(--text4); text-transform:uppercase; letter-spacing:1px; }
+
+  /* ═══ MAIN LAYOUT ═══ */
+  .main { flex:1; display:flex; overflow:hidden; }
+  .panel { overflow-y:auto; transition:width 0.3s, opacity 0.3s; }
+  .panel.hidden { width:0 !important; opacity:0; overflow:hidden; padding:0 !important; border:none !important; }
+
+  /* Left Panel: Roster */
+  .panel-left {
+    width:240px; background:var(--white); border-right:1px solid var(--border);
+    padding:12px; flex-shrink:0;
+  }
+  .pl-title { font-size:12px; font-weight:700; margin-bottom:8px; display:flex; justify-content:space-between; }
+  .pl-section { font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--text4); margin:10px 0 4px; }
+  .pl-slot { display:flex; gap:6px; padding:3px 0; font-size:11px; border-bottom:1px solid var(--border-light); align-items:center; }
+  .pl-pos { width:22px; font-size:9px; font-weight:700; color:var(--text4); }
+  .pl-name { font-weight:500; }
+  .pl-name.empty { color:var(--text4); font-style:italic; }
+  .pl-rd { margin-left:auto; font-size:9px; color:var(--text4); }
+
+  .pl-cat { display:flex; align-items:center; gap:4px; padding:2px 0; }
+  .pl-cat-label { width:28px; font-size:9px; font-weight:700; }
+  .pl-cat-bar { flex:1; height:4px; background:var(--border-light); border-radius:2px; overflow:hidden; }
+  .pl-cat-fill { height:100%; border-radius:2px; transition:width 0.4s; }
+  .pl-cat-val { width:18px; text-align:right; font-size:9px; font-variant-numeric:tabular-nums; }
+
+  .pl-warning {
+    padding:5px 8px; border-radius:4px; font-size:9px; font-weight:600; margin-top:4px;
+  }
+
+  /* Center Panel: Board */
+  .panel-center { flex:1; padding:12px; overflow-y:auto; background:var(--bg); }
+  .board-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .board-title { font-size:13px; font-weight:700; }
+  .board-tabs { display:flex; gap:3px; }
+  .btab {
+    padding:4px 10px; font-size:10px; font-weight:600; border-radius:4px;
+    background:var(--white); border:1px solid var(--border); cursor:pointer; color:var(--text3);
+  }
+  .btab.active { background:var(--text); color:white; border-color:var(--text); }
+
+  /* Position columns */
+  .pos-board { display:grid; grid-template-columns:repeat(8,1fr); gap:1px; background:var(--border); border-radius:var(--radius); overflow:hidden; }
+  .pos-col { background:var(--white); }
+  .pos-col-hdr {
+    padding:6px 4px; text-align:center; font-size:10px; font-weight:700;
+    border-bottom:2px solid; position:sticky; top:0; background:var(--white); z-index:2;
+  }
+  .pos-col-hdr .count { font-weight:400; color:var(--text4); font-size:9px; }
+  .pp {
+    padding:4px 5px; border-bottom:1px solid var(--border-light); font-size:9px;
+    cursor:pointer; transition:all 0.1s; border-left:3px solid transparent;
+  }
+  .pp:hover { background:#f0f4ff; }
+  .pp.drafted { opacity:0.12; text-decoration:line-through; pointer-events:none; }
+  .pp.wishlist { border-left-color:var(--yellow); background:var(--yellow-soft); }
+  .pp.tier-e { border-left-color:#ef4444; background:#fef2f2; }
+  .pp.tier-s { border-left-color:#3b82f6; background:#eff6ff; }
+  .pp.tier-m { border-left-color:#059669; background:#ecfdf5; }
+  .pp.tier-l { border-left-color:#9ca3af; background:#fafbfc; }
+  .pp-name { font-weight:700; font-size:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pp-stat { font-size:8px; color:var(--text3); font-variant-numeric:tabular-nums; }
+  .pp-adp { font-size:8px; color:var(--text4); }
+  .pp-tag { font-size:7px; font-weight:700; padding:0 3px; border-radius:2px; display:inline-block; }
+
+  /* Right Panel: War Room Feed */
+  .panel-right {
+    width:300px; background:var(--white); border-left:1px solid var(--border);
+    flex-shrink:0; display:flex; flex-direction:column;
+  }
+  .pr-tabs { display:flex; border-bottom:1px solid var(--border); flex-shrink:0; }
+  .pr-tab {
+    flex:1; padding:8px 4px; font-size:9px; font-weight:600; text-align:center;
+    cursor:pointer; color:var(--text4); border-bottom:2px solid transparent;
+    text-transform:uppercase; letter-spacing:0.5px;
+  }
+  .pr-tab.active { color:var(--red); border-bottom-color:var(--red); }
+  .pr-feed { flex:1; overflow-y:auto; }
+  .fi {
+    padding:8px 12px; border-bottom:1px solid var(--border-light);
+    border-left:3px solid transparent; transition:all 0.1s;
+  }
+  .fi:hover { background:var(--bg); }
+  .fi.crit { border-left-color:#ef4444; background:var(--red-soft); }
+  .fi.good { border-left-color:var(--green); }
+  .fi.warn { border-left-color:var(--yellow); }
+  .fi.info { border-left-color:var(--blue); }
+  .fi-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:2px; }
+  .fi-expert { font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; }
+  .fi-time { font-size:8px; color:var(--text4); }
+  .fi-tag { display:inline-block; font-size:7px; font-weight:700; padding:1px 5px; border-radius:2px; margin-right:3px; }
+  .fi-tag.buy { background:var(--green-soft); color:var(--green); }
+  .fi-tag.sell { background:var(--red-soft); color:var(--red); }
+  .fi-tag.watch { background:var(--yellow-soft); color:var(--yellow); }
+  .fi-tag.alert { background:var(--red-soft); color:var(--red); }
+  .fi-tag.stash { background:#faf5ff; color:var(--purple); }
+  .fi-body { font-size:10px; color:var(--text2); line-height:1.4; }
+  .fi-source { font-size:8px; color:var(--text4); margin-top:2px; }
+
+  /* ═══ RESPONSIVE ═══ */
+  @media (max-width:1200px) {
+    .panel-left { width:200px; }
+    .panel-right { width:260px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ TOP NAV ═══════════ -->
+<div class="topnav">
+  <div class="logo">THE DUGOUT</div>
+  <div class="nav-tabs">
+    <div class="ntab">Hub</div>
+    <div class="ntab">Draft Prep</div>
+    <div class="ntab active">Draft Live <span class="dot"></span></div>
+    <div class="ntab">War Room</div>
+    <div class="ntab">Intel</div>
+    <div class="ntab">My Team</div>
+  </div>
+  <div class="nav-right">
+    <span class="nav-badge" style="background:var(--red-soft);color:var(--red)">● LIVE — Polling ESPN</span>
+    <span class="nav-status">We're the Millers · Pick 9/12 · Field of Dreams League</span>
+  </div>
+</div>
+
+<!-- ═══════════ OTC STRIP ═══════════ -->
+<div class="otc" id="otcStrip">
+  <div class="otc-round">
+    <div class="label">Round</div>
+    <div class="num">3</div>
+  </div>
+  <div class="otc-sep"></div>
+  <div class="otc-picks">
+    <div class="pk done"><div class="pk-num">25</div><div class="pk-name">Machado</div></div>
+    <div class="pk done"><div class="pk-num">26</div><div class="pk-name">Alonso</div></div>
+    <div class="pk done"><div class="pk-num">27</div><div class="pk-name">Alvarez</div></div>
+    <div class="pk done"><div class="pk-num">28</div><div class="pk-name">H. Brown</div></div>
+    <div class="pk done"><div class="pk-num">29</div><div class="pk-name">Raleigh</div></div>
+    <div class="pk done"><div class="pk-num">30</div><div class="pk-name">Yamamoto</div></div>
+    <div class="pk done"><div class="pk-num">31</div><div class="pk-name">deGrom</div></div>
+    <div class="pk current"><div class="pk-num">32</div><div class="pk-name">On Clock</div></div>
+    <div class="pk mine"><div class="pk-num">33</div><div class="pk-name">★ YOU</div></div>
+    <div class="pk"><div class="pk-num">34</div><div class="pk-name">Team 10</div></div>
+    <div class="pk"><div class="pk-num">35</div><div class="pk-name">Team 11</div></div>
+    <div class="pk"><div class="pk-num">36</div><div class="pk-name">Team 12</div></div>
+  </div>
+  <div class="otc-sep"></div>
+  <div class="otc-timer">1:22</div>
+</div>
+
+<!-- ═══════════ PANEL TOGGLES ═══════════ -->
+<div class="toggles">
+  <span class="label">Panels</span>
+  <button class="toggle-btn active" onclick="togglePanel('left',this)">Roster</button>
+  <button class="toggle-btn active" onclick="togglePanel('center',this)">Board</button>
+  <button class="toggle-btn active" onclick="togglePanel('right',this)">War Room</button>
+  <span class="sep"></span>
+  <span class="label">Board</span>
+  <button class="toggle-btn active" id="tbPos">Position</button>
+  <button class="toggle-btn" id="tbCat">Category</button>
+  <button class="toggle-btn" id="tbTable">Table</button>
+  <span class="sep"></span>
+  <span class="label">Draft</span>
+  <button class="toggle-btn active" onclick="toggleOTC(this)">OTC Strip</button>
+  <span style="margin-left:auto;font-size:9px;color:var(--text4)">
+    <span style="display:inline-block;width:8px;height:8px;border-left:3px solid #ef4444;background:#fef2f2;margin-right:2px"></span>Elite
+    <span style="display:inline-block;width:8px;height:8px;border-left:3px solid #3b82f6;background:#eff6ff;margin:0 2px 0 6px"></span>Solid
+    <span style="display:inline-block;width:8px;height:8px;border-left:3px solid #059669;background:#ecfdf5;margin:0 2px 0 6px"></span>Mid
+    <span style="display:inline-block;width:8px;height:8px;border-left:3px solid #9ca3af;background:#fafbfc;margin:0 2px 0 6px"></span>Late
+    <span style="display:inline-block;width:8px;height:8px;border-left:3px solid var(--yellow);background:var(--yellow-soft);margin:0 2px 0 6px"></span>Wishlist
+  </span>
+</div>
+
+<!-- ═══════════ MAIN THREE-PANEL LAYOUT ═══════════ -->
+<div class="main">
+
+  <!-- LEFT: Roster + Categories + Warnings -->
+  <div class="panel panel-left" id="panel-left">
+    <div class="pl-title">Your Roster <span style="color:var(--text4);font-weight:400">2/23</span></div>
+
+    <div class="pl-section">Batting</div>
+    <div class="pl-slot"><span class="pl-pos">SS</span><span class="pl-name" style="color:var(--red)">Jose Ramirez</span><span class="pl-rd">R1</span></div>
+    <div class="pl-slot"><span class="pl-pos">SS</span><span class="pl-name" style="color:var(--red)">Gunnar Henderson</span><span class="pl-rd">R2</span></div>
+    <div class="pl-slot"><span class="pl-pos">1B</span><span class="pl-name empty">Pick 33 ←</span></div>
+    <div class="pl-slot"><span class="pl-pos">3B</span><span class="pl-name empty">—</span></div>
+    <div class="pl-slot"><span class="pl-pos">2B</span><span class="pl-name empty">—</span></div>
+    <div class="pl-slot"><span class="pl-pos">OF</span><span class="pl-name empty">—</span></div>
+    <div class="pl-slot"><span class="pl-pos">OF</span><span class="pl-name empty">—</span></div>
+    <div class="pl-slot"><span class="pl-pos">OF</span><span class="pl-name empty">—</span></div>
+    <div class="pl-slot"><span class="pl-pos">UT</span><span class="pl-name empty">—</span></div>
+    <div class="pl-slot"><span class="pl-pos">UT</span><span class="pl-name empty">—</span></div>
+    <div class="pl-slot"><span class="pl-pos">C</span><span class="pl-name empty">—</span></div>
+
+    <div class="pl-section">Pitching</div>
+    <div class="pl-slot"><span class="pl-pos">SP</span><span class="pl-name empty">—</span></div>
+    <div class="pl-slot"><span class="pl-pos">SP</span><span class="pl-name empty">—</span></div>
+    <div class="pl-slot"><span class="pl-pos">SP</span><span class="pl-name empty">—</span></div>
+    <div class="pl-slot"><span class="pl-pos">RP</span><span class="pl-name empty">—</span></div>
+    <div class="pl-slot"><span class="pl-pos">RP</span><span class="pl-name empty">—</span></div>
+
+    <div class="pl-section" style="margin-top:12px">Categories</div>
+    <div class="pl-cat"><span class="pl-cat-label">R</span><div class="pl-cat-bar"><div class="pl-cat-fill" style="width:18%;background:var(--red)"></div></div><span class="pl-cat-val" style="color:var(--red)">18</span></div>
+    <div class="pl-cat"><span class="pl-cat-label">HR</span><div class="pl-cat-bar"><div class="pl-cat-fill" style="width:23%;background:var(--red)"></div></div><span class="pl-cat-val" style="color:var(--red)">23</span></div>
+    <div class="pl-cat"><span class="pl-cat-label">RBI</span><div class="pl-cat-bar"><div class="pl-cat-fill" style="width:20%;background:var(--red)"></div></div><span class="pl-cat-val" style="color:var(--red)">20</span></div>
+    <div class="pl-cat"><span class="pl-cat-label" style="color:var(--yellow)">SB</span><div class="pl-cat-bar"><div class="pl-cat-fill" style="width:47%;background:var(--yellow)"></div></div><span class="pl-cat-val" style="color:var(--yellow)">47</span></div>
+    <div class="pl-cat"><span class="pl-cat-label">AVG</span><div class="pl-cat-bar"><div class="pl-cat-fill" style="width:95%;background:var(--green)"></div></div><span class="pl-cat-val" style="color:var(--green)">95</span></div>
+    <div class="pl-cat"><span class="pl-cat-label">OPS</span><div class="pl-cat-bar"><div class="pl-cat-fill" style="width:98%;background:var(--green)"></div></div><span class="pl-cat-val" style="color:var(--green)">98</span></div>
+    <div class="pl-cat"><span class="pl-cat-label" style="color:var(--red)">K</span><div class="pl-cat-bar"><div class="pl-cat-fill" style="width:0%"></div></div><span class="pl-cat-val" style="color:var(--red)">0</span></div>
+    <div class="pl-cat"><span class="pl-cat-label" style="color:var(--red)">QS</span><div class="pl-cat-bar"><div class="pl-cat-fill" style="width:0%"></div></div><span class="pl-cat-val" style="color:var(--red)">0</span></div>
+    <div class="pl-cat"><span class="pl-cat-label">W</span><div class="pl-cat-bar"><div class="pl-cat-fill" style="width:0%;"></div></div><span class="pl-cat-val" style="color:var(--red)">0</span></div>
+    <div class="pl-cat"><span class="pl-cat-label">SV</span><div class="pl-cat-bar"><div class="pl-cat-fill" style="width:0%;"></div></div><span class="pl-cat-val" style="color:var(--red)">0</span></div>
+    <div class="pl-cat"><span class="pl-cat-label" style="color:var(--red)">ERA</span><div class="pl-cat-bar"><div class="pl-cat-fill" style="width:0%"></div></div><span class="pl-cat-val" style="color:var(--red)">0</span></div>
+    <div class="pl-cat"><span class="pl-cat-label">WHIP</span><div class="pl-cat-bar"><div class="pl-cat-fill" style="width:0%;"></div></div><span class="pl-cat-val" style="color:var(--red)">0</span></div>
+
+    <div class="pl-section" style="margin-top:12px">Warnings</div>
+    <div class="pl-warning" style="background:var(--red-soft);color:var(--red)">⚠ Only 5 elite SB sources remain</div>
+    <div class="pl-warning" style="background:var(--yellow-soft);color:var(--yellow)">⚠ No SP drafted — aces are disappearing</div>
+    <div class="pl-warning" style="background:var(--blue-soft);color:var(--blue)">ℹ 2B scarcest position — 25 in top 300</div>
+
+    <div class="pl-section" style="margin-top:12px">Wishlist</div>
+    <div class="pl-slot"><span class="pl-pos" style="color:var(--yellow)">★</span><span class="pl-name">Kyle Tucker</span><span class="pl-rd">ADP 12</span></div>
+    <div class="pl-slot"><span class="pl-pos" style="color:var(--yellow)">★</span><span class="pl-name">Eury Perez</span><span class="pl-rd">ADP 155</span></div>
+    <div class="pl-slot"><span class="pl-pos" style="color:var(--yellow)">★</span><span class="pl-name">Jose Caballero</span><span class="pl-rd">ADP 155</span></div>
+  </div>
+
+  <!-- CENTER: Board -->
+  <div class="panel panel-center" id="panel-center">
+    <div class="board-header">
+      <div class="board-title">Draft Board — Round 3, Pick 33 <span style="font-weight:400;color:var(--text3);font-size:11px">(5 picks until your turn)</span></div>
+    </div>
+
+    <div class="pos-board">
+      <!-- C -->
+      <div class="pos-col">
+        <div class="pos-col-hdr" style="color:var(--yellow);border-color:var(--yellow)">C <span class="count">4</span></div>
+        <div class="pp tier-s"><div class="pp-name">Cal Raleigh</div><div class="pp-stat">32HR .228 · 19.5%brl</div><div class="pp-adp">ADP 38 · AI #18</div></div>
+        <div class="pp tier-s"><div class="pp-name">Wm. Contreras</div><div class="pp-stat">22HR .270 · #1 blast rate</div><div class="pp-adp">ADP 52 · AI #24</div></div>
+        <div class="pp tier-m"><div class="pp-name">Adley Rutschman</div><div class="pp-stat">20HR .265 · 12%brl</div><div class="pp-adp">ADP 120 · AI #55</div></div>
+        <div class="pp tier-l"><div class="pp-name">Drake Baldwin</div><div class="pp-stat">15HR .255</div><div class="pp-adp">ADP 95 · AI #72</div></div>
+      </div>
+      <!-- 1B -->
+      <div class="pos-col">
+        <div class="pos-col-hdr" style="color:var(--blue);border-color:var(--blue)">1B <span class="count">5</span></div>
+        <div class="pp tier-e"><div class="pp-name">Bryce Harper</div><div class="pp-stat">32HR 95RBI .280 · <span style="color:var(--green)">15.2%brl</span></div><div class="pp-adp">ADP 18 · AI #8 <span class="pp-tag" style="background:var(--green-soft);color:var(--green)">IN RANGE</span></div></div>
+        <div class="pp tier-s drafted"><div class="pp-name">Freddie Freeman</div><div class="pp-stat">25HR .290</div><div class="pp-adp">ADP 28</div></div>
+        <div class="pp tier-s"><div class="pp-name">Pete Alonso</div><div class="pp-stat">40HR 110RBI .245 · 18.9%brl</div><div class="pp-adp">ADP 45 · AI #22</div></div>
+        <div class="pp tier-s"><div class="pp-name">Vinnie Pasquantino</div><div class="pp-stat">25HR .275 · <span style="color:var(--green)">30.1% sq-up</span></div><div class="pp-adp">ADP 95 · AI #35 <span class="pp-tag" style="background:var(--green-soft);color:var(--green)">BUY</span></div></div>
+        <div class="pp tier-m"><div class="pp-name">Josh Naylor</div><div class="pp-stat">28HR .260 · <span style="color:var(--red)">.315 BABIP</span></div><div class="pp-adp">ADP 65 · AI #58 <span class="pp-tag" style="background:var(--red-soft);color:var(--red)">AVOID</span></div></div>
+      </div>
+      <!-- 2B -->
+      <div class="pos-col">
+        <div class="pos-col-hdr" style="color:var(--green);border-color:var(--green)">2B <span class="count" style="color:var(--red)">2 ⚠</span></div>
+        <div class="pp tier-e"><div class="pp-name">Ketel Marte</div><div class="pp-stat">32HR 18SB .278 · 13.5%brl</div><div class="pp-adp">ADP 16 · AI #12</div></div>
+        <div class="pp tier-m"><div class="pp-name">Andres Gimenez</div><div class="pp-stat">.210BA <span style="color:var(--green)">.252xBA</span> 30SB</div><div class="pp-adp">ADP 100 · AI #40 <span class="pp-tag" style="background:var(--green-soft);color:var(--green)">BUY</span></div></div>
+        <div class="pp tier-m"><div class="pp-name">Marcus Semien</div><div class="pp-stat">24HR 10SB · <span style="color:var(--green)">.251 BABIP</span></div><div class="pp-adp">ADP 160 · AI #52 <span class="pp-tag" style="background:var(--green-soft);color:var(--green)">BUY</span></div></div>
+      </div>
+      <!-- SS -->
+      <div class="pos-col">
+        <div class="pos-col-hdr" style="color:var(--purple);border-color:var(--purple)">SS <span class="count">5</span></div>
+        <div class="pp tier-e drafted"><div class="pp-name">Jose Ramirez</div></div>
+        <div class="pp tier-e drafted"><div class="pp-name">Gunnar Henderson</div></div>
+        <div class="pp tier-e"><div class="pp-name">Trea Turner</div><div class="pp-stat">22HR <span style="color:var(--green)">28SB</span> .280 · 30.2ft/s</div><div class="pp-adp">ADP 15 · AI #6</div></div>
+        <div class="pp tier-s"><div class="pp-name">Mookie Betts</div><div class="pp-stat">25HR 18SB .275</div><div class="pp-adp">ADP 41 · AI #15</div></div>
+        <div class="pp tier-m"><div class="pp-name">CJ Abrams</div><div class="pp-stat">18HR 25SB .265</div><div class="pp-adp">ADP 55 · AI #30</div></div>
+      </div>
+      <!-- 3B -->
+      <div class="pos-col">
+        <div class="pos-col-hdr" style="color:var(--red);border-color:var(--red)">3B <span class="count">3</span></div>
+        <div class="pp tier-e drafted"><div class="pp-name">Rafael Devers</div></div>
+        <div class="pp tier-s"><div class="pp-name">Austin Riley</div><div class="pp-stat">35HR .280 · <span style="color:var(--green)">15.2%brl</span></div><div class="pp-adp">ADP 50 · AI #20 <span class="pp-tag" style="background:var(--green-soft);color:var(--green)">BUY</span></div></div>
+        <div class="pp tier-m"><div class="pp-name">Alex Bregman</div><div class="pp-stat">24HR .272</div><div class="pp-adp">ADP 55 · AI #32</div></div>
+      </div>
+      <!-- OF -->
+      <div class="pos-col">
+        <div class="pos-col-hdr" style="color:var(--green);border-color:var(--green)">OF <span class="count">8</span></div>
+        <div class="pp tier-e"><div class="pp-name">Acuña Jr.</div><div class="pp-stat">38HR <span style="color:var(--green);font-weight:700">48SB</span> .282</div><div class="pp-adp">ADP 10 · AI #2</div></div>
+        <div class="pp tier-e wishlist"><div class="pp-name">Kyle Tucker</div><div class="pp-stat">35HR <span style="color:var(--green);font-weight:700">28SB</span> .285</div><div class="pp-adp">ADP 12 · AI #4 <span class="pp-tag" style="background:var(--yellow-soft);color:var(--yellow)">★ WISH</span></div></div>
+        <div class="pp tier-s"><div class="pp-name">Jarren Duran</div><div class="pp-stat">20HR <span style="color:var(--green)">30SB</span> .270</div><div class="pp-adp">ADP 56 · AI #25</div></div>
+        <div class="pp tier-s"><div class="pp-name">Jo Adell</div><div class="pp-stat">37HR .264 · <span style="color:var(--green)">17.2%brl</span></div><div class="pp-adp">ADP 70 · AI #28 <span class="pp-tag" style="background:var(--green-soft);color:var(--green)">BUY</span></div></div>
+        <div class="pp tier-m"><div class="pp-name">Bryan Reynolds</div><div class="pp-stat"><span style="color:var(--green)">.425xwOBA</span> 91.2EV</div><div class="pp-adp">ADP 90 · AI #33 <span class="pp-tag" style="background:var(--green-soft);color:var(--green)">BUY</span></div></div>
+      </div>
+      <!-- SP -->
+      <div class="pos-col">
+        <div class="pos-col-hdr" style="color:var(--blue);border-color:var(--blue)">SP <span class="count">10</span></div>
+        <div class="pp tier-e"><div class="pp-name">Paul Skenes</div><div class="pp-stat">225K 18QS 2.95 · 115 S+</div><div class="pp-adp">ADP 5 · AI #3</div></div>
+        <div class="pp tier-e drafted"><div class="pp-name">Tarik Skubal</div></div>
+        <div class="pp tier-e"><div class="pp-name">G. Crochet</div><div class="pp-stat">255K 2.59 · <span style="color:var(--green)">117 S+</span></div><div class="pp-adp">ADP 10 · AI #5</div></div>
+        <div class="pp tier-e"><div class="pp-name">Hunter Greene</div><div class="pp-stat">210K 3.15 · <span style="color:var(--green)">120 S+ #1</span></div><div class="pp-adp">ADP 25 · AI #10</div></div>
+        <div class="pp tier-s"><div class="pp-name">George Kirby</div><div class="pp-stat">198K 18QS 3.42</div><div class="pp-adp">ADP 67 · AI #29</div></div>
+        <div class="pp tier-s wishlist"><div class="pp-name">Eury Perez</div><div class="pp-stat">165K 3.86 · <span style="color:var(--green)">118 S+ #8</span></div><div class="pp-adp">ADP 155 · AI #38 <span class="pp-tag" style="background:var(--yellow-soft);color:var(--yellow)">★ WISH</span></div></div>
+        <div class="pp tier-m"><div class="pp-name">Emmet Sheehan</div><div class="pp-stat">2.82ERA 23%K-BB</div><div class="pp-adp">ADP 110 · AI #42</div></div>
+        <div class="pp tier-l"><div class="pp-name">Shane Baz</div><div class="pp-stat">97mph · <span style="color:var(--green)">107 S+</span></div><div class="pp-adp">ADP 200 · AI #55 <span class="pp-tag" style="background:var(--green-soft);color:var(--green)">DEEP</span></div></div>
+      </div>
+      <!-- RP -->
+      <div class="pos-col">
+        <div class="pos-col-hdr" style="color:var(--red);border-color:var(--red)">RP <span class="count">5</span></div>
+        <div class="pp tier-s"><div class="pp-name">Mason Miller</div><div class="pp-stat">42SV 2.65 · 102mph</div><div class="pp-adp">ADP 40 · AI #16</div></div>
+        <div class="pp tier-s"><div class="pp-name">Cade Smith</div><div class="pp-stat">38SV 2.75 · 34%K</div><div class="pp-adp">ADP 62 · AI #26</div></div>
+        <div class="pp tier-m"><div class="pp-name">Ryan Helsley</div><div class="pp-stat">30SV 2.80 · BAL</div><div class="pp-adp">ADP 75 · AI #34</div></div>
+        <div class="pp tier-m"><div class="pp-name">Bryan Abreu</div><div class="pp-stat">25SV · <span style="color:var(--green)">Hader injured</span></div><div class="pp-adp">ADP 130 · AI #45 <span class="pp-tag" style="background:var(--green-soft);color:var(--green)">BUY</span></div></div>
+        <div class="pp tier-l"><div class="pp-name">C. Estevez</div><div class="pp-stat">25SV · <span style="color:var(--red)">-6.9mph ⚠</span></div><div class="pp-adp">ADP 100 · AI #80 <span class="pp-tag" style="background:var(--red-soft);color:var(--red)">DANGER</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: War Room Feed -->
+  <div class="panel panel-right" id="panel-right">
+    <div class="pr-tabs">
+      <div class="pr-tab active">Live Feed</div>
+      <div class="pr-tab">Scouts</div>
+      <div class="pr-tab">Closers</div>
+      <div class="pr-tab">Wishlist</div>
+    </div>
+    <div class="pr-feed">
+      <div class="fi crit">
+        <div class="fi-top"><span class="fi-expert" style="color:var(--red)">⚠ THE QUANT</span><span class="fi-time">Just now</span></div>
+        <div class="fi-body"><span class="fi-tag alert">CRITICAL</span>Only <strong>5 elite SB sources</strong> remain. Your SB is 47/100. Address this pick or lose SB every week.</div>
+        <div class="fi-source">Draft Engine SGP · Category Score Analysis</div>
+      </div>
+
+      <div class="fi good">
+        <div class="fi-top"><span class="fi-expert" style="color:var(--green)">🎯 THE SCOUT</span><span class="fi-time">Mar 15</span></div>
+        <div class="fi-body"><span class="fi-tag buy">BUY</span><strong>Bryce Harper</strong> · 1B · ADP 18<br>15.2% barrel rate · 93.3 mph exit velo · IN RANGE at Pick 33. Five-category 1B anchor.</div>
+        <div class="fi-source">Baseball Savant · Barrel% + EV Leaderboard</div>
+      </div>
+
+      <div class="fi warn">
+        <div class="fi-top"><span class="fi-expert" style="color:var(--red)">⚠ THE CONTRARIAN</span><span class="fi-time">Mar 15</span></div>
+        <div class="fi-body"><span class="fi-tag sell">AVOID</span><strong>Josh Naylor</strong> · 1B · ADP 65<br>.315 BABIP (30pts above career). Below-avg barrels. Projects .271/.771. Let someone else overpay.</div>
+        <div class="fi-source">FanGraphs BABIP Analysis · Baseball Savant Barrel%</div>
+      </div>
+
+      <div class="fi good">
+        <div class="fi-top"><span class="fi-expert" style="color:var(--blue)">🔬 THE SCOUT</span><span class="fi-time">Mar 15</span></div>
+        <div class="fi-body"><span class="fi-tag buy">STEAL</span><strong>Eury Perez</strong> · SP · ADP 155<br>118 Stuff+ (8th in MLB). Post-July: 3.86 ERA, 0.96 WHIP. Ace ceiling at Round 13 price.</div>
+        <div class="fi-source">FanGraphs Stuff+ Rankings</div>
+      </div>
+
+      <div class="fi crit">
+        <div class="fi-top"><span class="fi-expert" style="color:var(--red)">🏥 THE HISTORIAN</span><span class="fi-time">Mar 15</span></div>
+        <div class="fi-body"><span class="fi-tag alert">DANGER</span><strong>Carlos Estevez</strong> · RP · Your R10 pick<br>-6.9 mph velocity drop this spring. Closer role at serious risk. Consider Bryan Abreu instead.</div>
+        <div class="fi-source">RotoWire Spring Velo Tracker · ESPN Transactions</div>
+      </div>
+
+      <div class="fi warn">
+        <div class="fi-top"><span class="fi-expert" style="color:var(--yellow)">🌱 SPRING INTEL</span><span class="fi-time">Mar 14</span></div>
+        <div class="fi-body"><span class="fi-tag watch">WATCH</span><strong>Jac Caglianone</strong> · 1B · KC<br>120.2 mph double, 460-ft HR. EV90 of 116.5 mph — hitting harder than nearly anyone alive.</div>
+        <div class="fi-source">MLB.com Spring Training Statcast</div>
+      </div>
+
+      <div class="fi info">
+        <div class="fi-top"><span class="fi-expert" style="color:var(--blue)">💨 SPEED SCOUT</span><span class="fi-time">Mar 15</span></div>
+        <div class="fi-body"><span class="fi-tag buy">ADD</span><strong>Jose Caballero</strong> · 2B · ADP 155<br>30 ft/sec · 49 SB in 126 games — best SB/PA ratio in all of baseball. Free steals in R13.</div>
+        <div class="fi-source">Baseball Savant Sprint Speed Leaderboard</div>
+      </div>
+
+      <div class="fi info">
+        <div class="fi-top"><span class="fi-expert" style="color:var(--purple)">🔒 CLOSER SPECIALIST</span><span class="fi-time">Mar 15</span></div>
+        <div class="fi-body"><span class="fi-tag stash">VOLATILE</span><strong>LAD Bullpen</strong> — true committee (Stephenson/Yates/Pomeranz). With 7 transactions/week, stream the hot arm. Free SV.</div>
+        <div class="fi-source">CloserMonkey Depth Charts · FanGraphs</div>
+      </div>
+
+      <div class="fi good">
+        <div class="fi-top"><span class="fi-expert" style="color:var(--green)">📊 THE QUANT</span><span class="fi-time">Mar 15</span></div>
+        <div class="fi-body"><span class="fi-tag buy">EDGE</span><strong>Your 7 transactions/matchup</strong> = streaming superpower. Don't overpay for SPs or closers. Draft 3 aces + stream the rest. Volatile bullpens are YOUR friend.</div>
+        <div class="fi-source">League Settings Analysis · SGP Calculator</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function togglePanel(id, btn) {
+  const panel = document.getElementById('panel-' + id);
+  panel.classList.toggle('hidden');
+  btn.classList.toggle('active');
+}
+function toggleOTC(btn) {
+  document.getElementById('otcStrip').classList.toggle('hidden');
+  btn.classList.toggle('active');
+}
+</script>
+</body>
+</html>

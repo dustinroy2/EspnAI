@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The Dugout — Field View</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Inter',sans-serif; background:#f5f6f8; color:#111827; display:flex; justify-content:center; padding:20px; }
+  .field-wrap {
+    width:800px; position:relative; background:#2d7a1b; border-radius:16px; overflow:hidden;
+    box-shadow:0 8px 32px rgba(0,0,0,0.2);
+  }
+
+  /* Sky gradient behind field */
+  .sky {
+    height:60px;
+    background:linear-gradient(180deg, #1a3a5c 0%, #2d6a8a 40%, #4a9ab5 100%);
+    position:relative;
+  }
+  .sky-text { position:absolute; top:14px; left:50%; transform:translateX(-50%); text-align:center; }
+  .sky-title { font-size:14px; font-weight:800; color:white; letter-spacing:2px; text-transform:uppercase; }
+  .sky-sub { font-size:10px; color:rgba(255,255,255,0.6); margin-top:2px; }
+  .score-pill {
+    position:absolute; top:12px; right:16px;
+    background:rgba(0,0,0,0.4); padding:4px 12px; border-radius:10px;
+    font-size:11px; font-weight:700; color:white;
+  }
+  .roster-count {
+    position:absolute; top:12px; left:16px;
+    background:rgba(0,0,0,0.4); padding:4px 12px; border-radius:10px;
+    font-size:11px; font-weight:600; color:white;
+  }
+
+  /* Field SVG area */
+  .field {
+    position:relative; width:800px; height:520px;
+    background:
+      radial-gradient(ellipse 600px 400px at 50% 85%, #3d8a28 0%, #2d7a1b 60%, #1d5a12 100%);
+  }
+
+  /* Grass pattern stripes */
+  .field::before {
+    content:''; position:absolute; inset:0;
+    background:repeating-linear-gradient(
+      90deg, transparent, transparent 44px,
+      rgba(255,255,255,0.03) 44px, rgba(255,255,255,0.03) 88px
+    );
+  }
+
+  /* Diamond / dirt */
+  .diamond {
+    position:absolute; width:260px; height:260px;
+    left:50%; bottom:40px; transform:translateX(-50%) rotate(45deg);
+    background:
+      linear-gradient(135deg, #c4956a 0%, #b8845a 50%, #a07348 100%);
+    border-radius:4px;
+    box-shadow:inset 0 0 40px rgba(0,0,0,0.15);
+  }
+
+  /* Infield grass */
+  .infield-grass {
+    position:absolute; width:180px; height:180px;
+    left:50%; bottom:80px; transform:translateX(-50%) rotate(45deg);
+    background:radial-gradient(circle, #3d9028 0%, #2d7a1b 100%);
+    border-radius:3px;
+  }
+
+  /* Pitcher's mound */
+  .mound {
+    position:absolute; left:50%; bottom:185px; transform:translateX(-50%);
+    width:28px; height:28px; background:#c4956a; border-radius:50%;
+    box-shadow:0 2px 8px rgba(0,0,0,0.2);
+  }
+
+  /* Home plate */
+  .home {
+    position:absolute; left:50%; bottom:42px; transform:translateX(-50%);
+    width:16px; height:16px; background:white; clip-path:polygon(50% 0%, 100% 30%, 100% 70%, 50% 100%, 0% 70%, 0% 30%);
+  }
+
+  /* Bases */
+  .base {
+    position:absolute; width:12px; height:12px; background:white;
+    transform:rotate(45deg); border-radius:2px;
+  }
+  .base-1 { right:222px; bottom:170px; }
+  .base-2 { left:50%; bottom:290px; transform:translateX(-50%) rotate(45deg); }
+  .base-3 { left:222px; bottom:170px; }
+
+  /* Foul lines */
+  .foul-line {
+    position:absolute; bottom:48px; height:2px; width:500px;
+    background:rgba(255,255,255,0.15);
+    transform-origin:bottom center;
+  }
+  .foul-left { left:50%; transform:rotate(-45deg) translateX(-50%); }
+  .foul-right { right:50%; transform:rotate(45deg) translateX(50%); }
+
+  /* Outfield wall */
+  .wall {
+    position:absolute; top:40px; left:50%; transform:translateX(-50%);
+    width:700px; height:350px;
+    border:3px solid rgba(0,80,0,0.4);
+    border-radius:50% 50% 0 0;
+    border-bottom:none;
+  }
+
+  /* Player position markers */
+  .pos-marker {
+    position:absolute; text-align:center; transform:translateX(-50%);
+    cursor:pointer; transition:all 0.2s;
+    z-index:10;
+  }
+  .pos-marker:hover { transform:translateX(-50%) scale(1.08); }
+  .pos-marker:hover .pm-card { box-shadow:0 4px 16px rgba(0,0,0,0.3); }
+
+  .pm-card {
+    background:white; border-radius:8px; padding:6px 8px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.15);
+    min-width:90px; transition:all 0.2s;
+    border:2px solid transparent;
+  }
+  .pm-card.filled { border-color:rgba(204,0,0,0.3); }
+  .pm-card.empty { border-color:rgba(0,0,0,0.1); opacity:0.7; }
+  .pm-card.wishlist { border-color:rgba(217,119,6,0.5); background:#fffef5; }
+
+  .pm-pos {
+    font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:1px;
+    color:#9ca3af; text-align:center;
+  }
+  .pm-name { font-size:11px; font-weight:700; color:#111827; text-align:center; white-space:nowrap; }
+  .pm-name.empty-name { color:#9ca3af; font-style:italic; font-weight:400; font-size:10px; }
+  .pm-stat { font-size:8px; color:#6b7280; text-align:center; font-variant-numeric:tabular-nums; }
+  .pm-round { font-size:8px; font-weight:600; color:#cc0000; text-align:center; }
+  .pm-tag {
+    font-size:7px; font-weight:700; padding:1px 4px; border-radius:2px;
+    display:inline-block; margin-top:1px;
+  }
+
+  /* Bullpen areas */
+  .bullpen {
+    position:absolute; border-radius:8px; padding:8px;
+    background:rgba(0,0,0,0.3); backdrop-filter:blur(4px);
+    border:1px solid rgba(255,255,255,0.1);
+  }
+  .bullpen-title {
+    font-size:8px; font-weight:700; color:rgba(255,255,255,0.7);
+    text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;
+    text-align:center;
+  }
+  .bp-slot {
+    display:flex; align-items:center; gap:4px; padding:3px 0;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  .bp-slot:last-child { border-bottom:none; }
+  .bp-pos-tag { font-size:7px; font-weight:700; color:rgba(255,255,255,0.5); width:16px; }
+  .bp-name { font-size:9px; font-weight:600; color:white; flex:1; }
+  .bp-name.empty { color:rgba(255,255,255,0.3); font-style:italic; }
+  .bp-stat { font-size:8px; color:rgba(255,255,255,0.5); }
+
+  /* Bench area */
+  .bench {
+    background:#1d5a12; padding:12px 16px; display:flex; gap:8px;
+    border-top:2px solid rgba(0,0,0,0.2);
+    flex-wrap:wrap; justify-content:center;
+  }
+  .bench-title {
+    width:100%; text-align:center; font-size:9px; font-weight:700;
+    color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:2px;
+    margin-bottom:4px;
+  }
+  .bench-slot {
+    background:rgba(255,255,255,0.1); border-radius:6px; padding:4px 10px;
+    text-align:center; min-width:80px;
+    border:1px solid rgba(255,255,255,0.08);
+  }
+  .bench-slot .pm-pos { color:rgba(255,255,255,0.5); }
+  .bench-slot .pm-name { color:white; font-size:10px; }
+  .bench-slot .pm-name.empty-name { color:rgba(255,255,255,0.3); }
+  .bench-slot .pm-stat { color:rgba(255,255,255,0.4); }
+
+  /* Category bar strip at bottom */
+  .cat-strip {
+    background:#0f3a08; padding:10px 16px;
+    display:flex; gap:10px; justify-content:center; flex-wrap:wrap;
+  }
+  .cs-item { display:flex; align-items:center; gap:4px; }
+  .cs-label { font-size:9px; font-weight:700; color:rgba(255,255,255,0.6); width:28px; }
+  .cs-bar { width:60px; height:4px; background:rgba(255,255,255,0.15); border-radius:2px; overflow:hidden; }
+  .cs-fill { height:100%; border-radius:2px; }
+  .cs-val { font-size:9px; color:rgba(255,255,255,0.8); font-weight:600; width:18px; font-variant-numeric:tabular-nums; }
+</style>
+</head>
+<body>
+
+<div class="field-wrap">
+  <!-- Sky / scoreboard -->
+  <div class="sky">
+    <div class="roster-count">2 / 23 DRAFTED</div>
+    <div class="sky-text">
+      <div class="sky-title">We're the Millers</div>
+      <div class="sky-sub">Field of Dreams Fantasy Baseball · Pick 9 · Round 3</div>
+    </div>
+    <div class="score-pill">Overall: 33/100</div>
+  </div>
+
+  <!-- Field -->
+  <div class="field">
+    <!-- Field elements -->
+    <div class="wall"></div>
+    <div class="diamond"></div>
+    <div class="infield-grass"></div>
+    <div class="mound"></div>
+    <div class="home"></div>
+    <div class="base base-1"></div>
+    <div class="base base-2"></div>
+    <div class="base base-3"></div>
+
+    <!-- ═══ POSITION PLAYERS ON FIELD ═══ -->
+
+    <!-- Catcher -->
+    <div class="pos-marker" style="left:50%;bottom:12px">
+      <div class="pm-card empty">
+        <div class="pm-pos">C</div>
+        <div class="pm-name empty-name">Empty</div>
+      </div>
+    </div>
+
+    <!-- 1B -->
+    <div class="pos-marker" style="left:65%;bottom:175px">
+      <div class="pm-card empty">
+        <div class="pm-pos">1B</div>
+        <div class="pm-name empty-name">Empty</div>
+      </div>
+    </div>
+
+    <!-- 2B -->
+    <div class="pos-marker" style="left:58%;bottom:270px">
+      <div class="pm-card empty">
+        <div class="pm-pos">2B</div>
+        <div class="pm-name empty-name">Empty</div>
+      </div>
+    </div>
+
+    <!-- SS -->
+    <div class="pos-marker" style="left:42%;bottom:270px">
+      <div class="pm-card filled">
+        <div class="pm-pos">SS</div>
+        <div class="pm-name">Jose Ramirez</div>
+        <div class="pm-stat">102R · 35HR · 25SB · .275</div>
+        <div class="pm-round">R1 Pick 9</div>
+      </div>
+    </div>
+
+    <!-- 3B -->
+    <div class="pos-marker" style="left:35%;bottom:175px">
+      <div class="pm-card empty">
+        <div class="pm-pos">3B</div>
+        <div class="pm-name empty-name">Empty</div>
+      </div>
+    </div>
+
+    <!-- LF -->
+    <div class="pos-marker" style="left:18%;bottom:360px">
+      <div class="pm-card empty">
+        <div class="pm-pos">LF</div>
+        <div class="pm-name empty-name">Empty</div>
+      </div>
+    </div>
+
+    <!-- CF -->
+    <div class="pos-marker" style="left:50%;bottom:420px">
+      <div class="pm-card empty">
+        <div class="pm-pos">CF</div>
+        <div class="pm-name empty-name">Empty</div>
+      </div>
+    </div>
+
+    <!-- RF -->
+    <div class="pos-marker" style="left:82%;bottom:360px">
+      <div class="pm-card empty">
+        <div class="pm-pos">RF</div>
+        <div class="pm-name empty-name">Empty</div>
+      </div>
+    </div>
+
+    <!-- UTIL 1 -->
+    <div class="pos-marker" style="left:15%;bottom:120px">
+      <div class="pm-card filled">
+        <div class="pm-pos">UTIL</div>
+        <div class="pm-name">Gunnar Henderson</div>
+        <div class="pm-stat">105R · 32HR · 22SB · .270</div>
+        <div class="pm-round">R2 Pick 16</div>
+      </div>
+    </div>
+
+    <!-- UTIL 2 -->
+    <div class="pos-marker" style="left:85%;bottom:120px">
+      <div class="pm-card empty">
+        <div class="pm-pos">UTIL</div>
+        <div class="pm-name empty-name">Empty</div>
+      </div>
+    </div>
+
+    <!-- ═══ BULLPENS ═══ -->
+
+    <!-- Starting Rotation (left bullpen) -->
+    <div class="bullpen" style="left:8px;top:50px;width:130px">
+      <div class="bullpen-title">Starting Rotation</div>
+      <div class="bp-slot"><span class="bp-pos-tag">SP1</span><span class="bp-name empty">—</span></div>
+      <div class="bp-slot"><span class="bp-pos-tag">SP2</span><span class="bp-name empty">—</span></div>
+      <div class="bp-slot"><span class="bp-pos-tag">SP3</span><span class="bp-name empty">—</span></div>
+      <div class="bp-slot"><span class="bp-pos-tag">P</span><span class="bp-name empty">—</span></div>
+      <div class="bp-slot"><span class="bp-pos-tag">P</span><span class="bp-name empty">—</span></div>
+    </div>
+
+    <!-- Relief / Closers (right bullpen) -->
+    <div class="bullpen" style="right:8px;top:50px;width:130px">
+      <div class="bullpen-title">Bullpen</div>
+      <div class="bp-slot"><span class="bp-pos-tag">RP1</span><span class="bp-name empty">—</span></div>
+      <div class="bp-slot"><span class="bp-pos-tag">RP2</span><span class="bp-name empty">—</span></div>
+      <div class="bp-slot">
+        <span class="bp-pos-tag" style="color:rgba(255,215,0,0.7)">★</span>
+        <span class="bp-name" style="color:rgba(255,215,0,0.8);font-style:italic;font-size:8px">Wishlist: Eury Perez</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bench -->
+  <div class="bench">
+    <div class="bench-title">Bench · 6 Slots</div>
+    <div class="bench-slot"><div class="pm-pos">BE</div><div class="pm-name empty-name">—</div></div>
+    <div class="bench-slot"><div class="pm-pos">BE</div><div class="pm-name empty-name">—</div></div>
+    <div class="bench-slot"><div class="pm-pos">BE</div><div class="pm-name empty-name">—</div></div>
+    <div class="bench-slot"><div class="pm-pos">BE</div><div class="pm-name empty-name">—</div></div>
+    <div class="bench-slot"><div class="pm-pos">BE</div><div class="pm-name empty-name">—</div></div>
+    <div class="bench-slot"><div class="pm-pos">BE</div><div class="pm-name empty-name">—</div></div>
+  </div>
+
+  <!-- Category Strip -->
+  <div class="cat-strip">
+    <div class="cs-item"><span class="cs-label">R</span><div class="cs-bar"><div class="cs-fill" style="width:18%;background:#ef4444"></div></div><span class="cs-val" style="color:#ef4444">18</span></div>
+    <div class="cs-item"><span class="cs-label">HR</span><div class="cs-bar"><div class="cs-fill" style="width:23%;background:#ef4444"></div></div><span class="cs-val" style="color:#ef4444">23</span></div>
+    <div class="cs-item"><span class="cs-label">RBI</span><div class="cs-bar"><div class="cs-fill" style="width:20%;background:#ef4444"></div></div><span class="cs-val" style="color:#ef4444">20</span></div>
+    <div class="cs-item"><span class="cs-label" style="color:#fbbf24">SB</span><div class="cs-bar"><div class="cs-fill" style="width:47%;background:#fbbf24"></div></div><span class="cs-val" style="color:#fbbf24">47</span></div>
+    <div class="cs-item"><span class="cs-label">AVG</span><div class="cs-bar"><div class="cs-fill" style="width:95%;background:#4ade80"></div></div><span class="cs-val" style="color:#4ade80">95</span></div>
+    <div class="cs-item"><span class="cs-label">OPS</span><div class="cs-bar"><div class="cs-fill" style="width:98%;background:#4ade80"></div></div><span class="cs-val" style="color:#4ade80">98</span></div>
+    <div class="cs-item"><span class="cs-label" style="color:#ef4444">K</span><div class="cs-bar"><div class="cs-fill" style="width:0%"></div></div><span class="cs-val" style="color:#ef4444">0</span></div>
+    <div class="cs-item"><span class="cs-label" style="color:#ef4444">QS</span><div class="cs-bar"><div class="cs-fill" style="width:0%"></div></div><span class="cs-val" style="color:#ef4444">0</span></div>
+    <div class="cs-item"><span class="cs-label">W</span><div class="cs-bar"><div class="cs-fill" style="width:0%"></div></div><span class="cs-val" style="color:#ef4444">0</span></div>
+    <div class="cs-item"><span class="cs-label">SV</span><div class="cs-bar"><div class="cs-fill" style="width:0%"></div></div><span class="cs-val" style="color:#ef4444">0</span></div>
+    <div class="cs-item"><span class="cs-label" style="color:#ef4444">ERA</span><div class="cs-bar"><div class="cs-fill" style="width:0%"></div></div><span class="cs-val" style="color:#ef4444">0</span></div>
+    <div class="cs-item"><span class="cs-label">WHIP</span><div class="cs-bar"><div class="cs-fill" style="width:0%"></div></div><span class="cs-val" style="color:#ef4444">0</span></div>
+  </div>
+</div>
+
+</body>
+</html>

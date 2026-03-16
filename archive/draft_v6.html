@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The Dugout — Draft (Live)</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,900;1,700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red:   #C8352A;
+  --gold:  #C49A3C;
+  --gold2: #F0C860;
+  --espn:  #013369;
+  --bg:    #0e1018;
+  --surf:  #141820;
+  --surf2: #1a2030;
+  --bord:  #252b38;
+  --bord2: #303848;
+  --dim:   #3a4458;
+  --mid:   #6a7a96;
+  --txt:   #c8d4e8;
+  --white: #eef2f8;
+  --D: 'Bebas Neue', cursive;
+  --C: 'Barlow Condensed', sans-serif;
+  --M: 'Share Tech Mono', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); font-family: var(--C); color: var(--txt); }
+
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 9999;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+body {
+  display: grid;
+  grid-template-rows: 52px 1fr 28px;
+  grid-template-columns: 1fr 290px;
+  height: 100vh;
+}
+
+/* ═══ OTC STRIP ═══ */
+.otc {
+  grid-column: 1/-1;
+  background: var(--espn);
+  border-bottom: 3px solid var(--red);
+  display: flex; align-items: stretch;
+  overflow: hidden;
+}
+.otc-clock {
+  background: var(--red);
+  padding: 0 16px;
+  display: flex; align-items: center; gap: 14px;
+  flex-shrink: 0; min-width: 210px;
+}
+.oc-tag   { font-family: var(--C); font-size: 9px; font-weight: 700; letter-spacing: 2.5px; color: rgba(255,255,255,0.6); }
+.oc-team  { font-family: var(--D); font-size: 17px; letter-spacing: 1.5px; color: white; line-height: 1.1; }
+.oc-rd    { font-family: var(--C); font-size: 9px; color: rgba(255,255,255,0.55); letter-spacing: 1px; margin-top: 1px; }
+.oc-timer { font-family: var(--D); font-size: 34px; color: #FFD700; letter-spacing: 2px; line-height: 1; animation: timerflash 1s steps(1) infinite; }
+@keyframes timerflash { 50%{opacity:.65} }
+.otc-teams { display: flex; align-items: stretch; flex: 1; padding: 0 6px; gap: 2px; overflow-x: auto; }
+.otc-teams::-webkit-scrollbar { display: none; }
+.ot { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3px 9px; border-radius: 3px; min-width: 58px; flex-shrink: 0; border: 1px solid transparent; cursor: pointer; transition: background .1s; }
+.ot.done    { opacity: 0.35; }
+.ot.picking { background: var(--red); border-color: var(--red); }
+.ot.mine    { background: rgba(196,154,60,0.18); border-color: rgba(196,154,60,0.5); }
+.ot.up      { border-color: rgba(255,255,255,0.12); }
+.ot-num     { font-family: var(--D); font-size: 14px; color: rgba(255,255,255,0.9); line-height: 1; }
+.ot-name    { font-family: var(--C); font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 56px; }
+.ot-pick    { font-family: var(--C); font-size: 8px; color: rgba(255,255,255,0.25); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 56px; }
+.ot.mine .ot-num  { color: #FFD700; }
+.ot.mine .ot-name { color: rgba(255,215,0,0.65); }
+.ot.picking .ot-name { color: rgba(255,255,255,0.9); }
+.otc-last { padding: 0 14px; flex-shrink: 0; border-left: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; justify-content: center; background: rgba(0,0,0,0.2); }
+.ol-lbl  { font-family: var(--C); font-size: 9px; color: rgba(255,255,255,0.3); letter-spacing: 1.5px; }
+.ol-pick { font-family: var(--C); font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.85); }
+.ol-by   { font-family: var(--C); font-size: 9px; color: rgba(255,255,255,0.35); }
+
+/* ═══ BOARD ═══ */
+.board {
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+  position: relative;
+}
+.board-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 14px;
+  background: var(--surf);
+  border-bottom: 1px solid var(--bord);
+  flex-shrink: 0;
+}
+.bb-title { font-family: var(--D); font-size: 18px; letter-spacing: 3px; color: var(--white); }
+.bb-count { font-family: var(--M); font-size: 10px; color: var(--mid); }
+.bb-space { flex: 1; }
+.bb-view  { display: flex; gap: 4px; }
+.bv { font-family: var(--C); font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 3px 10px; border-radius: 2px; border: 1px solid var(--bord2); color: var(--mid); cursor: pointer; transition: all .1s; }
+.bv.on { background: var(--red); border-color: var(--red); color: white; }
+.bb-search { font-family: var(--M); font-size: 11px; background: var(--surf2); border: 1px solid var(--bord2); color: var(--txt); padding: 4px 10px; border-radius: 3px; outline: none; width: 160px; }
+.bb-search::placeholder { color: var(--dim); }
+.bb-search:focus { border-color: var(--mid); }
+
+/* Status dot */
+.status-wrap { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+.status-dot  { width: 7px; height: 7px; border-radius: 50%; }
+.status-dot.live        { background: #4caf70; box-shadow: 0 0 6px rgba(76,175,112,0.7); animation: pulse-live 2s ease-in-out infinite; }
+.status-dot.connecting  { background: var(--gold); animation: pulse-live 0.6s ease-in-out infinite; }
+.status-dot.error       { background: var(--red); }
+@keyframes pulse-live { 50% { opacity: 0.4; } }
+.status-lbl { font-family: var(--M); font-size: 9px; color: var(--mid); letter-spacing: 1.5px; }
+
+/* ═══ PILLS ═══ */
+.pills {
+  display: flex; gap: 4px; padding: 7px 14px;
+  border-bottom: 1px solid var(--bord); flex-shrink: 0; flex-wrap: wrap;
+  background: var(--surf);
+}
+.pill {
+  font-family: var(--C); font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+  padding: 3px 9px; border-radius: 2px; border: 1px solid var(--bord2);
+  color: var(--dim); cursor: pointer; transition: all .12s; user-select: none;
+}
+.pill.on { background: rgba(200,53,42,0.15); border-color: var(--red); color: #ff7a72; }
+.pill:hover:not(.on) { border-color: var(--mid); color: var(--txt); }
+
+/* ═══ SECTION LABEL ═══ */
+.sect-label {
+  font-family: var(--C); font-size: 9px; font-weight: 700; letter-spacing: 2.5px;
+  padding: 6px 14px 4px; color: var(--mid); text-transform: uppercase;
+}
+.sect-label.war { color: var(--gold); }
+
+/* ═══ CARD GRID ═══ */
+.card-grid-scroll {
+  overflow-y: auto; flex: 1;
+  padding: 0 10px 60px;
+}
+.card-grid-scroll::-webkit-scrollbar { width: 4px; }
+.card-grid-scroll::-webkit-scrollbar-thumb { background: var(--bord2); border-radius: 2px; }
+
+.card-row {
+  display: flex; flex-wrap: wrap; gap: 7px;
+  padding: 6px 4px;
+}
+
+/* ═══ MINI CARD ═══ */
+.card {
+  width: 86px;
+  border-radius: 5px;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: transform .15s cubic-bezier(.34,1.56,.64,1), box-shadow .15s;
+  border: 1.5px solid var(--bord2);
+  background: var(--surf2);
+  user-select: none;
+}
+.card:hover {
+  transform: translateY(-4px) scale(1.04);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.5);
+  z-index: 10;
+}
+.card.selected {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(196,154,60,0.3), 0 12px 32px rgba(196,154,60,0.25);
+  transform: translateY(-4px) scale(1.04);
+  z-index: 10;
+}
+.card.taken {
+  opacity: 0.22;
+  filter: grayscale(0.6);
+  pointer-events: none;
+}
+.card.rec {
+  border-color: rgba(196,154,60,0.4);
+}
+.card.rec::before {
+  content: '';
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(115deg, transparent 20%, rgba(240,200,96,0.07) 40%, rgba(240,200,96,0.14) 50%, rgba(240,200,96,0.07) 60%, transparent 80%);
+  background-size: 200% 200%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.card.slip::after {
+  content: '';
+  position: absolute; inset: -2px; border-radius: 6px; z-index: 0; pointer-events: none;
+  border: 2px solid var(--red);
+  animation: slippulse 1.6s ease-in-out infinite;
+}
+@keyframes slippulse {
+  0%,100% { opacity: 0.8; box-shadow: 0 0 0 0 rgba(200,53,42,0.4); }
+  50%     { opacity: 0.4; box-shadow: 0 0 0 4px rgba(200,53,42,0); }
+}
+.card-band {
+  height: 26px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 6px;
+  position: relative;
+  flex-shrink: 0;
+}
+.card-band::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: rgba(0,0,0,0.25);
+}
+.cb-pos { font-family: var(--D); font-size: 12px; letter-spacing: 1px; color: rgba(255,255,255,0.9); text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+.cb-rank { font-family: var(--M); font-size: 9px; color: rgba(255,255,255,0.55); }
+.card-portrait {
+  height: 56px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.card-portrait-bg { position: absolute; inset: 0; background: linear-gradient(160deg, rgba(255,255,255,0.03) 0%, transparent 100%); }
+.card-avatar {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--D); font-size: 16px; letter-spacing: 1px;
+  color: white;
+  border: 2px solid rgba(255,255,255,0.15);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  position: relative; z-index: 1;
+  flex-shrink: 0;
+}
+.card.rec .card-avatar { border-color: rgba(196,154,60,0.5); }
+.card.selected .card-avatar { border-color: var(--gold); }
+.card-badge {
+  position: absolute; z-index: 2;
+  font-family: var(--C); font-size: 7px; font-weight: 700; letter-spacing: 0.5px;
+  padding: 1px 4px; border-radius: 1px;
+}
+.card-badge.slip { top: 4px; right: 4px; background: var(--red); color: white; }
+.card-badge.inj  { top: 4px; left: 4px; background: #9a6800; color: #FFE082; }
+.card-badge.war  { bottom: 4px; right: 4px; background: rgba(196,154,60,0.85); color: white; }
+.card-foot {
+  padding: 5px 6px 6px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+.cf-name  { font-family: var(--C); font-size: 11px; font-weight: 900; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.3px; line-height: 1.1; }
+.cf-team  { font-family: var(--M); font-size: 8px; color: var(--mid); margin-top: 1px; }
+.cf-sgp   { font-family: var(--D); font-size: 17px; color: var(--gold); letter-spacing: 1px; line-height: 1; margin-top: 3px; }
+.card.rec .cf-sgp { color: var(--gold2); }
+.cf-dots  { display: flex; gap: 2px; margin-top: 4px; }
+.cfd      { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+.cfd.ok   { background: #4caf70; }
+.cfd.pt   { background: var(--gold); }
+.cfd.miss { background: var(--dim); border: 1px solid var(--bord2); }
+
+/* ═══ RIGHT PANEL ═══ */
+.right-panel {
+  background: var(--surf);
+  border-left: 1px solid var(--bord);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.inspector {
+  flex-shrink: 0;
+  border-bottom: 2px solid var(--red);
+  padding: 0;
+  transition: all .2s;
+}
+.big-card {
+  margin: 12px auto 0;
+  width: 120px;
+  border-radius: 7px;
+  overflow: hidden;
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 24px rgba(196,154,60,0.25), 0 8px 32px rgba(0,0,0,0.5);
+  flex-shrink: 0;
+}
+.big-card .card-band  { height: 36px; }
+.big-card .cb-pos     { font-size: 16px; }
+.big-card .cb-rank    { font-size: 10px; }
+.big-card .card-portrait { height: 76px; }
+.big-card .card-avatar { width: 56px; height: 56px; font-size: 21px; }
+.big-card .card-foot  { padding: 7px 8px 8px; }
+.big-card .cf-name    { font-size: 13px; }
+.big-card .cf-team    { font-size: 9px; }
+.big-card .cf-sgp     { font-size: 22px; }
+.insp-details { padding: 10px 12px 8px; }
+.id-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.id-name { font-family: var(--D); font-size: 20px; letter-spacing: 1.5px; color: var(--white); }
+.id-sgp  { font-family: var(--D); font-size: 26px; color: var(--gold); }
+.id-meta { font-family: var(--M); font-size: 9px; color: var(--mid); margin-bottom: 8px; letter-spacing: 0.5px; }
+.stat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 4px; margin-bottom: 8px; }
+.stat-block { background: var(--surf2); border: 1px solid var(--bord); border-radius: 3px; padding: 5px 6px; text-align: center; cursor: default; transition: border-color .1s, background .1s; }
+.stat-block:hover { border-color: var(--gold); background: rgba(196,154,60,0.06); }
+.sb-val { font-family: var(--D); font-size: 16px; color: var(--white); line-height: 1; }
+.sb-lbl { font-family: var(--M); font-size: 8px; color: var(--mid); margin-top: 1px; letter-spacing: 0.5px; }
+.signals { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 8px; }
+.signal { font-family: var(--C); font-size: 9px; font-weight: 700; letter-spacing: 0.5px; padding: 2px 6px; border-radius: 2px; border: 1px solid; cursor: default; }
+.signal.pos { background: rgba(29,122,46,0.15); border-color: rgba(29,122,46,0.4); color: #4caf70; }
+.signal.neg { background: rgba(200,53,42,0.12); border-color: rgba(200,53,42,0.35); color: #ff7a72; }
+.signal.neu { background: rgba(196,154,60,0.1); border-color: rgba(196,154,60,0.35); color: var(--gold2); }
+.insp-cats { display: grid; grid-template-columns: repeat(3,1fr); gap: 3px; margin-bottom: 10px; }
+.ic { font-family: var(--C); font-size: 9px; font-weight: 700; padding: 3px 4px; border-radius: 2px; text-align: center; letter-spacing: 0.5px; }
+.ic.ok   { background: rgba(29,122,46,0.2); color: #4caf70; border: 1px solid rgba(29,122,46,0.3); }
+.ic.pt   { background: rgba(196,154,60,0.12); color: var(--gold2); border: 1px solid rgba(196,154,60,0.25); }
+.ic.miss { background: rgba(200,53,42,0.1); color: #ff7a72; border: 1px solid rgba(200,53,42,0.25); }
+.verdict { background: rgba(196,154,60,0.08); border: 1px solid rgba(196,154,60,0.25); border-radius: 3px; padding: 7px 9px; margin-bottom: 10px; }
+.v-lbl { font-family: var(--M); font-size: 8px; color: var(--gold); letter-spacing: 2px; margin-bottom: 3px; }
+.v-txt { font-family: var(--C); font-size: 11px; color: var(--txt); line-height: 1.5; }
+.draft-btn {
+  width: calc(100% - 24px); margin: 0 12px 10px;
+  padding: 10px;
+  background: var(--red);
+  border: none; border-radius: 3px;
+  font-family: var(--D); font-size: 20px; letter-spacing: 3px;
+  color: white; cursor: pointer;
+  position: relative; overflow: hidden;
+  transition: background .1s, transform .1s;
+  flex-shrink: 0;
+}
+.draft-btn::before {
+  content: '';
+  position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+  animation: btnshine 2.5s ease-in-out infinite;
+}
+@keyframes btnshine { 0%{left:-100%} 100%{left:200%} }
+.draft-btn:hover { background: #e03d32; transform: translateY(-1px); }
+.draft-btn:active { transform: translateY(0); }
+.inspector-empty { padding: 24px 14px; text-align: center; flex-shrink: 0; border-bottom: 2px solid var(--bord); }
+.ie-icon { font-size: 28px; margin-bottom: 6px; opacity: 0.3; }
+.ie-txt  { font-family: var(--C); font-size: 11px; color: var(--dim); letter-spacing: 1px; }
+.slip-banner { margin: 8px 10px 0; padding: 6px 9px; background: rgba(200,53,42,0.1); border: 1px solid rgba(200,53,42,0.3); border-radius: 3px; flex-shrink: 0; }
+.slip-banner-lbl { font-family: var(--M); font-size: 9px; color: var(--red); letter-spacing: 2px; }
+.slip-banner-txt { font-family: var(--C); font-size: 11px; color: var(--txt); margin-top: 2px; }
+.slip-banner-txt strong { color: var(--gold2); }
+.roster-head { font-family: var(--C); font-size: 9px; font-weight: 700; letter-spacing: 2px; color: var(--mid); padding: 6px 12px 3px; border-bottom: 1px solid var(--bord); background: var(--surf2); flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; }
+.rh-cats { display: flex; gap: 3px; }
+.rh-cat { font-family: var(--C); font-size: 8px; font-weight: 700; padding: 1px 4px; border-radius: 1px; }
+.rh-cat.ok { background: rgba(29,122,46,0.2); color: #4caf70; }
+.rh-cat.nd { background: rgba(200,53,42,0.12); color: #ff7a72; }
+.rh-cat.fa { background: rgba(196,154,60,0.1); color: var(--gold2); }
+.roster-scroll { overflow-y: auto; flex: 1; }
+.roster-scroll::-webkit-scrollbar { width: 3px; }
+.roster-scroll::-webkit-scrollbar-thumb { background: var(--bord2); }
+.rsect { font-family: var(--C); font-size: 8px; font-weight: 700; letter-spacing: 2px; color: var(--dim); padding: 4px 12px 2px; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--bord); }
+.rr { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-bottom: 1px solid rgba(255,255,255,0.03); cursor: default; transition: background .1s; }
+.rr:hover { background: rgba(255,255,255,0.03); }
+.rr.empty { opacity: 0.38; }
+.rr-p  { font-family: var(--D); font-size: 11px; color: var(--dim); width: 28px; text-align: center; flex-shrink: 0; }
+.rr.filled .rr-p { color: var(--red); }
+.rr-av { width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: var(--D); font-size: 9px; color: white; border: 1.5px solid var(--gold); }
+.rr-ec { width: 22px; height: 22px; border-radius: 50%; border: 1.5px dashed var(--bord2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: var(--D); font-size: 7px; color: var(--dim); }
+.rr-i  { flex: 1; min-width: 0; }
+.rr-n  { font-family: var(--C); font-size: 11px; font-weight: 700; color: var(--txt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rr.empty .rr-n { color: var(--dim); font-style: italic; font-weight: 400; }
+.rr-m  { font-family: var(--M); font-size: 8px; color: var(--dim); }
+.rr-cc { display: flex; gap: 2px; }
+.rc    { font-family: var(--C); font-size: 7px; font-weight: 700; padding: 1px 3px; border-radius: 1px; }
+.rc.ok { background: rgba(29,122,46,0.2); color: #4caf70; }
+.rc.pt { background: rgba(196,154,60,0.1); color: var(--gold2); }
+
+/* ═══ TICKER ═══ */
+.ticker {
+  grid-column: 1/-1;
+  background: #06080d; border-top: 2px solid var(--red);
+  display: flex; align-items: center; overflow: hidden;
+}
+.tick-lbl { font-family: var(--C); font-size: 9px; font-weight: 700; letter-spacing: 2px; color: white; background: var(--red); padding: 0 10px; height: 100%; display: flex; align-items: center; flex-shrink: 0; }
+.tick-txt { font-family: var(--C); font-size: 11px; color: var(--mid); padding: 0 12px; white-space: nowrap; animation: tickscroll 40s linear infinite; }
+.tick-txt strong { color: #FFD700; }
+.tick-txt .a { color: var(--red); }
+@keyframes tickscroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+
+/* ═══ FIELD PiP ═══ */
+.field-pip { position: absolute; bottom: 14px; right: 14px; width: 200px; background: var(--bg); border: 1.5px solid var(--bord2); border-radius: 7px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 100; overflow: hidden; transition: all .3s cubic-bezier(.4,0,.2,1); }
+.field-pip.expanded { bottom: 0; right: 0; width: 100%; height: calc(100% - 0px); border-radius: 0; border: none; }
+.pip-hd { display: flex; align-items: center; gap: 6px; padding: 5px 8px; background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--bord); cursor: pointer; }
+.pip-title { font-family: var(--M); font-size: 9px; color: var(--mid); letter-spacing: 1.5px; flex: 1; }
+.pip-btn { font-family: var(--C); font-size: 8px; font-weight: 700; letter-spacing: 1px; color: var(--mid); background: var(--bord2); padding: 2px 6px; border-radius: 2px; border: none; cursor: pointer; transition: all .1s; }
+.pip-btn:hover { color: var(--white); background: var(--bord); }
+.field-pip:not(.expanded) .pip-close { display: none; }
+.field-pip.expanded .pip-expand { display: none; }
+.pip-svg-wrap { width: 100%; }
+.field-pip:not(.expanded) .pip-svg-wrap { height: 148px; }
+.field-pip.expanded .pip-svg-wrap { height: calc(100% - 32px); display: flex; align-items: center; justify-content: center; }
+
+/* Roster fill state (dynamic) */
+.rr.my-pick { background: rgba(196,154,60,0.04); }
+.rr.my-pick .rr-n { color: var(--gold2); }
+</style>
+</head>
+<body>
+
+<!-- ═══ OTC STRIP ═══ -->
+<header class="otc">
+  <div class="otc-clock">
+    <div>
+      <div class="oc-tag">On The Clock</div>
+      <div class="oc-team" id="otcTeamName">Connecting…</div>
+      <div class="oc-rd" id="otcRoundInfo">—</div>
+    </div>
+    <div class="oc-timer" id="timer">—</div>
+  </div>
+  <div class="otc-teams" id="otcTeams">
+    <!-- populated by renderOTC() -->
+    <div class="ot up"><div class="ot-num">—</div><div class="ot-name">loading</div></div>
+  </div>
+  <div class="otc-last">
+    <div class="ol-lbl">LAST PICK</div>
+    <div class="ol-pick" id="lastPickName">—</div>
+    <div class="ol-by" id="lastPickBy">—</div>
+  </div>
+</header>
+
+<!-- ═══ BOARD ═══ -->
+<main class="board" id="board">
+  <div class="board-bar">
+    <div class="bb-title">Draft Board</div>
+    <div class="bb-count" id="pickCount">— available</div>
+    <div class="bb-space"></div>
+    <div class="status-wrap">
+      <div class="status-dot connecting" id="statusDot"></div>
+      <div class="status-lbl" id="statusLbl">CONNECTING</div>
+    </div>
+    <div class="bb-view">
+      <div class="bv on">CARDS</div>
+    </div>
+    <input class="bb-search" id="searchBox" placeholder="Search…">
+  </div>
+
+  <div class="pills">
+    <div class="pill on" onclick="setPill(this,'ALL')">ALL</div>
+    <div class="pill" onclick="setPill(this,'C')">C</div>
+    <div class="pill" onclick="setPill(this,'1B')">1B</div>
+    <div class="pill" onclick="setPill(this,'2B')">2B</div>
+    <div class="pill" onclick="setPill(this,'3B')">3B</div>
+    <div class="pill" onclick="setPill(this,'SS')">SS</div>
+    <div class="pill" onclick="setPill(this,'OF')">OF</div>
+    <div class="pill" onclick="setPill(this,'SP')">SP</div>
+    <div class="pill" onclick="setPill(this,'RP')">RP</div>
+  </div>
+
+  <div class="card-grid-scroll" id="cardGrid">
+    <div class="sect-label war" style="margin-top:20px;text-align:center;">⚡ Connecting to ESPN draft…</div>
+  </div>
+
+  <!-- FIELD PiP -->
+  <div class="field-pip" id="fieldPip">
+    <div class="pip-hd" onclick="toggleField()">
+      <div class="pip-title">ROSTER MAP</div>
+      <button class="pip-btn pip-expand" onclick="event.stopPropagation();toggleField()">⤢ EXPAND</button>
+      <button class="pip-btn pip-close" onclick="event.stopPropagation();toggleField()">✕</button>
+    </div>
+    <div class="pip-svg-wrap">
+      <svg viewBox="0 0 380 340" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="fg" cx="50%" cy="85%" r="75%"><stop offset="0%" stop-color="#3a8a34"/><stop offset="100%" stop-color="#1e5018"/></radialGradient>
+          <filter id="gl"><feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="rgba(196,154,60,0.6)"/></filter>
+          <filter id="ds"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,0.7)"/></filter>
+        </defs>
+        <rect width="380" height="340" fill="#0d1117"/>
+        <path d="M 190,298 L 22,74 Q 190,14 358,74 Z" fill="url(#fg)"/>
+        <g opacity="0.18"><path d="M 190,298 L 36,86" stroke="#1a4d18" stroke-width="14"/><path d="M 190,298 L 68,50" stroke="#224d1a" stroke-width="14"/><path d="M 190,298 L 120,26" stroke="#1a4d18" stroke-width="14"/><path d="M 190,298 L 190,14" stroke="#224d1a" stroke-width="14"/><path d="M 190,298 L 260,26" stroke="#1a4d18" stroke-width="14"/><path d="M 190,298 L 312,50" stroke="#224d1a" stroke-width="14"/><path d="M 190,298 L 344,86" stroke="#1a4d18" stroke-width="14"/></g>
+        <path d="M 190,298 L 22,74 Q 190,14 358,74 Z" fill="none" stroke="#b07840" stroke-width="14" opacity="0.4"/>
+        <line x1="190" y1="298" x2="22" y2="74" stroke="white" stroke-width="1.5" opacity="0.45"/>
+        <line x1="190" y1="298" x2="358" y2="74" stroke="white" stroke-width="1.5" opacity="0.45"/>
+        <line x1="22" y1="74" x2="17" y2="22" stroke="#FFD700" stroke-width="2.5"/>
+        <line x1="358" y1="74" x2="363" y2="22" stroke="#FFD700" stroke-width="2.5"/>
+        <ellipse cx="190" cy="218" rx="108" ry="72" fill="#c8954a" opacity="0.8"/>
+        <polygon points="190,162 242,212 190,262 138,212" fill="#2a6824"/>
+        <line x1="190" y1="262" x2="138" y2="212" stroke="#9a7038" stroke-width="8" opacity="0.4"/>
+        <line x1="138" y1="212" x2="190" y2="162" stroke="#9a7038" stroke-width="8" opacity="0.4"/>
+        <line x1="190" y1="162" x2="242" y2="212" stroke="#9a7038" stroke-width="8" opacity="0.4"/>
+        <line x1="242" y1="212" x2="190" y2="262" stroke="#9a7038" stroke-width="8" opacity="0.4"/>
+        <ellipse cx="190" cy="220" rx="12" ry="8" fill="#d4a060"/>
+        <ellipse cx="190" cy="218" rx="9" ry="6" fill="#c49050"/>
+        <rect x="184" y="156" width="12" height="12" rx="2" fill="white" filter="url(#ds)"/>
+        <rect x="234" y="206" width="12" height="12" rx="2" fill="white" filter="url(#ds)"/>
+        <rect x="134" y="206" width="12" height="12" rx="2" fill="white" filter="url(#ds)"/>
+        <polygon points="190,270 196,274 194,282 186,282 184,274" fill="white" filter="url(#ds)"/>
+        <rect x="4" y="248" width="46" height="78" rx="3" fill="#1a4018" opacity="0.9" stroke="#0d3010"/>
+        <text x="27" y="261" text-anchor="middle" font-family="'Barlow Condensed'" font-size="7" fill="rgba(255,255,255,0.3)">RP</text>
+        <rect x="330" y="248" width="46" height="78" rx="3" fill="#1a3060" opacity="0.9" stroke="#0d2050"/>
+        <text x="353" y="261" text-anchor="middle" font-family="'Barlow Condensed'" font-size="7" fill="rgba(150,200,255,0.3)">SP</text>
+        <rect x="50" y="270" width="70" height="14" rx="2" fill="#111820"/>
+        <rect x="260" y="270" width="70" height="14" rx="2" fill="#111820"/>
+        <g id="pipRoster"><!-- filled by renderRosterMap() --></g>
+        <!-- Empty position placeholders -->
+        <g transform="translate(190,46)"><circle r="16" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" stroke-dasharray="4 3"/><text text-anchor="middle" dy="5" font-family="'Bebas Neue'" font-size="11" fill="rgba(255,255,255,0.35)">CF</text></g>
+        <g transform="translate(68,108)"><circle r="16" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" stroke-dasharray="4 3"/><text text-anchor="middle" dy="5" font-family="'Bebas Neue'" font-size="11" fill="rgba(255,255,255,0.35)">LF</text></g>
+        <g transform="translate(312,108)"><circle r="16" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" stroke-dasharray="4 3"/><text text-anchor="middle" dy="5" font-family="'Bebas Neue'" font-size="11" fill="rgba(255,255,255,0.35)">RF</text></g>
+        <g transform="translate(228,188)"><circle r="16" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" stroke-dasharray="4 3"/><text text-anchor="middle" dy="5" font-family="'Bebas Neue'" font-size="11" fill="rgba(255,255,255,0.35)">2B</text></g>
+        <g transform="translate(150,188)"><circle r="16" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" stroke-dasharray="4 3"/><text text-anchor="middle" dy="5" font-family="'Bebas Neue'" font-size="11" fill="rgba(255,255,255,0.35)">SS</text></g>
+        <g transform="translate(130,210)"><circle r="16" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" stroke-dasharray="4 3"/><text text-anchor="middle" dy="5" font-family="'Bebas Neue'" font-size="11" fill="rgba(255,255,255,0.35)">3B</text></g>
+        <g transform="translate(248,210)"><circle r="16" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" stroke-dasharray="4 3"/><text text-anchor="middle" dy="5" font-family="'Bebas Neue'" font-size="11" fill="rgba(255,255,255,0.35)">1B</text></g>
+        <g transform="translate(190,288)"><circle r="16" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" stroke-dasharray="4 3"/><text text-anchor="middle" dy="6" font-family="'Bebas Neue'" font-size="13" fill="rgba(255,255,255,0.35)">C</text></g>
+        <g transform="translate(20,268)"><circle r="11" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.14)" stroke-width="1" stroke-dasharray="3 3"/><text text-anchor="middle" dy="4" font-family="'Bebas Neue'" font-size="8" fill="rgba(255,255,255,0.28)">RP</text></g>
+        <g transform="translate(38,292)"><circle r="11" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.14)" stroke-width="1" stroke-dasharray="3 3"/><text text-anchor="middle" dy="4" font-family="'Bebas Neue'" font-size="8" fill="rgba(255,255,255,0.28)">RP</text></g>
+        <g transform="translate(346,268)"><circle r="11" fill="rgba(0,50,100,0.25)" stroke="rgba(100,150,255,0.18)" stroke-width="1" stroke-dasharray="3 3"/><text text-anchor="middle" dy="4" font-family="'Bebas Neue'" font-size="8" fill="rgba(150,200,255,0.38)">SP</text></g>
+        <g transform="translate(364,292)"><circle r="11" fill="rgba(0,50,100,0.25)" stroke="rgba(100,150,255,0.18)" stroke-width="1" stroke-dasharray="3 3"/><text text-anchor="middle" dy="4" font-family="'Bebas Neue'" font-size="8" fill="rgba(150,200,255,0.38)">SP</text></g>
+        <g transform="translate(346,312)"><circle r="11" fill="rgba(0,50,100,0.25)" stroke="rgba(100,150,255,0.18)" stroke-width="1" stroke-dasharray="3 3"/><text text-anchor="middle" dy="4" font-family="'Bebas Neue'" font-size="8" fill="rgba(150,200,255,0.38)">SP</text></g>
+      </svg>
+    </div>
+  </div>
+</main>
+
+<!-- ═══ RIGHT PANEL ═══ -->
+<aside class="right-panel">
+
+  <div class="inspector" id="inspector">
+    <div class="inspector-empty" id="inspEmpty">
+      <div class="ie-icon">🃏</div>
+      <div class="ie-txt">CLICK A CARD<br>TO INSPECT</div>
+    </div>
+
+    <div id="inspFull" style="display:none;">
+      <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px 0;">
+        <div class="big-card" id="bigCard">
+          <div class="card-band" id="bc-band" style="background:#1a2030">
+            <span class="cb-pos" id="bc-pos">—</span><span class="cb-rank" id="bc-rank">—</span>
+          </div>
+          <div class="card-portrait">
+            <div class="card-portrait-bg"></div>
+            <div class="card-avatar" id="bc-av" style="background:#1a2030">—</div>
+          </div>
+          <div class="card-foot">
+            <div class="cf-name" id="bc-name">—</div>
+            <div class="cf-team" id="bc-team">—</div>
+            <div class="cf-sgp" id="bc-sgp">—</div>
+          </div>
+        </div>
+        <div style="flex:1;padding-top:4px;">
+          <div class="id-row">
+            <div>
+              <div class="id-name" id="id-name">—</div>
+              <div class="id-meta" id="id-meta">—</div>
+            </div>
+            <div class="id-sgp" id="id-sgp">—</div>
+          </div>
+          <div class="signals" id="id-signals"></div>
+        </div>
+      </div>
+
+      <div class="insp-details">
+        <div class="stat-grid" id="id-stats"></div>
+        <div class="verdict" id="id-verdict">
+          <div class="v-lbl">WAR ROOM VERDICT</div>
+          <div class="v-txt" id="id-verdict-txt">Select a player to see analysis.</div>
+        </div>
+        <div class="id-row" style="margin-bottom:4px;"><div style="font-family:var(--M);font-size:9px;color:var(--mid);letter-spacing:1.5px;">CATEGORY COVERAGE</div></div>
+        <div class="insp-cats" id="id-cats"></div>
+      </div>
+      <button class="draft-btn" id="draftBtn" onclick="draftSelected()">DRAFT THIS PLAYER</button>
+    </div>
+  </div>
+
+  <!-- ADP Slip banner -->
+  <div class="slip-banner" id="slipBanner" style="display:none;">
+    <div class="slip-banner-lbl">⚡ ADP SLIP ACTIVE</div>
+    <div class="slip-banner-txt" id="slipBannerTxt">—</div>
+  </div>
+
+  <!-- My Roster -->
+  <div class="roster-head">
+    <span id="rosterHead">MILLERS · 0/23</span>
+    <div class="rh-cats" id="rosterCats">
+      <div class="rh-cat nd">SB</div><div class="rh-cat nd">QS</div>
+      <div class="rh-cat nd">ERA</div><div class="rh-cat nd">HR</div>
+    </div>
+  </div>
+  <div class="roster-scroll" id="rosterScroll">
+    <div class="rsect">BATTERS</div>
+    <div class="rr empty"><div class="rr-p">C</div><div class="rr-ec">C</div><div class="rr-i"><div class="rr-n">open slot</div></div></div>
+    <div class="rr empty"><div class="rr-p">1B</div><div class="rr-ec">1B</div><div class="rr-i"><div class="rr-n">open slot</div></div></div>
+    <div class="rr empty"><div class="rr-p">2B</div><div class="rr-ec">2B</div><div class="rr-i"><div class="rr-n">open slot</div></div></div>
+    <div class="rr empty"><div class="rr-p">3B</div><div class="rr-ec">3B</div><div class="rr-i"><div class="rr-n">open slot</div></div></div>
+    <div class="rr empty"><div class="rr-p">SS</div><div class="rr-ec">SS</div><div class="rr-i"><div class="rr-n">open slot</div></div></div>
+    <div class="rr empty"><div class="rr-p">OF</div><div class="rr-ec">OF</div><div class="rr-i"><div class="rr-n">open slot</div></div></div>
+    <div class="rr empty"><div class="rr-p">OF</div><div class="rr-ec">OF</div><div class="rr-i"><div class="rr-n">open slot</div></div></div>
+    <div class="rr empty"><div class="rr-p">OF</div><div class="rr-ec">OF</div><div class="rr-i"><div class="rr-n">open slot</div></div></div>
+    <div class="rr empty"><div class="rr-p">UTIL</div><div class="rr-ec" style="font-size:6px;">UTL</div><div class="rr-i"><div class="rr-n">open slot</div></div></div>
+    <div class="rr empty"><div class="rr-p">UTIL</div><div class="rr-ec" style="font-size:6px;">UTL</div><div class="rr-i"><div class="rr-n">open slot</div></div></div>
+    <div class="rsect">PITCHERS</div>
+    <div class="rr empty"><div class="rr-p">SP</div><div class="rr-ec">SP</div><div class="rr-i"><div class="rr-n">open slot</div></div></div>
+    <div class="rr empty"><div class="rr-p">SP</div><div class="rr-ec">SP</div><div class="rr-i"><div class="rr-n">open slot</div></div></div>
+    <div class="rr empty"><div class="rr-p">SP</div><div class="rr-ec">SP</div><div class="rr-i"><div class="rr-n">open slot</div></div></div>
+    <div class="rr empty"><div class="rr-p">P</div><div class="rr-ec">P</div><div class="rr-i"><div class="rr-n">open slot</div></div></div>
+    <div class="rr empty"><div class="rr-p">P</div><div class="rr-ec">P</div><div class="rr-i"><div class="rr-n">open slot</div></div></div>
+    <div class="rr empty"><div class="rr-p">RP</div><div class="rr-ec">RP</div><div class="rr-i"><div class="rr-n">open slot</div></div></div>
+    <div class="rr empty"><div class="rr-p">RP</div><div class="rr-ec">RP</div><div class="rr-i"><div class="rr-n">open slot</div></div></div>
+    <div class="rsect">BENCH / IL</div>
+    <div class="rr empty"><div class="rr-p">BN</div><div class="rr-ec">BN</div><div class="rr-i"><div class="rr-n">open slot</div></div></div>
+    <div class="rr empty"><div class="rr-p">BN</div><div class="rr-ec">BN</div><div class="rr-i"><div class="rr-n">open slot</div></div></div>
+    <div class="rr empty"><div class="rr-p">BN</div><div class="rr-ec">BN</div><div class="rr-i"><div class="rr-n">open slot</div></div></div>
+    <div class="rr empty"><div class="rr-p">IL</div><div class="rr-ec">IL</div><div class="rr-i"><div class="rr-n">open slot</div></div></div>
+    <div class="rr empty"><div class="rr-p">IL</div><div class="rr-ec">IL</div><div class="rr-i"><div class="rr-n">open slot</div></div></div>
+    <div class="rr empty"><div class="rr-p">IL</div><div class="rr-ec">IL</div><div class="rr-i"><div class="rr-n">open slot</div></div></div>
+  </div>
+</aside>
+
+<!-- ═══ TICKER ═══ -->
+<footer class="ticker">
+  <div class="tick-lbl">LIVE</div>
+  <div class="tick-txt" id="tickerTxt">
+    Waiting for draft to begin… &nbsp;·&nbsp; The Dugout is connected to ESPN &nbsp;·&nbsp; Waiting for draft to begin… &nbsp;·&nbsp; The Dugout is connected to ESPN
+  </div>
+</footer>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════════════════════════
+const API       = 'http://localhost:5050';
+const MY_TEAM   = "We're the Millers";
+const LEAGUE_ID = 904188626;
+
+// ══════════════════════════════════════════════════════════════════════
+// TEAM COLORS  [band-gradient, avatar-gradient]
+// ══════════════════════════════════════════════════════════════════════
+const TEAM_COLORS = {
+  'NYY': ['linear-gradient(135deg,#1a1a1a,#333)',        'linear-gradient(160deg,#0C2340,#C4CED4)'],
+  'BOS': ['linear-gradient(135deg,#0C2340,#BD3039)',     'linear-gradient(160deg,#BD3039,#0C2340)'],
+  'LAD': ['linear-gradient(135deg,#00001a,#00003a)',     'linear-gradient(160deg,#005A9C,#EF3E42)'],
+  'ATL': ['linear-gradient(135deg,#0d2d1a,#1a6b36)',     'linear-gradient(160deg,#0d2d1a,#CE1141)'],
+  'HOU': ['linear-gradient(135deg,#1a0a00,#5a2a00)',     'linear-gradient(160deg,#eb6e1f,#002d62)'],
+  'SDP': ['linear-gradient(135deg,#3d2200,#c87800)',     'linear-gradient(160deg,#2F241D,#d4840a)'],
+  'PHI': ['linear-gradient(135deg,#1a001a,#5a005a)',     'linear-gradient(160deg,#E81828,#003278)'],
+  'NYM': ['linear-gradient(135deg,#00002a,#003c7a)',     'linear-gradient(160deg,#002D72,#FF5910)'],
+  'CHC': ['linear-gradient(135deg,#001a4a,#0033a0)',     'linear-gradient(160deg,#003087,#CC3433)'],
+  'MIL': ['linear-gradient(135deg,#001d0c,#004a1e)',     'linear-gradient(160deg,#12284b,#FFC52F)'],
+  'MIN': ['linear-gradient(135deg,#0d0020,#500050)',     'linear-gradient(160deg,#002B5C,#D31145)'],
+  'TBR': ['linear-gradient(135deg,#000820,#001848)',     'linear-gradient(160deg,#092C5C,#8FBCE6)'],
+  'SEA': ['linear-gradient(135deg,#001a30,#003a6a)',     'linear-gradient(160deg,#005C5C,#C4CED4)'],
+  'CLE': ['linear-gradient(135deg,#0a1a30,#1a3060)',     'linear-gradient(160deg,#e31937,#002b5c)'],
+  'KCR': ['linear-gradient(135deg,#001a30,#003a6a)',     'linear-gradient(160deg,#004687,#C09A5B)'],
+  'KC':  ['linear-gradient(135deg,#001a30,#003a6a)',     'linear-gradient(160deg,#004687,#C09A5B)'],
+  'BAL': ['linear-gradient(135deg,#001d0c,#1a4000)',     'linear-gradient(160deg,#003831,#EFB21E)'],
+  'CIN': ['linear-gradient(135deg,#1a0000,#4a0000)',     'linear-gradient(160deg,#C6011F,#000000)'],
+  'PIT': ['linear-gradient(135deg,#1a1200,#4a3800)',     'linear-gradient(160deg,#27251F,#FDB827)'],
+  'STL': ['linear-gradient(135deg,#1a0000,#5a0010)',     'linear-gradient(160deg,#C41E3A,#0C2340)'],
+  'CHW': ['linear-gradient(135deg,#0a0a0a,#202020)',     'linear-gradient(160deg,#27251F,#C4CED4)'],
+  'TEX': ['linear-gradient(135deg,#001a30,#003a6a)',     'linear-gradient(160deg,#003278,#C0111F)'],
+  'OAK': ['linear-gradient(135deg,#001a08,#003815)',     'linear-gradient(160deg,#003831,#EFB21E)'],
+  'ARI': ['linear-gradient(135deg,#1a0028,#4a0058)',     'linear-gradient(160deg,#A71930,#E3D4AD)'],
+  'COL': ['linear-gradient(135deg,#1a0028,#330050)',     'linear-gradient(160deg,#33006F,#C4CED4)'],
+  'SFG': ['linear-gradient(135deg,#1a0500,#4a1200)',     'linear-gradient(160deg,#FD5A1E,#27251F)'],
+  'MIA': ['linear-gradient(135deg,#001a24,#00384a)',     'linear-gradient(160deg,#00A3E0,#EF3340)'],
+  'WSN': ['linear-gradient(135deg,#1a0005,#4a0015)',     'linear-gradient(160deg,#AB0003,#14225A)'],
+  'WAS': ['linear-gradient(135deg,#1a0005,#4a0015)',     'linear-gradient(160deg,#AB0003,#14225A)'],
+  'TOR': ['linear-gradient(135deg,#001a30,#003878)',     'linear-gradient(160deg,#134A8E,#E8291C)'],
+  'LAA': ['linear-gradient(135deg,#1a0005,#5a0015)',     'linear-gradient(160deg,#BA0021,#003263)'],
+  'DET': ['linear-gradient(135deg,#001a30,#003878)',     'linear-gradient(160deg,#0C2340,#FA4616)'],
+  'MIL': ['linear-gradient(135deg,#001d0c,#004a1e)',     'linear-gradient(160deg,#12284b,#FFC52F)'],
+};
+
+function getTeamColors(proTeam) {
+  const k = (proTeam || '').toUpperCase().replace(/\s.*/,'').trim();
+  return TEAM_COLORS[k] || ['linear-gradient(135deg,#1a1a2e,#2a2a4e)', 'linear-gradient(160deg,#2a2a4e,#1a1a2e)'];
+}
+
+function getInitials(name) {
+  const p = (name || '').trim().split(/\s+/);
+  if (p.length >= 2) return (p[0][0] + p[p.length-1][0]).toUpperCase();
+  return (name || '--').slice(0,2).toUpperCase();
+}
+
+function lastNameOf(name) {
+  const p = (name || '').trim().split(/\s+/);
+  return p[p.length - 1] || name;
+}
+
+function abbrevTeam(teamName) {
+  if (!teamName) return '—';
+  const p = teamName.trim().split(/\s+/);
+  return p[p.length - 1].slice(0, 7);
+}
+
+function normalizePos(pos) {
+  const m = { LF:'OF', CF:'OF', RF:'OF', OF:'OF', DH:'DH', SP:'SP', RP:'RP',
+              C:'C', '1B':'1B', '2B':'2B', '3B':'3B', SS:'SS', P:'P', UTIL:'UTIL' };
+  return m[pos] || pos || '?';
+}
+
+function injBadgeText(status) {
+  if (!status) return '';
+  if (/DTD|DAY/i.test(status)) return 'DTD';
+  if (/IL60/i.test(status))    return 'IL60';
+  if (/IL10|IL15/i.test(status)) return 'IL';
+  if (/INJUR/i.test(status))   return '🏥';
+  if (/SUSPEND/i.test(status)) return 'SUS';
+  return 'Q';
+}
+
+function isInjured(status) {
+  return status && status !== 'ACTIVE' && status !== 'NORMAL' && status !== 'NA';
+}
+
+// SGP estimate: rank 1 ≈ 12.0, rank 200 ≈ 2.0
+function sgpEst(rank) {
+  return Math.max(1.5, (12.2 - (rank - 1) * 0.052)).toFixed(1);
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// ENRICHMENT DATA (from v5 — used in inspector when name matches)
+// ══════════════════════════════════════════════════════════════════════
+const PLAYERS = {
+  tatis:    { name:'F. Tatís Jr.', short:'Tatís Jr.', team:'SDP · SS', meta:'SDP · SS · ADP 28 · Age 25', pos:'SS', rank:'#32', sgp:'9.4', band:'linear-gradient(135deg,#3d2200,#c87800)', av:'linear-gradient(160deg,#2F241D,#d4840a)', init:'FT', stats:[{v:'9.4',l:'SGP'},{v:'.292',l:'PROJ AVG'},{v:'34',l:'PROJ HR'},{v:'28',l:'PROJ SB'},{v:'.910',l:'PROJ OPS'},{v:'94',l:'HEALTH %'}], signals:[{t:'▼4 ADP SLIP',c:'neg'},{t:'SB scarcity x1.4',c:'pos'},{t:'WBC boost active',c:'pos'},{t:'Contract year +5%',c:'pos'},{t:'Age-25 peak window',c:'pos'}], cats:[{l:'R ✓',c:'ok'},{l:'HR ✓',c:'ok'},{l:'RBI ✓',c:'ok'},{l:'SB ✓✓',c:'ok'},{l:'AVG ~',c:'pt'},{l:'OPS ✓',c:'ok'}], verdict:'Top SB source still available 4 picks past ADP. Age-25 means 3-year peak window. WBC velocity up 1.2mph. SB is your scarcest category — this fills it.' },
+  acuna:    { name:'R. Acuña Jr.', short:'Acuña Jr.', team:'ATL · OF', meta:'ATL · OF · ADP 31 · Age 27', pos:'OF', rank:'#35', sgp:'9.1', band:'linear-gradient(135deg,#0d2d1a,#1a6b36)', av:'linear-gradient(160deg,#0d2d1a,#CE1141)', init:'RA', stats:[{v:'9.1',l:'SGP'},{v:'.298',l:'PROJ AVG'},{v:'32',l:'PROJ HR'},{v:'22',l:'PROJ SB'},{v:'.940',l:'PROJ OPS'},{v:'88',l:'HEALTH %'}], signals:[{t:'🏥 Knee monitor',c:'neg'},{t:'Age-27 breakout curve',c:'pos'},{t:'Elite ceiling',c:'pos'},{t:'Dr. Field: 88% health',c:'neu'}], cats:[{l:'R ✓',c:'ok'},{l:'HR ✓',c:'ok'},{l:'RBI ✓',c:'ok'},{l:'SB ✓',c:'ok'},{l:'AVG ✓',c:'ok'},{l:'OPS ✓✓',c:'ok'}], verdict:'Best ceiling on the board. Knee monitored but Dr. Field gives 88% healthy. Age-27 historically the best season for tooled-up speedsters.' },
+  soto:     { name:'J. Soto', short:'J. Soto', team:'NYY · OF', meta:'NYY · OF · ADP 36 · Age 26', pos:'OF', rank:'#38', sgp:'8.8', band:'linear-gradient(135deg,#0d1a3d,#1a3d8c)', av:'linear-gradient(160deg,#003087,#E81828)', init:'JS', stats:[{v:'8.8',l:'SGP'},{v:'.295',l:'PROJ AVG'},{v:'38',l:'PROJ HR'},{v:'8',l:'PROJ SB'},{v:'.985',l:'PROJ OPS'},{v:'98',l:'HEALTH %'}], signals:[{t:'▼2 ADP SLIP',c:'neg'},{t:'Contract year +5%',c:'pos'},{t:'OPS elite tier',c:'pos'},{t:'Low SB contributor',c:'neg'}], cats:[{l:'R ✓',c:'ok'},{l:'HR ✓✓',c:'ok'},{l:'RBI ✓',c:'ok'},{l:'SB ✗',c:'pt'},{l:'AVG ✓',c:'ok'},{l:'OPS ✓✓',c:'ok'}], verdict:'OPS anchor. Contract year motivation. Best OPS of any available player. Weak SB — pair with Tatís for balance.' },
+  devers:   { name:'R. Devers', short:'Devers', team:'BOS · 3B', meta:'BOS · 3B · ADP 38 · Age 28', pos:'3B', rank:'#40', sgp:'8.5', band:'linear-gradient(135deg,#0d1a2e,#bd3039)', av:'linear-gradient(160deg,#BD3039,#0C2340)', init:'RD', stats:[{v:'8.5',l:'SGP'},{v:'.278',l:'PROJ AVG'},{v:'36',l:'PROJ HR'},{v:'2',l:'PROJ SB'},{v:'.880',l:'PROJ OPS'},{v:'97',l:'HEALTH %'}], signals:[{t:'3B is thin after Rnd 3',c:'pos'},{t:'Fenway HR park factor +8%',c:'pos'},{t:'Near-zero SB',c:'neg'}], cats:[{l:'R ✓',c:'ok'},{l:'HR ✓✓',c:'ok'},{l:'RBI ✓✓',c:'ok'},{l:'SB ✗',c:'pt'},{l:'AVG ~',c:'pt'},{l:'OPS ✓',c:'ok'}], verdict:'Reliable 3B in a thin market. Power/RBI producer in Fenway. Zero speed. Best used to lock up HR/RBI early.' },
+  holliday: { name:'J. Holliday', short:'Holliday', team:'BAL · SS', meta:'BAL · SS · ADP 41 · Age 22', pos:'SS', rank:'#43', sgp:'8.2', band:'linear-gradient(135deg,#003831,#1a5c38)', av:'linear-gradient(160deg,#003831,#EFB21E)', init:'JH', stats:[{v:'8.2',l:'SGP'},{v:'.284',l:'PROJ AVG'},{v:'22',l:'PROJ HR'},{v:'18',l:'PROJ SB'},{v:'.855',l:'PROJ OPS'},{v:'96',l:'HEALTH %'}], signals:[{t:'⏰ Service time Apr 14',c:'neg'},{t:'Age-22 upside curve',c:'pos'},{t:'Misses first 2 weeks',c:'neg'},{t:'Elite prospect pedigree',c:'pos'}], cats:[{l:'R ~',c:'pt'},{l:'HR ~',c:'pt'},{l:'RBI ~',c:'pt'},{l:'SB ✓',c:'ok'},{l:'AVG ✓',c:'ok'},{l:'OPS ~',c:'pt'}], verdict:'Caution: service time means he misses opening 2 weeks. After that, elite upside. Take only if you can absorb the slow start in H2H week 1.' },
+  cole:     { name:'G. Cole', short:'G. Cole', team:'NYY · SP', meta:'NYY · SP · ADP 43 · Age 34', pos:'SP', rank:'#46', sgp:'8.0', band:'linear-gradient(135deg,#1a1a1a,#333)', av:'linear-gradient(160deg,#1a3a1a,#3a6a3a)', init:'GC', stats:[{v:'8.0',l:'SGP'},{v:'2.88',l:'PROJ ERA'},{v:'228',l:'PROJ K'},{v:'17',l:'PROJ W'},{v:'16',l:'PROJ QS'},{v:'72',l:'HEALTH %'}], signals:[{t:'TJS recovery concern',c:'neg'},{t:'K upside if healthy',c:'pos'},{t:'Health risk: 72%',c:'neg'},{t:'Discount ADP',c:'pos'}], cats:[{l:'K ✓✓',c:'ok'},{l:'QS ✓',c:'ok'},{l:'W ✓',c:'ok'},{l:'SV ✗',c:'pt'},{l:'ERA ✓',c:'ok'},{l:'WHIP ✓',c:'ok'}], verdict:'High risk, high reward. TJS history means health ceiling. K upside is real if he stays healthy.' },
+  ramirez:  { name:'J. Ramírez', short:'Ramírez', team:'CLE · 3B', meta:'CLE · 3B · ADP 46 · Age 32', pos:'3B', rank:'#48', sgp:'7.9', band:'linear-gradient(135deg,#0a1a30,#1a3060)', av:'linear-gradient(160deg,#e31937,#002b5c)', init:'JR', stats:[{v:'7.9',l:'SGP'},{v:'.276',l:'PROJ AVG'},{v:'24',l:'PROJ HR'},{v:'24',l:'PROJ SB'},{v:'.860',l:'PROJ OPS'},{v:'99',l:'HEALTH %'}], signals:[{t:'Consistent 5-cat player',c:'pos'},{t:'SB/HR balance rare',c:'pos'},{t:'Age-32 decline risk',c:'neg'}], cats:[{l:'R ✓',c:'ok'},{l:'HR ✓',c:'ok'},{l:'RBI ✓',c:'ok'},{l:'SB ✓',c:'ok'},{l:'AVG ~',c:'pt'},{l:'OPS ~',c:'pt'}], verdict:'Best 5-category balance remaining. HR + SB combo is rare at 3B. Aging curve is the only concern.' },
+  witt:     { name:'B. Witt Jr.', short:'B. Witt Jr', team:'KC · SS', meta:'KC · SS · ADP 52 · Age 25', pos:'SS', rank:'#54', sgp:'7.5', band:'linear-gradient(135deg,#001a30,#003a6a)', av:'linear-gradient(160deg,#004687,#C09A5B)', init:'BW', stats:[{v:'7.5',l:'SGP'},{v:'.280',l:'PROJ AVG'},{v:'26',l:'PROJ HR'},{v:'30',l:'PROJ SB'},{v:'.848',l:'PROJ OPS'},{v:'99',l:'HEALTH %'}], signals:[{t:'SB elite',c:'pos'},{t:'ADP creeping up',c:'neu'},{t:'Weak lineup around him',c:'neg'}], cats:[{l:'R ✓',c:'ok'},{l:'HR ~',c:'pt'},{l:'RBI ~',c:'pt'},{l:'SB ✓✓',c:'ok'},{l:'AVG ✓',c:'ok'},{l:'OPS ~',c:'pt'}], verdict:'SB upside matches Tatís. Weaker power profile but SB/AVG combo is real. Alternative SB source if Tatís goes.' },
+};
+
+// ══════════════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════════════
+let draftState    = null;
+let pollInterval  = null;
+let filterPos     = 'ALL';
+let searchTerm    = '';
+let selectedName  = null;
+let countdownSecs = 90;
+let countdownTi   = null;
+
+// ══════════════════════════════════════════════════════════════════════
+// CONNECT + POLL
+// ══════════════════════════════════════════════════════════════════════
+async function initDraft() {
+  setStatus('connecting');
+  try {
+    const r = await fetch(`${API}/api/draft/init`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ leagueId: LEAGUE_ID, year: 2026, teamName: MY_TEAM })
+    });
+    const d = await r.json();
+    if (!d.success) throw new Error('Init failed');
+    setStatus('live');
+    await pollDraft();
+    pollInterval = setInterval(pollDraft, 5000);
+  } catch(e) {
+    setStatus('error', e.message.slice(0, 24));
+    // Retry in 10 seconds
+    setTimeout(initDraft, 10000);
+  }
+}
+
+async function pollDraft() {
+  try {
+    const r = await fetch(`${API}/api/draft/state`);
+    const d = await r.json();
+    if (d.error) { setStatus('error', 'ESPN err'); return; }
+    
+    const prevTotal = draftState ? draftState.totalPicks : 0;
+    draftState = d;
+    
+    // Reset countdown on new pick
+    if (d.totalPicks > prevTotal) {
+      resetCountdown();
+    }
+    
+    renderOTC(d);
+    renderCardGrid(d);
+    renderRosterPanel(d);
+    renderTicker(d);
+    document.getElementById('pickCount').textContent = 
+      `${d.available.length} available · ${d.totalPicks} taken`;
+    
+    setStatus('live');
+  } catch(e) {
+    setStatus('error', 'Server offline');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// STATUS
+// ══════════════════════════════════════════════════════════════════════
+function setStatus(state, msg) {
+  const dot = document.getElementById('statusDot');
+  const lbl = document.getElementById('statusLbl');
+  dot.className = `status-dot ${state}`;
+  lbl.textContent = state === 'live' ? 'LIVE' : state === 'connecting' ? 'CONNECTING' : (msg || 'ERROR');
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// COUNTDOWN TIMER
+// ══════════════════════════════════════════════════════════════════════
+function resetCountdown() {
+  countdownSecs = 90;
+  clearInterval(countdownTi);
+  countdownTi = setInterval(() => {
+    countdownSecs--;
+    if (countdownSecs <= 0) { clearInterval(countdownTi); document.getElementById('timer').textContent = '0:00'; return; }
+    document.getElementById('timer').textContent = 
+      Math.floor(countdownSecs/60) + ':' + String(countdownSecs%60).padStart(2,'0');
+  }, 1000);
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// OTC STRIP
+// ══════════════════════════════════════════════════════════════════════
+function renderOTC(state) {
+  const { onClock, round, overallPick, upcoming } = state;
+
+  document.getElementById('otcTeamName').textContent = abbrevTeam(onClock) || '—';
+  document.getElementById('otcRoundInfo').textContent = `Round ${round} · Pick ${overallPick}`;
+
+  // Last pick
+  const last = state.picks.length ? state.picks[state.picks.length - 1] : null;
+  if (last) {
+    document.getElementById('lastPickName').textContent = lastNameOf(last.playerName);
+    document.getElementById('lastPickBy').textContent = `${abbrevTeam(last.teamName)} · Pk ${last.overall}`;
+  } else {
+    document.getElementById('lastPickName').textContent = 'Draft not started';
+    document.getElementById('lastPickBy').textContent = '—';
+  }
+
+  // Teams strip
+  document.getElementById('otcTeams').innerHTML = upcoming.map(u => {
+    let cls = 'ot';
+    if (u.isDone) cls += ' done';
+    else if (u.isCurrent) cls += ' picking';
+    else if (u.isMine) cls += ' mine';
+    else cls += ' up';
+    const sn = abbrevTeam(u.teamName);
+    const pickLine = u.isDone ? lastNameOf(u.playerName || '—') :
+                     u.isCurrent ? 'picking…' :
+                     u.isMine ? 'your pick' : '';
+    return `<div class="${cls}">
+      <div class="ot-num">${u.overallPick}</div>
+      <div class="ot-name">${sn}</div>
+      ${pickLine ? `<div class="ot-pick">${pickLine}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// CARD GRID
+// ══════════════════════════════════════════════════════════════════════
+function renderCardGrid(state) {
+  const { available, picks, myPicks, overallPick } = state;
+
+  // Apply filters
+  const filtered = available.filter(p => {
+    const pos = normalizePos(p.position);
+    const matchPos = filterPos === 'ALL' || pos === filterPos ||
+                     (filterPos === 'OF' && ['LF','CF','RF','OF'].includes(p.position));
+    const matchSearch = !searchTerm || p.name.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchPos && matchSearch;
+  });
+
+  // War room: top 3 from unfiltered available (always show best 3)
+  const warRoom = available.slice(0, 3);
+  const showWarRoom = filterPos === 'ALL' && !searchTerm;
+
+  let html = '';
+
+  if (showWarRoom && warRoom.length) {
+    html += `<div class="sect-label war">⚡ WAR ROOM — TOP PICKS FOR PICK ${overallPick}</div>
+    <div class="card-row">`;
+    warRoom.forEach((p, i) => { html += buildCard(p, i + 1, { warRank: i + 1 }); });
+    html += '</div>';
+  }
+
+  if (filtered.length) {
+    html += `<div class="sect-label" style="color:var(--mid)">AVAILABLE — ${filtered.length}</div>
+    <div class="card-row">`;
+    filtered.forEach((p, i) => { html += buildCard(p, i + (showWarRoom ? 4 : 1)); });
+    html += '</div>';
+  } else if (searchTerm || filterPos !== 'ALL') {
+    html += `<div class="sect-label" style="color:var(--dim);margin-top:20px;text-align:center;">No players match</div>`;
+  }
+
+  // Taken — always show if any
+  if (picks.length) {
+    const takenFiltered = picks.filter(p =>
+      !searchTerm || p.playerName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    if (takenFiltered.length) {
+      html += `<div class="sect-label" style="color:var(--dim);font-size:9px;">TAKEN — ${picks.length} PICKS</div>
+      <div class="card-row">`;
+      takenFiltered.forEach(p => { html += buildTakenCard(p, myPicks); });
+      html += '</div>';
+    }
+  }
+
+  document.getElementById('cardGrid').innerHTML = html;
+}
+
+function buildCard(player, rank, opts = {}) {
+  const { warRank } = opts;
+  const colors  = getTeamColors(player.proTeam);
+  const init    = getInitials(player.name);
+  const sgp     = sgpEst(rank);
+  const lastName = lastNameOf(player.name);
+  const pos     = normalizePos(player.position);
+  const injured = isInjured(player.injuryStatus);
+
+  let cls = 'card';
+  if (warRank) cls += ' rec';
+
+  let badges = '';
+  if (warRank) badges += `<span class="card-badge war">★${warRank}</span>`;
+  if (injured) badges += `<span class="card-badge inj">${injBadgeText(player.injuryStatus)}</span>`;
+
+  const dots = ['ok','ok','pt','pt','pt','ok'].map(c => `<div class="cfd ${c}"></div>`).join('');
+
+  // Escape name for safe HTML attribute
+  const safeData = JSON.stringify({
+    name: player.name, position: player.position, proTeam: player.proTeam,
+    injuryStatus: player.injuryStatus, rank, sgp
+  }).replace(/"/g, '&quot;');
+
+  return `<div class="${cls}" onclick="selectLiveCard(this)" data-p="${safeData}">
+    <div class="card-band" style="background:${colors[0]}">
+      <span class="cb-pos">${pos}</span><span class="cb-rank">#${rank}</span>
+    </div>
+    <div class="card-portrait">
+      <div class="card-portrait-bg"></div>
+      <div class="card-avatar" style="background:${colors[1]}">${init}</div>
+      ${badges}
+    </div>
+    <div class="card-foot">
+      <div class="cf-name">${lastName}</div>
+      <div class="cf-team">${player.proTeam || '?'} · ${pos}</div>
+      <div class="cf-sgp">${sgp}</div>
+      <div class="cf-dots">${dots}</div>
+    </div>
+  </div>`;
+}
+
+function buildTakenCard(pick, myPicks) {
+  const isMe  = myPicks.some(p => p.overall === pick.overall);
+  const init  = getInitials(pick.playerName);
+  const bg    = isMe ? '#1a3d1a' : '#1a1a2e';
+  return `<div class="card taken">
+    <div class="card-band" style="background:#1a1a1a;">
+      <span class="cb-pos">R${pick.round}</span><span class="cb-rank">#${pick.overall}</span>
+    </div>
+    <div class="card-portrait">
+      <div class="card-portrait-bg"></div>
+      <div class="card-avatar" style="background:${bg};">${init}</div>
+    </div>
+    <div class="card-foot">
+      <div class="cf-name">${lastNameOf(pick.playerName)}</div>
+      <div class="cf-team">${abbrevTeam(pick.teamName)}${isMe ? ' ★' : ''}</div>
+      <div class="cf-sgp">—</div>
+    </div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// INSPECTOR
+// ══════════════════════════════════════════════════════════════════════
+function selectLiveCard(el) {
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+
+  const raw = el.getAttribute('data-p');
+  if (!raw) return;
+  const p = JSON.parse(raw.replace(/&quot;/g, '"'));
+  selectedName = p.name;
+
+  // Try enrichment dict first (match by last name)
+  const lastName = lastNameOf(p.name).toLowerCase();
+  for (const [id, data] of Object.entries(PLAYERS)) {
+    if (data.name.toLowerCase().includes(lastName)) {
+      showEnrichedInspector(data);
+      return;
+    }
+  }
+
+  // Fall back to live data inspector
+  showLiveInspector(p);
+}
+
+function showEnrichedInspector(p) {
+  document.getElementById('inspEmpty').style.display = 'none';
+  document.getElementById('inspFull').style.display = 'block';
+
+  document.getElementById('bc-band').style.background = p.band;
+  document.getElementById('bc-av').style.background   = p.av;
+  document.getElementById('bc-av').textContent        = p.init;
+  document.getElementById('bc-pos').textContent       = p.pos;
+  document.getElementById('bc-rank').textContent      = p.rank;
+  document.getElementById('bc-name').textContent      = p.short;
+  document.getElementById('bc-team').textContent      = p.team;
+  document.getElementById('bc-sgp').textContent       = p.sgp;
+  document.getElementById('id-name').textContent      = p.name;
+  document.getElementById('id-meta').textContent      = p.meta;
+  document.getElementById('id-sgp').textContent       = p.sgp;
+  document.getElementById('id-signals').innerHTML     = p.signals.map(s => `<div class="signal ${s.c}">${s.t}</div>`).join('');
+  document.getElementById('id-stats').innerHTML       = p.stats.map(s => `<div class="stat-block"><div class="sb-val">${s.v}</div><div class="sb-lbl">${s.l}</div></div>`).join('');
+  document.getElementById('id-verdict-txt').textContent = p.verdict;
+  document.getElementById('id-cats').innerHTML        = p.cats.map(c => `<div class="ic ${c.c}">${c.l}</div>`).join('');
+}
+
+function showLiveInspector(p) {
+  document.getElementById('inspEmpty').style.display = 'none';
+  document.getElementById('inspFull').style.display = 'block';
+
+  const colors = getTeamColors(p.proTeam);
+  const pos    = normalizePos(p.position);
+
+  document.getElementById('bc-band').style.background = colors[0];
+  document.getElementById('bc-av').style.background   = colors[1];
+  document.getElementById('bc-av').textContent        = getInitials(p.name);
+  document.getElementById('bc-pos').textContent       = pos;
+  document.getElementById('bc-rank').textContent      = `#${p.rank}`;
+  document.getElementById('bc-name').textContent      = lastNameOf(p.name);
+  document.getElementById('bc-team').textContent      = `${p.proTeam} · ${pos}`;
+  document.getElementById('bc-sgp').textContent       = p.sgp;
+  document.getElementById('id-name').textContent      = p.name;
+  document.getElementById('id-meta').textContent      = `${p.proTeam} · ${pos} · ADP #${p.rank} · ${p.injuryStatus || 'ACTIVE'}`;
+  document.getElementById('id-sgp').textContent       = p.sgp;
+
+  const sigs = [];
+  if (isInjured(p.injuryStatus)) sigs.push(`<div class="signal neg">${p.injuryStatus}</div>`);
+  sigs.push(`<div class="signal neu">ADP Rank #${p.rank}</div>`);
+  sigs.push(`<div class="signal pos">ESPN Live Data</div>`);
+  document.getElementById('id-signals').innerHTML = sigs.join('');
+
+  document.getElementById('id-stats').innerHTML = `
+    <div class="stat-block"><div class="sb-val">${p.sgp}</div><div class="sb-lbl">SGP EST</div></div>
+    <div class="stat-block"><div class="sb-val">#${p.rank}</div><div class="sb-lbl">ADP RANK</div></div>
+    <div class="stat-block" style="cursor:pointer;border-color:rgba(196,154,60,0.4)" onclick="requestWarRoomAnalysis('${p.name.replace(/'/g,'')}')">
+      <div class="sb-val" style="font-size:14px;color:var(--gold)">⚡</div>
+      <div class="sb-lbl">ANALYZE</div>
+    </div>`;
+
+  const CATS = ['R','HR','RBI','SB','AVG','OPS'];
+  document.getElementById('id-cats').innerHTML = CATS.map(c => `<div class="ic pt">${c} ~</div>`).join('');
+  document.getElementById('id-verdict-txt').textContent =
+    `Click ⚡ ANALYZE to get full War Room intel on ${p.name}. (context_builder integration — next build)`;
+}
+
+function requestWarRoomAnalysis(playerName) {
+  document.getElementById('id-verdict-txt').textContent = `⚡ War Room analyzing ${playerName}…`;
+  // Placeholder — will wire to /api/analyze in next build
+  setTimeout(() => {
+    document.getElementById('id-verdict-txt').textContent =
+      `War Room verdict coming soon — this will pull live SGP, injury risk, service time, and ADP arbitrage signals from context_builder.py.`;
+  }, 700);
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// DRAFT BUTTON
+// ══════════════════════════════════════════════════════════════════════
+function draftSelected() {
+  if (!selectedName) return;
+  // Placeholder — ESPN pick submission coming in next build
+  alert(`Draft pick submission for "${selectedName}" will be wired to ESPN API in the next build.`);
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// ROSTER PANEL
+// ══════════════════════════════════════════════════════════════════════
+function renderRosterPanel(state) {
+  const { myPicks } = state;
+  if (!myPicks || !myPicks.length) return;
+
+  document.getElementById('rosterHead').textContent = `MILLERS · ${myPicks.length}/23`;
+
+  // Build rows dynamically
+  const batters = myPicks.filter(p => !['SP','RP','P'].includes(normalizePos(p.position || '')));
+  const pitchers = myPicks.filter(p => ['SP','RP','P'].includes(normalizePos(p.position || '')));
+
+  let html = '<div class="rsect">MY PICKS</div>';
+  myPicks.forEach(p => {
+    const init = getInitials(p.playerName);
+    html += `<div class="rr filled my-pick">
+      <div class="rr-p" style="color:var(--red);">R${p.round}</div>
+      <div class="rr-av" style="background:${getTeamColors('')[1]}">${init}</div>
+      <div class="rr-i">
+        <div class="rr-n">${p.playerName}</div>
+        <div class="rr-m">Pk ${p.overall}</div>
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('rosterScroll').innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// TICKER
+// ══════════════════════════════════════════════════════════════════════
+function renderTicker(state) {
+  if (!state.picks.length) return;
+  const recent = state.picks.slice(-8).reverse();
+  const items = recent.map(p =>
+    `Pk ${p.overall} — <strong>${abbrevTeam(p.teamName)}</strong> took <strong>${p.playerName}</strong>`
+  ).join(' &nbsp;·&nbsp; ');
+  // Double for scroll loop
+  document.getElementById('tickerTxt').innerHTML = items + ' &nbsp;·&nbsp; ' + items;
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// FILTERS
+// ══════════════════════════════════════════════════════════════════════
+function setPill(el, pos) {
+  document.querySelectorAll('.pill').forEach(p => p.classList.remove('on'));
+  el.classList.add('on');
+  filterPos = pos;
+  if (draftState) renderCardGrid(draftState);
+}
+
+document.getElementById('searchBox').addEventListener('input', e => {
+  searchTerm = e.target.value.trim();
+  if (draftState) renderCardGrid(draftState);
+});
+
+// ══════════════════════════════════════════════════════════════════════
+// FIELD PiP
+// ══════════════════════════════════════════════════════════════════════
+const pip = document.getElementById('fieldPip');
+let pipOpen = false;
+function toggleField() {
+  pipOpen = !pipOpen;
+  pip.classList.toggle('expanded', pipOpen);
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════════════════════════════════
+initDraft();
+</script>
+</body>
+</html>

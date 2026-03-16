@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The Dugout — Layout Concepts</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Inter',sans-serif; background:#0f1117; color:#e2e5ea; }
+
+  .concept { margin-bottom:60px; border-bottom:1px solid #2a2d35; padding-bottom:40px; }
+  .concept-label {
+    text-align:center; padding:20px; font-size:12px; font-weight:600;
+    text-transform:uppercase; letter-spacing:3px; color:#6b7280;
+  }
+  .concept-label span { color:#d00; }
+
+  /* ═══════════════════════════════════════════
+     CONCEPT A: "Mission Control" — Split Dashboard
+     Top half = live draft status. Bottom half = intel panels.
+     ═══════════════════════════════════════════ */
+  .mc { height:100vh; display:grid; grid-template-rows:48px 1fr; background:#f4f5f7; color:#1a1a1a; }
+  .mc-topnav {
+    background:#1a1a1a; display:flex; align-items:center; padding:0 16px; gap:0;
+  }
+  .mc-logo { color:#d00; font-weight:800; font-size:14px; letter-spacing:1px; padding-right:20px; border-right:1px solid #333; margin-right:0; }
+  .mc-tab {
+    padding:14px 18px; font-size:11px; font-weight:600; color:#6b7280;
+    text-transform:uppercase; letter-spacing:1px; cursor:pointer; border-bottom:2px solid transparent;
+  }
+  .mc-tab.active { color:white; border-bottom-color:#d00; }
+  .mc-tab:hover { color:#ccc; }
+  .mc-status { margin-left:auto; display:flex; align-items:center; gap:12px; }
+  .mc-dot { width:7px; height:7px; border-radius:50%; background:#4ade80; }
+  .mc-status-text { font-size:10px; color:#6b7280; }
+
+  .mc-body { display:grid; grid-template-columns:280px 1fr 300px; overflow:hidden; }
+
+  /* Left rail: roster + category bars */
+  .mc-left { background:white; border-right:1px solid #e2e5ea; padding:14px; overflow-y:auto; }
+  .mc-section-label { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#9ca3af; margin:12px 0 6px; }
+  .mc-roster-slot { display:flex; gap:6px; padding:4px 0; font-size:11px; border-bottom:1px solid #f3f4f6; }
+  .mc-roster-pos { width:24px; font-weight:700; color:#9ca3af; font-size:10px; }
+  .mc-roster-name { font-weight:500; }
+  .mc-cat-row { display:flex; align-items:center; gap:6px; padding:3px 0; font-size:10px; }
+  .mc-cat-label { width:32px; font-weight:700; }
+  .mc-cat-bar { flex:1; height:5px; background:#e5e7eb; border-radius:3px; overflow:hidden; }
+  .mc-cat-fill { height:100%; border-radius:3px; }
+  .mc-cat-val { width:20px; text-align:right; font-size:9px; color:#6b7280; }
+
+  /* Center: board */
+  .mc-center { overflow-y:auto; padding:14px; background:#f9fafb; }
+  .mc-board-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+  .mc-board-title { font-size:14px; font-weight:700; }
+  .mc-board-tabs { display:flex; gap:4px; }
+  .mc-btab { padding:4px 10px; font-size:10px; font-weight:600; border-radius:4px; background:#e5e7eb; cursor:pointer; }
+  .mc-btab.active { background:#1a1a1a; color:white; }
+  .mc-pos-cols { display:grid; grid-template-columns:repeat(8,1fr); gap:1px; background:#e2e5ea; border-radius:6px; overflow:hidden; }
+  .mc-pos-col { background:white; }
+  .mc-pos-header { padding:6px 4px; text-align:center; font-size:10px; font-weight:700; border-bottom:2px solid; }
+  .mc-pos-player { padding:4px 5px; border-bottom:1px solid #f3f4f6; font-size:10px; }
+  .mc-pos-player.drafted { opacity:0.15; text-decoration:line-through; }
+  .mc-pp-name { font-weight:600; font-size:10px; }
+  .mc-pp-stat { font-size:8px; color:#6b7280; }
+  .mc-pp-adp { font-size:8px; color:#9ca3af; }
+
+  /* Right rail: war room feed */
+  .mc-right { background:white; border-left:1px solid #e2e5ea; overflow-y:auto; }
+  .mc-feed-header { padding:10px 14px; font-size:11px; font-weight:700; border-bottom:1px solid #e2e5ea; display:flex; justify-content:space-between; }
+  .mc-feed-item { padding:8px 14px; border-bottom:1px solid #f3f4f6; font-size:10px; }
+  .mc-feed-tag { display:inline-block; font-size:8px; font-weight:700; padding:1px 5px; border-radius:2px; margin-right:4px; }
+  .mc-feed-tag.buy { background:#ecfdf5; color:#059669; }
+  .mc-feed-tag.sell { background:#fef2f2; color:#d00; }
+  .mc-feed-tag.warn { background:#fffbeb; color:#d97706; }
+  .mc-feed-tag.info { background:#eff6ff; color:#2563eb; }
+  .mc-feed-text { color:#374151; margin-top:2px; }
+  .mc-feed-source { font-size:8px; color:#9ca3af; margin-top:1px; }
+
+  /* ═══════════════════════════════════════════
+     CONCEPT B: "ESPN Overlay" — Looks like ESPN with AI panels
+     Clean white, red accents, intel slides in from right
+     ═══════════════════════════════════════════ */
+  .espn { height:100vh; display:grid; grid-template-rows:52px auto 1fr; background:white; color:#1a1a1a; }
+  .espn-nav {
+    background:white; border-bottom:2px solid #d00;
+    display:flex; align-items:center; padding:0 20px;
+  }
+  .espn-logo { font-weight:800; font-size:16px; color:#d00; margin-right:24px; }
+  .espn-tab { padding:16px 16px; font-size:12px; font-weight:600; color:#6b7280; cursor:pointer; }
+  .espn-tab.active { color:#d00; border-bottom:2px solid #d00; margin-bottom:-2px; }
+  .espn-right { margin-left:auto; display:flex; align-items:center; gap:10px; }
+  .espn-badge { font-size:10px; font-weight:600; padding:3px 8px; border-radius:10px; background:#fef2f2; color:#d00; }
+
+  /* OTC strip */
+  .espn-otc {
+    background:#d00; padding:8px 20px; display:flex; align-items:center; gap:12px; color:white;
+  }
+  .espn-otc-round { font-size:11px; font-weight:600; opacity:0.7; }
+  .espn-otc-round .big { font-size:22px; font-weight:800; display:block; opacity:1; }
+  .espn-otc-picks { display:flex; gap:4px; flex:1; overflow-x:auto; }
+  .espn-otc-pick { padding:4px 8px; border-radius:4px; text-align:center; font-size:10px; min-width:56px; background:rgba(255,255,255,0.1); }
+  .espn-otc-pick.current { background:rgba(255,255,255,0.3); font-weight:700; }
+  .espn-otc-pick.mine { background:rgba(255,215,0,0.2); border:1px solid rgba(255,215,0,0.4); }
+  .espn-otc-pick .pk-num { font-weight:700; }
+  .espn-otc-pick .pk-name { font-size:8px; opacity:0.7; }
+  .espn-otc-timer { font-size:24px; font-weight:800; font-variant-numeric:tabular-nums; }
+
+  /* Main content */
+  .espn-main { display:grid; grid-template-columns:1fr 320px; overflow:hidden; }
+  .espn-board { padding:16px; overflow-y:auto; }
+  .espn-intel { background:#fafbfc; border-left:1px solid #e2e5ea; overflow-y:auto; }
+  .espn-intel-tab { display:flex; border-bottom:1px solid #e2e5ea; }
+  .espn-itab { flex:1; padding:10px 8px; font-size:10px; font-weight:600; text-align:center; cursor:pointer; color:#6b7280; border-bottom:2px solid transparent; }
+  .espn-itab.active { color:#d00; border-bottom-color:#d00; }
+
+  .espn-intel-card { padding:12px 14px; border-bottom:1px solid #f3f4f6; }
+  .espn-ic-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+  .espn-ic-expert { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; }
+  .espn-ic-source { font-size:8px; color:#9ca3af; }
+  .espn-ic-body { font-size:11px; }
+  .espn-ic-player { font-weight:700; }
+  .espn-ic-metric { font-size:10px; color:#6b7280; margin-top:2px; }
+
+  /* ═══════════════════════════════════════════
+     CONCEPT C: "Bloomberg Terminal" — Dense data, dark mode
+     Max information density. Power user layout.
+     ═══════════════════════════════════════════ */
+  .bb { height:100vh; display:grid; grid-template-rows:32px 1fr; background:#0a0e14; color:#c5cdd8; font-size:10px; }
+  .bb-top {
+    background:#0d1117; border-bottom:1px solid #1f2937;
+    display:flex; align-items:center; padding:0 12px; gap:16px;
+  }
+  .bb-logo { color:#f59e0b; font-weight:800; font-size:12px; letter-spacing:2px; }
+  .bb-nav { display:flex; gap:0; }
+  .bb-ntab { padding:8px 14px; font-size:9px; font-weight:600; color:#6b7280; cursor:pointer; text-transform:uppercase; letter-spacing:1px; }
+  .bb-ntab.active { color:#f59e0b; border-bottom:1px solid #f59e0b; }
+  .bb-clock { margin-left:auto; font-size:10px; color:#4b5563; font-variant-numeric:tabular-nums; }
+
+  .bb-body { display:grid; grid-template-columns:220px 1fr 1fr 280px; gap:1px; background:#1f2937; }
+  .bb-panel { background:#0d1117; overflow-y:auto; }
+  .bb-panel-header { padding:6px 10px; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#f59e0b; border-bottom:1px solid #1f2937; position:sticky; top:0; background:#0d1117; z-index:1; }
+  .bb-row { display:flex; padding:3px 10px; border-bottom:1px solid #111827; font-size:9px; gap:6px; }
+  .bb-row:hover { background:#111827; }
+  .bb-row.drafted { opacity:0.2; }
+  .bb-name { font-weight:600; color:#e5e7eb; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .bb-val { color:#6b7280; font-variant-numeric:tabular-nums; }
+  .bb-val.green { color:#4ade80; }
+  .bb-val.red { color:#f87171; }
+  .bb-val.yellow { color:#fbbf24; }
+  .bb-tag { font-size:7px; font-weight:700; padding:1px 4px; border-radius:2px; }
+  .bb-tag.buy { background:#052e16; color:#4ade80; }
+  .bb-tag.sell { background:#450a0a; color:#f87171; }
+  .bb-tag.watch { background:#422006; color:#fbbf24; }
+
+  /* Roster panel */
+  .bb-roster-row { display:flex; padding:2px 10px; font-size:9px; border-bottom:1px solid #111827; }
+  .bb-roster-pos { width:20px; color:#4b5563; font-weight:700; }
+  .bb-roster-name { flex:1; }
+
+  /* Cat bars mini */
+  .bb-cat { display:flex; align-items:center; padding:2px 10px; gap:4px; }
+  .bb-cat-lbl { width:28px; font-weight:700; font-size:8px; }
+  .bb-cat-bar { flex:1; height:3px; background:#1f2937; border-radius:2px; overflow:hidden; }
+  .bb-cat-fill { height:100%; border-radius:2px; }
+  .bb-cat-val { width:16px; text-align:right; font-size:8px; }
+
+  /* Feed */
+  .bb-feed-item { padding:6px 10px; border-bottom:1px solid #111827; }
+  .bb-feed-expert { font-size:8px; color:#f59e0b; font-weight:600; }
+  .bb-feed-text { font-size:9px; color:#9ca3af; margin-top:1px; }
+
+  /* Helper */
+  .divider { height:1px; background:#1f2937; margin:20px 0; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="concept-label">CONCEPT A: <span>"Mission Control"</span> — Three-panel layout. Board center, roster left, war room feed right.</div>
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="mc" style="height:auto;min-height:100vh">
+  <div class="mc-topnav">
+    <div class="mc-logo">THE DUGOUT</div>
+    <div class="mc-tab">Hub</div>
+    <div class="mc-tab active">Draft Room</div>
+    <div class="mc-tab">War Room</div>
+    <div class="mc-tab">Intel</div>
+    <div class="mc-tab">My Team</div>
+    <div class="mc-status">
+      <div class="mc-dot"></div>
+      <div class="mc-status-text">ESPN Connected · Pick 9 · Round 3</div>
+    </div>
+  </div>
+  <div class="mc-body" style="min-height:600px">
+    <!-- Left: Roster + Cats -->
+    <div class="mc-left">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">Your Roster <span style="color:#9ca3af;font-weight:400">2/23</span></div>
+      <div class="mc-section-label">Batting</div>
+      <div class="mc-roster-slot"><span class="mc-roster-pos">SS</span><span class="mc-roster-name" style="color:#d00;font-weight:600">Jose Ramirez</span><span style="font-size:9px;color:#9ca3af;margin-left:auto">R1</span></div>
+      <div class="mc-roster-slot"><span class="mc-roster-pos">SS</span><span class="mc-roster-name" style="color:#d00;font-weight:600">Gunnar Henderson</span><span style="font-size:9px;color:#9ca3af;margin-left:auto">R2</span></div>
+      <div class="mc-roster-slot"><span class="mc-roster-pos">1B</span><span class="mc-roster-name" style="color:#9ca3af;font-style:italic">Pick 33</span></div>
+      <div class="mc-roster-slot"><span class="mc-roster-pos">3B</span><span class="mc-roster-name" style="color:#9ca3af;font-style:italic">—</span></div>
+      <div class="mc-roster-slot"><span class="mc-roster-pos">OF</span><span class="mc-roster-name" style="color:#9ca3af;font-style:italic">—</span></div>
+      <div class="mc-roster-slot"><span class="mc-roster-pos">OF</span><span class="mc-roster-name" style="color:#9ca3af;font-style:italic">—</span></div>
+      <div class="mc-roster-slot"><span class="mc-roster-pos">OF</span><span class="mc-roster-name" style="color:#9ca3af;font-style:italic">—</span></div>
+      <div class="mc-section-label">Pitching</div>
+      <div class="mc-roster-slot"><span class="mc-roster-pos">SP</span><span class="mc-roster-name" style="color:#9ca3af;font-style:italic">—</span></div>
+      <div class="mc-roster-slot"><span class="mc-roster-pos">SP</span><span class="mc-roster-name" style="color:#9ca3af;font-style:italic">—</span></div>
+      <div class="mc-roster-slot"><span class="mc-roster-pos">RP</span><span class="mc-roster-name" style="color:#9ca3af;font-style:italic">—</span></div>
+
+      <div class="mc-section-label" style="margin-top:16px">Category Scores</div>
+      <div class="mc-cat-row"><span class="mc-cat-label">R</span><div class="mc-cat-bar"><div class="mc-cat-fill" style="width:18%;background:#d00"></div></div><span class="mc-cat-val">18</span></div>
+      <div class="mc-cat-row"><span class="mc-cat-label">HR</span><div class="mc-cat-bar"><div class="mc-cat-fill" style="width:23%;background:#d00"></div></div><span class="mc-cat-val">23</span></div>
+      <div class="mc-cat-row"><span class="mc-cat-label">RBI</span><div class="mc-cat-bar"><div class="mc-cat-fill" style="width:20%;background:#d00"></div></div><span class="mc-cat-val">20</span></div>
+      <div class="mc-cat-row"><span class="mc-cat-label" style="color:#059669">SB</span><div class="mc-cat-bar"><div class="mc-cat-fill" style="width:47%;background:#059669"></div></div><span class="mc-cat-val">47</span></div>
+      <div class="mc-cat-row"><span class="mc-cat-label">AVG</span><div class="mc-cat-bar"><div class="mc-cat-fill" style="width:95%;background:#059669"></div></div><span class="mc-cat-val">95</span></div>
+      <div class="mc-cat-row"><span class="mc-cat-label">OPS</span><div class="mc-cat-bar"><div class="mc-cat-fill" style="width:98%;background:#059669"></div></div><span class="mc-cat-val">98</span></div>
+      <div class="mc-cat-row"><span class="mc-cat-label" style="color:#d00">K</span><div class="mc-cat-bar"><div class="mc-cat-fill" style="width:0%;background:#d00"></div></div><span class="mc-cat-val">0</span></div>
+      <div class="mc-cat-row"><span class="mc-cat-label">ERA</span><div class="mc-cat-bar"><div class="mc-cat-fill" style="width:0%;background:#d00"></div></div><span class="mc-cat-val">0</span></div>
+
+      <div class="mc-section-label" style="margin-top:16px">Warnings</div>
+      <div style="font-size:9px;color:#d00;padding:4px;background:#fef2f2;border-radius:4px;margin-bottom:4px">⚠ Only 5 elite SB sources remain</div>
+      <div style="font-size:9px;color:#d97706;padding:4px;background:#fffbeb;border-radius:4px">⚠ No SP drafted — aces disappearing</div>
+    </div>
+
+    <!-- Center: Board -->
+    <div class="mc-center">
+      <div class="mc-board-header">
+        <div class="mc-board-title">Draft Board — Round 3, Pick 33</div>
+        <div class="mc-board-tabs">
+          <div class="mc-btab active">By Position</div>
+          <div class="mc-btab">By Category</div>
+          <div class="mc-btab">Table</div>
+        </div>
+      </div>
+      <div class="mc-pos-cols">
+        <div class="mc-pos-col">
+          <div class="mc-pos-header" style="color:#d97706;border-color:#d97706">C <span style="color:#9ca3af">4</span></div>
+          <div class="mc-pos-player"><div class="mc-pp-name">Cal Raleigh</div><div class="mc-pp-stat">32HR .228</div><div class="mc-pp-adp">ADP 38</div></div>
+          <div class="mc-pos-player"><div class="mc-pp-name">Wm. Contreras</div><div class="mc-pp-stat">22HR .270</div><div class="mc-pp-adp">ADP 52</div></div>
+          <div class="mc-pos-player"><div class="mc-pp-name">Adley Rutschman</div><div class="mc-pp-stat">20HR .265</div><div class="mc-pp-adp">ADP 120</div></div>
+        </div>
+        <div class="mc-pos-col">
+          <div class="mc-pos-header" style="color:#2563eb;border-color:#2563eb">1B <span style="color:#9ca3af">6</span></div>
+          <div class="mc-pos-player"><div class="mc-pp-name">Bryce Harper</div><div class="mc-pp-stat">32HR 95RBI .280</div><div class="mc-pp-adp">ADP 18</div></div>
+          <div class="mc-pos-player drafted"><div class="mc-pp-name">Freddie Freeman</div></div>
+          <div class="mc-pos-player"><div class="mc-pp-name">Pete Alonso</div><div class="mc-pp-stat">40HR 110RBI .245</div><div class="mc-pp-adp">ADP 45</div></div>
+          <div class="mc-pos-player"><div class="mc-pp-name">Josh Naylor</div><div class="mc-pp-stat">28HR .260</div><div class="mc-pp-adp">ADP 65</div></div>
+        </div>
+        <div class="mc-pos-col">
+          <div class="mc-pos-header" style="color:#059669;border-color:#059669">2B <span style="color:#9ca3af">3</span></div>
+          <div class="mc-pos-player"><div class="mc-pp-name">Ketel Marte</div><div class="mc-pp-stat">32HR 18SB .278</div><div class="mc-pp-adp">ADP 16</div></div>
+          <div class="mc-pos-player"><div class="mc-pp-name">M. Semien</div><div class="mc-pp-stat">24HR 10SB .265</div><div class="mc-pp-adp">ADP 80</div></div>
+        </div>
+        <div class="mc-pos-col">
+          <div class="mc-pos-header" style="color:#7c3aed;border-color:#7c3aed">SS <span style="color:#9ca3af">5</span></div>
+          <div class="mc-pos-player drafted"><div class="mc-pp-name">Jose Ramirez</div></div>
+          <div class="mc-pos-player drafted"><div class="mc-pp-name">Gunnar Henderson</div></div>
+          <div class="mc-pos-player"><div class="mc-pp-name">Trea Turner</div><div class="mc-pp-stat">22HR 28SB .280</div><div class="mc-pp-adp">ADP 15</div></div>
+          <div class="mc-pos-player"><div class="mc-pp-name">Mookie Betts</div><div class="mc-pp-stat">25HR 18SB .275</div><div class="mc-pp-adp">ADP 41</div></div>
+        </div>
+        <div class="mc-pos-col">
+          <div class="mc-pos-header" style="color:#d00;border-color:#d00">3B <span style="color:#9ca3af">3</span></div>
+          <div class="mc-pos-player drafted"><div class="mc-pp-name">Rafael Devers</div></div>
+          <div class="mc-pos-player"><div class="mc-pp-name">Alex Bregman</div><div class="mc-pp-stat">24HR .272</div><div class="mc-pp-adp">ADP 55</div></div>
+          <div class="mc-pos-player"><div class="mc-pp-name">Austin Riley</div><div class="mc-pp-stat">35HR .280</div><div class="mc-pp-adp">ADP 50</div></div>
+        </div>
+        <div class="mc-pos-col">
+          <div class="mc-pos-header" style="color:#059669;border-color:#059669">OF <span style="color:#9ca3af">8</span></div>
+          <div class="mc-pos-player"><div class="mc-pp-name">Acuña Jr.</div><div class="mc-pp-stat">38HR 48SB .282</div><div class="mc-pp-adp">ADP 10</div></div>
+          <div class="mc-pos-player"><div class="mc-pp-name">Kyle Tucker</div><div class="mc-pp-stat">35HR 28SB .285</div><div class="mc-pp-adp">ADP 12</div></div>
+          <div class="mc-pos-player"><div class="mc-pp-name">Jarren Duran</div><div class="mc-pp-stat">20HR 30SB .270</div><div class="mc-pp-adp">ADP 56</div></div>
+          <div class="mc-pos-player"><div class="mc-pp-name">Jo Adell</div><div class="mc-pp-stat">37HR 17.2%brl</div><div class="mc-pp-adp">ADP 70</div></div>
+        </div>
+        <div class="mc-pos-col">
+          <div class="mc-pos-header" style="color:#2563eb;border-color:#2563eb">SP <span style="color:#9ca3af">10</span></div>
+          <div class="mc-pos-player"><div class="mc-pp-name">Paul Skenes</div><div class="mc-pp-stat">225K 2.95ERA</div><div class="mc-pp-adp">ADP 5</div></div>
+          <div class="mc-pos-player drafted"><div class="mc-pp-name">Tarik Skubal</div></div>
+          <div class="mc-pos-player"><div class="mc-pp-name">G. Crochet</div><div class="mc-pp-stat">255K 117 Stuff+</div><div class="mc-pp-adp">ADP 10</div></div>
+          <div class="mc-pos-player"><div class="mc-pp-name">George Kirby</div><div class="mc-pp-stat">198K 18QS</div><div class="mc-pp-adp">ADP 67</div></div>
+        </div>
+        <div class="mc-pos-col">
+          <div class="mc-pos-header" style="color:#d00;border-color:#d00">RP <span style="color:#9ca3af">5</span></div>
+          <div class="mc-pos-player"><div class="mc-pp-name">Mason Miller</div><div class="mc-pp-stat">42SV 2.65ERA</div><div class="mc-pp-adp">ADP 40</div></div>
+          <div class="mc-pos-player"><div class="mc-pp-name">Edwin Diaz</div><div class="mc-pp-stat">35SV 2.85ERA</div><div class="mc-pp-adp">ADP 45</div></div>
+          <div class="mc-pos-player"><div class="mc-pp-name">Cade Smith</div><div class="mc-pp-stat">38SV 2.75ERA</div><div class="mc-pp-adp">ADP 62</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: War Room Feed -->
+    <div class="mc-right">
+      <div class="mc-feed-header">
+        <span>War Room Live Feed</span>
+        <span style="font-size:9px;color:#9ca3af">12 signals</span>
+      </div>
+      <div class="mc-feed-item" style="background:#fef2f2">
+        <div><span class="mc-feed-tag sell">RUNNING OUT</span><strong>SB Sources</strong></div>
+        <div class="mc-feed-text">Only 5 players with 20+ SB remain on the board. Address this round or lose SB every week.</div>
+        <div class="mc-feed-source">The Quant · Draft Engine SGP · Just now</div>
+      </div>
+      <div class="mc-feed-item">
+        <div><span class="mc-feed-tag buy">BUY</span><strong>Bryce Harper</strong> · 1B · ADP 18</div>
+        <div class="mc-feed-text">15.2% barrel rate, elite EV. IN RANGE at Pick 33. Five-category anchor.</div>
+        <div class="mc-feed-source">The Scout · Baseball Savant Barrel% · Mar 15</div>
+      </div>
+      <div class="mc-feed-item">
+        <div><span class="mc-feed-tag warn">AVOID</span><strong>Josh Naylor</strong> · 1B · ADP 65</div>
+        <div class="mc-feed-text">Below-avg barrels, .315 BABIP = lucky. Projects .271/.771. Let someone else overpay.</div>
+        <div class="mc-feed-source">The Contrarian · FanGraphs BABIP · Mar 15</div>
+      </div>
+      <div class="mc-feed-item">
+        <div><span class="mc-feed-tag buy">STEAL</span><strong>Eury Perez</strong> · SP · ADP 155</div>
+        <div class="mc-feed-text">118 Stuff+ (8th in MLB). Per-inning dominance is ace-caliber. Round 13 ADP is criminal.</div>
+        <div class="mc-feed-source">The Scout · FanGraphs Stuff+ · Mar 15</div>
+      </div>
+      <div class="mc-feed-item">
+        <div><span class="mc-feed-tag info">INJURY</span><strong>Carlos Estevez</strong> · RP</div>
+        <div class="mc-feed-text">-6.9 mph velocity drop in spring. Major concern for closer role.</div>
+        <div class="mc-feed-source">The Historian · RotoWire Velo Tracker · Mar 15</div>
+      </div>
+      <div class="mc-feed-item">
+        <div><span class="mc-feed-tag warn">LAST CHANCE</span><strong>Trea Turner</strong> · SS · ADP 15</div>
+        <div class="mc-feed-text">On your wishlist. ADP 15 = gone before your next pick at 40. Grab now or never.</div>
+        <div class="mc-feed-source">Wishlist Alert · ESPN ADP · Just now</div>
+      </div>
+      <div class="mc-feed-item">
+        <div><span class="mc-feed-tag buy">SPRING</span><strong>Jac Caglianone</strong> · 1B · KC</div>
+        <div class="mc-feed-text">120.2 mph double, 460-ft HR. Hitting harder than nearly anyone alive. EV90 of 116.5 mph.</div>
+        <div class="mc-feed-source">The Scout · MLB.com Spring Statcast · Mar 14</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider" style="background:#333;margin:40px 0"></div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="concept-label">CONCEPT B: <span>"ESPN Overlay"</span> — Familiar ESPN feel with AI intelligence panel sliding in from right.</div>
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="espn" style="height:auto;min-height:100vh">
+  <div class="espn-nav">
+    <div class="espn-logo">THE DUGOUT</div>
+    <div class="espn-tab">Hub</div>
+    <div class="espn-tab">Draft Prep</div>
+    <div class="espn-tab active">Draft Live</div>
+    <div class="espn-tab">War Room</div>
+    <div class="espn-tab">Intel</div>
+    <div class="espn-right">
+      <div class="espn-badge">● LIVE</div>
+      <span style="font-size:11px;color:#6b7280">We're the Millers · Pick 9</span>
+    </div>
+  </div>
+  <div class="espn-otc">
+    <div class="espn-otc-round">ROUND<span class="big">3</span></div>
+    <div style="width:1px;height:30px;background:rgba(255,255,255,0.2)"></div>
+    <div class="espn-otc-picks">
+      <div class="espn-otc-pick" style="opacity:0.3"><div class="pk-num">25</div><div class="pk-name">Machado</div></div>
+      <div class="espn-otc-pick" style="opacity:0.3"><div class="pk-num">26</div><div class="pk-name">Alonso</div></div>
+      <div class="espn-otc-pick" style="opacity:0.3"><div class="pk-num">27</div><div class="pk-name">Alvarez</div></div>
+      <div class="espn-otc-pick current"><div class="pk-num">28</div><div class="pk-name">On Clock</div></div>
+      <div class="espn-otc-pick"><div class="pk-num">29</div><div class="pk-name">Team 5</div></div>
+      <div class="espn-otc-pick"><div class="pk-num">30</div><div class="pk-name">Team 6</div></div>
+      <div class="espn-otc-pick"><div class="pk-num">31</div><div class="pk-name">Team 7</div></div>
+      <div class="espn-otc-pick"><div class="pk-num">32</div><div class="pk-name">Team 8</div></div>
+      <div class="espn-otc-pick mine"><div class="pk-num">33</div><div class="pk-name">★ YOU</div></div>
+      <div class="espn-otc-pick"><div class="pk-num">34</div><div class="pk-name">Team 10</div></div>
+    </div>
+    <div style="width:1px;height:30px;background:rgba(255,255,255,0.2)"></div>
+    <div class="espn-otc-timer">1:22</div>
+  </div>
+  <div class="espn-main" style="min-height:500px">
+    <div class="espn-board">
+      <div style="font-size:14px;font-weight:700;margin-bottom:12px">Board — By Position</div>
+      <div style="font-size:11px;color:#6b7280;margin-bottom:8px">Same position columns board from Concept A would go here — showing all players with tier colors and stats.</div>
+      <div style="background:#f3f4f6;border-radius:8px;padding:40px;text-align:center;color:#9ca3af;font-size:13px">
+        [ Position Board / Category Board / Table — same as current app ]<br><br>
+        The difference is the <strong>intelligence panel on the right</strong> →
+      </div>
+    </div>
+    <div class="espn-intel">
+      <div class="espn-intel-tab">
+        <div class="espn-itab active">Live Feed</div>
+        <div class="espn-itab">Scouts</div>
+        <div class="espn-itab">Closers</div>
+        <div class="espn-itab">Wishlist</div>
+      </div>
+      <div class="espn-intel-card" style="background:#fef2f2">
+        <div class="espn-ic-header">
+          <span class="espn-ic-expert" style="color:#d00">⚠ RUNNING OUT</span>
+          <span class="espn-ic-source">The Quant · Just now</span>
+        </div>
+        <div class="espn-ic-body">Only <strong>5 elite SB sources</strong> remain. Your SB is at 47/100 — address this pick.</div>
+      </div>
+      <div class="espn-intel-card">
+        <div class="espn-ic-header">
+          <span class="espn-ic-expert" style="color:#059669">🎯 THE SCOUT</span>
+          <span class="espn-ic-source">Savant Barrel% · Mar 15</span>
+        </div>
+        <div class="espn-ic-body">
+          <span class="espn-ic-player">Bryce Harper</span> · 1B · ADP 18<br>
+          <div class="espn-ic-metric">15.2% barrel rate · 93.3 mph EV · IN RANGE at Pick 33</div>
+        </div>
+      </div>
+      <div class="espn-intel-card">
+        <div class="espn-ic-header">
+          <span class="espn-ic-expert" style="color:#d00">⚠ CONTRARIAN</span>
+          <span class="espn-ic-source">FanGraphs BABIP · Mar 15</span>
+        </div>
+        <div class="espn-ic-body">
+          <span class="espn-ic-player">Josh Naylor</span> — AVOID<br>
+          <div class="espn-ic-metric">.315 BABIP (30pts above career). Below-avg barrels. Projects .271/.771</div>
+        </div>
+      </div>
+      <div class="espn-intel-card">
+        <div class="espn-ic-header">
+          <span class="espn-ic-expert" style="color:#2563eb">🔬 SCOUT</span>
+          <span class="espn-ic-source">FanGraphs Stuff+ · Mar 15</span>
+        </div>
+        <div class="espn-ic-body">
+          <span class="espn-ic-player">Eury Perez</span> · SP · ADP 155<br>
+          <div class="espn-ic-metric">118 Stuff+ (8th in MLB). Ace ceiling at a round 13 price.</div>
+        </div>
+      </div>
+      <div class="espn-intel-card">
+        <div class="espn-ic-header">
+          <span class="espn-ic-expert" style="color:#d97706">🌱 SPRING</span>
+          <span class="espn-ic-source">MLB.com Statcast · Mar 14</span>
+        </div>
+        <div class="espn-ic-body">
+          <span class="espn-ic-player">Jac Caglianone</span> · 1B · KC<br>
+          <div class="espn-ic-metric">120.2 mph EV, 460-ft HR. EV90 of 116.5 mph.</div>
+        </div>
+      </div>
+      <div class="espn-intel-card">
+        <div class="espn-ic-header">
+          <span class="espn-ic-expert" style="color:#d00">🏥 HISTORIAN</span>
+          <span class="espn-ic-source">ESPN Injury DB · Mar 15</span>
+        </div>
+        <div class="espn-ic-body">
+          <span class="espn-ic-player">Carlos Estevez</span> · RP · DANGER<br>
+          <div class="espn-ic-metric">-6.9 mph velocity drop this spring. Closer role at risk.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider" style="background:#333;margin:40px 0"></div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="concept-label">CONCEPT C: <span>"Bloomberg Terminal"</span> — Maximum data density. Dark mode. Every pixel has information.</div>
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="bb" style="height:auto;min-height:100vh">
+  <div class="bb-top">
+    <div class="bb-logo">DUGOUT</div>
+    <div class="bb-nav">
+      <div class="bb-ntab">Hub</div>
+      <div class="bb-ntab active">Draft</div>
+      <div class="bb-ntab">War Room</div>
+      <div class="bb-ntab">Intel</div>
+    </div>
+    <div class="bb-clock">R3 PK33 · ESPN LIVE · 1:22 · SB:47 K:0 ERA:0 ← CRITICAL</div>
+  </div>
+  <div class="bb-body" style="min-height:580px">
+    <!-- Panel 1: Roster + Cats -->
+    <div class="bb-panel">
+      <div class="bb-panel-header">ROSTER 2/23</div>
+      <div class="bb-roster-row"><span class="bb-roster-pos">R1</span><span class="bb-roster-name" style="color:#4ade80">Jose Ramirez</span></div>
+      <div class="bb-roster-row"><span class="bb-roster-pos">R2</span><span class="bb-roster-name" style="color:#4ade80">Gunnar Henderson</span></div>
+      <div class="bb-roster-row" style="opacity:0.3"><span class="bb-roster-pos">R3</span><span class="bb-roster-name">—</span></div>
+      <div class="bb-roster-row" style="opacity:0.3"><span class="bb-roster-pos">R4</span><span class="bb-roster-name">—</span></div>
+      <div class="bb-panel-header" style="margin-top:8px">CATEGORIES</div>
+      <div class="bb-cat"><span class="bb-cat-lbl">R</span><div class="bb-cat-bar"><div class="bb-cat-fill" style="width:18%;background:#f87171"></div></div><span class="bb-cat-val" style="color:#f87171">18</span></div>
+      <div class="bb-cat"><span class="bb-cat-lbl">HR</span><div class="bb-cat-bar"><div class="bb-cat-fill" style="width:23%;background:#f87171"></div></div><span class="bb-cat-val" style="color:#f87171">23</span></div>
+      <div class="bb-cat"><span class="bb-cat-lbl" style="color:#fbbf24">SB</span><div class="bb-cat-bar"><div class="bb-cat-fill" style="width:47%;background:#fbbf24"></div></div><span class="bb-cat-val" style="color:#fbbf24">47</span></div>
+      <div class="bb-cat"><span class="bb-cat-lbl">AVG</span><div class="bb-cat-bar"><div class="bb-cat-fill" style="width:95%;background:#4ade80"></div></div><span class="bb-cat-val" style="color:#4ade80">95</span></div>
+      <div class="bb-cat"><span class="bb-cat-lbl">OPS</span><div class="bb-cat-bar"><div class="bb-cat-fill" style="width:98%;background:#4ade80"></div></div><span class="bb-cat-val" style="color:#4ade80">98</span></div>
+      <div class="bb-cat"><span class="bb-cat-lbl" style="color:#f87171">K</span><div class="bb-cat-bar"><div class="bb-cat-fill" style="width:0%"></div></div><span class="bb-cat-val" style="color:#f87171">0</span></div>
+      <div class="bb-cat"><span class="bb-cat-lbl" style="color:#f87171">QS</span><div class="bb-cat-bar"><div class="bb-cat-fill" style="width:0%"></div></div><span class="bb-cat-val" style="color:#f87171">0</span></div>
+      <div class="bb-cat"><span class="bb-cat-lbl" style="color:#f87171">ERA</span><div class="bb-cat-bar"><div class="bb-cat-fill" style="width:0%"></div></div><span class="bb-cat-val" style="color:#f87171">0</span></div>
+      <div class="bb-panel-header" style="margin-top:8px">ALERTS</div>
+      <div style="padding:4px 10px;font-size:9px;color:#f87171;background:#1c0a0a;border-radius:3px;margin:2px 10px">⚠ 5 SB sources left</div>
+      <div style="padding:4px 10px;font-size:9px;color:#fbbf24;background:#1c1a0a;border-radius:3px;margin:2px 10px">⚠ No SP yet</div>
+      <div style="padding:4px 10px;font-size:9px;color:#60a5fa;background:#0a0e1c;border-radius:3px;margin:2px 10px">ℹ 2B scarcest pos</div>
+    </div>
+
+    <!-- Panel 2: Hitters Board -->
+    <div class="bb-panel">
+      <div class="bb-panel-header">HITTERS · BY AI RANK</div>
+      <div class="bb-row"><span class="bb-tag buy">BUY</span><span class="bb-name">Bryce Harper</span><span class="bb-val">1B</span><span class="bb-val green">15.2%brl</span><span class="bb-val">18</span></div>
+      <div class="bb-row"><span class="bb-tag buy">BUY</span><span class="bb-name">Acuña Jr.</span><span class="bb-val">OF</span><span class="bb-val green">48SB</span><span class="bb-val">10</span></div>
+      <div class="bb-row"><span class="bb-tag buy">BUY</span><span class="bb-name">Kyle Tucker</span><span class="bb-val">OF</span><span class="bb-val green">28SB</span><span class="bb-val">12</span></div>
+      <div class="bb-row"><span class="bb-tag watch">FAIR</span><span class="bb-name">Ketel Marte</span><span class="bb-val">2B</span><span class="bb-val">18SB</span><span class="bb-val">16</span></div>
+      <div class="bb-row drafted"><span class="bb-name">Trea Turner</span><span class="bb-val">SS</span><span class="bb-val">28SB</span><span class="bb-val">15</span></div>
+      <div class="bb-row"><span class="bb-tag buy">VAL</span><span class="bb-name">Austin Riley</span><span class="bb-val">3B</span><span class="bb-val green">15.2%brl</span><span class="bb-val">50</span></div>
+      <div class="bb-row"><span class="bb-tag buy">VAL</span><span class="bb-name">Ben Rice</span><span class="bb-val">1B</span><span class="bb-val green">+.058x</span><span class="bb-val">140</span></div>
+      <div class="bb-row"><span class="bb-tag sell">FADE</span><span class="bb-name">Josh Naylor</span><span class="bb-val">1B</span><span class="bb-val red">.315bip</span><span class="bb-val">50</span></div>
+      <div class="bb-row"><span class="bb-tag sell">FADE</span><span class="bb-name">Jose Altuve</span><span class="bb-val">2B</span><span class="bb-val red">↓EV</span><span class="bb-val">100</span></div>
+      <div class="bb-row"><span class="bb-tag buy">VAL</span><span class="bb-name">Jo Adell</span><span class="bb-val">OF</span><span class="bb-val green">17.2%brl</span><span class="bb-val">70</span></div>
+      <div class="bb-row"><span class="bb-tag buy">DEEP</span><span class="bb-name">Colson Montgomery</span><span class="bb-val">SS</span><span class="bb-val green">77mph</span><span class="bb-val">155</span></div>
+      <div class="bb-row"><span class="bb-tag buy">DEEP</span><span class="bb-name">Jose Caballero</span><span class="bb-val">2B</span><span class="bb-val green">49SB</span><span class="bb-val">155</span></div>
+    </div>
+
+    <!-- Panel 3: Pitchers Board -->
+    <div class="bb-panel">
+      <div class="bb-panel-header">PITCHERS · BY STUFF+</div>
+      <div class="bb-row"><span class="bb-tag buy">ACE</span><span class="bb-name">Paul Skenes</span><span class="bb-val">SP</span><span class="bb-val green">115 S+</span><span class="bb-val">5</span></div>
+      <div class="bb-row drafted"><span class="bb-name">Tarik Skubal</span><span class="bb-val">SP</span><span class="bb-val">116 S+</span><span class="bb-val">6</span></div>
+      <div class="bb-row"><span class="bb-tag buy">ACE</span><span class="bb-name">Hunter Greene</span><span class="bb-val">SP</span><span class="bb-val green">120 S+</span><span class="bb-val">25</span></div>
+      <div class="bb-row"><span class="bb-tag buy">ACE</span><span class="bb-name">G. Crochet</span><span class="bb-val">SP</span><span class="bb-val green">117 S+</span><span class="bb-val">10</span></div>
+      <div class="bb-row"><span class="bb-tag buy">VAL</span><span class="bb-name">Eury Perez</span><span class="bb-val">SP</span><span class="bb-val green">118 S+</span><span class="bb-val yellow">155</span></div>
+      <div class="bb-row"><span class="bb-tag buy">VAL</span><span class="bb-name">Chase Burns</span><span class="bb-val">SP</span><span class="bb-val green">112 S+</span><span class="bb-val">80</span></div>
+      <div class="bb-row"><span class="bb-tag buy">VAL</span><span class="bb-name">MacK. Gore</span><span class="bb-val">SP</span><span class="bb-val green">110 S+</span><span class="bb-val">125</span></div>
+      <div class="bb-row"><span class="bb-tag buy">DEEP</span><span class="bb-name">Shane Baz</span><span class="bb-val">SP</span><span class="bb-val green">107 S+</span><span class="bb-val yellow">200</span></div>
+      <div class="bb-row"><span class="bb-tag sell">FADE</span><span class="bb-name">Andrew Abbott</span><span class="bb-val">SP</span><span class="bb-val red">4.31 SI</span><span class="bb-val">90</span></div>
+      <div class="bb-row"><span class="bb-tag sell">FADE</span><span class="bb-name">Logan Webb</span><span class="bb-val">SP</span><span class="bb-val red">↓K%</span><span class="bb-val">60</span></div>
+      <div class="bb-panel-header" style="margin-top:4px">CLOSERS · SAVE MAP</div>
+      <div class="bb-row"><span class="bb-tag buy">SAFE</span><span class="bb-name">Mason Miller</span><span class="bb-val">SD</span><span class="bb-val green">42SV</span><span class="bb-val">40</span></div>
+      <div class="bb-row"><span class="bb-tag buy">SAFE</span><span class="bb-name">Cade Smith</span><span class="bb-val">CLE</span><span class="bb-val green">38SV</span><span class="bb-val">62</span></div>
+      <div class="bb-row"><span class="bb-tag watch">VOLAT</span><span class="bb-name">Bryan Abreu</span><span class="bb-val">HOU</span><span class="bb-val yellow">Hader hurt</span><span class="bb-val">130</span></div>
+      <div class="bb-row"><span class="bb-tag sell">DANGER</span><span class="bb-name">C. Estevez</span><span class="bb-val">KC</span><span class="bb-val red">-6.9mph</span><span class="bb-val">100</span></div>
+    </div>
+
+    <!-- Panel 4: War Room Feed -->
+    <div class="bb-panel">
+      <div class="bb-panel-header">WAR ROOM FEED</div>
+      <div class="bb-feed-item" style="border-left:2px solid #f87171">
+        <div class="bb-feed-expert">⚠ QUANT · SGP Engine · Now</div>
+        <div class="bb-feed-text">SB at 47/100 — 5 elite sources left. CRITICAL. Address R3.</div>
+      </div>
+      <div class="bb-feed-item" style="border-left:2px solid #4ade80">
+        <div class="bb-feed-expert">🎯 SCOUT · Savant Barrel% · Mar 15</div>
+        <div class="bb-feed-text">Harper 15.2% barrel, 93.3 mph EV. IN RANGE at Pk 33.</div>
+      </div>
+      <div class="bb-feed-item" style="border-left:2px solid #f87171">
+        <div class="bb-feed-expert">⚠ CONTRARIAN · FanGraphs · Mar 15</div>
+        <div class="bb-feed-text">Naylor .315 BABIP trap. Below-avg barrels. AVOID.</div>
+      </div>
+      <div class="bb-feed-item" style="border-left:2px solid #4ade80">
+        <div class="bb-feed-expert">🔬 SCOUT · Stuff+ · Mar 15</div>
+        <div class="bb-feed-text">Eury Perez 118 S+ at ADP 155 — ace hiding in R13.</div>
+      </div>
+      <div class="bb-feed-item" style="border-left:2px solid #fbbf24">
+        <div class="bb-feed-expert">🌱 SPRING · MLB.com · Mar 14</div>
+        <div class="bb-feed-text">Caglianone 120.2 mph EV. Hardest contact in baseball.</div>
+      </div>
+      <div class="bb-feed-item" style="border-left:2px solid #f87171">
+        <div class="bb-feed-expert">🏥 HISTORIAN · ESPN · Mar 15</div>
+        <div class="bb-feed-text">Estevez -6.9 mph velo drop. Closer role in danger.</div>
+      </div>
+      <div class="bb-feed-item" style="border-left:2px solid #60a5fa">
+        <div class="bb-feed-expert">🔒 CLOSER · CloserMonkey · Mar 15</div>
+        <div class="bb-feed-text">Abreu closing HOU with Hader injured. ADP 130 = free saves.</div>
+      </div>
+      <div class="bb-feed-item" style="border-left:2px solid #fbbf24">
+        <div class="bb-feed-expert">📊 QUANT · SGP · Now</div>
+        <div class="bb-feed-text">2B scarcest position — only 25 in top 300. Get one by R5.</div>
+      </div>
+      <div class="bb-feed-item" style="border-left:2px solid #4ade80">
+        <div class="bb-feed-expert">💨 SPEED · Savant · Mar 15</div>
+        <div class="bb-feed-text">Caballero 30 ft/sec, 49 SB in 126 GP. Best SB/PA in MLB. ADP 155.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="padding:40px;text-align:center;color:#6b7280;font-size:13px;line-height:1.8">
+  <strong style="color:#d00;font-size:16px">Which layout speaks to you?</strong><br><br>
+  <strong>Concept A "Mission Control"</strong> — Clean light mode. Three-panel split: roster left, board center, war room feed right. Everything visible at once.<br>
+  <strong>Concept B "ESPN Overlay"</strong> — Familiar ESPN feel with top nav + OTC strip. Intelligence panel slides in from right alongside the board.<br>
+  <strong>Concept C "Bloomberg Terminal"</strong> — Maximum data density dark mode. Four panels of pure information. Every pixel working. Power user feel.<br><br>
+  Or mix them — like Concept B's nav + OTC strip with Concept C's data density. Your call.
+</div>
+
+</body>
+</html>
