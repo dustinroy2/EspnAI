@@ -43,9 +43,9 @@ async function api(path, opts = {}) {
       body: opts.body ? JSON.stringify(opts.body) : undefined,
     });
     const ct = r.headers.get('content-type') || '';
-    if (!r.ok || !ct.includes('application/json')) return { error: 'No backend available' };
+    if (!r.ok || !ct.includes('application/json')) return {};
     return await r.json();
-  } catch (e) { return { error: 'No backend available' }; }
+  } catch (e) { return {}; }
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -85,12 +85,6 @@ function toast(msg) {
 async function refreshHub() {
   const status = await api('status');
   const projStatus = await api('draft/projections/status');
-  if (status.error && status.error === 'No backend available') {
-    // No local server running — show default disconnected state, no error
-    document.getElementById('hub-status-tag').textContent = 'Setup needed';
-    document.getElementById('hub-status-tag').className = 'topbar-tag tag-yellow';
-    return;
-  }
 
   // ESPN card
   const sc1 = document.getElementById('sc-espn');
