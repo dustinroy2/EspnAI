@@ -3354,4 +3354,3 @@ function truncate(s, n) { return s.length > n ? s.slice(0, n) + '...' : s; }
    INIT
    ═══════════════════════════════════════════════════════ */
 refreshHub();
-</script>
