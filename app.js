@@ -186,6 +186,19 @@ async function loadProjections() {
     S.projections = r.projections;
     S.projCount = r.player_count;
   }
+  // Fallback: load static projections file if API returned nothing
+  if (Object.keys(S.projections).length === 0) {
+    try {
+      const resp = await fetch('projections_2026.json');
+      if (resp.ok) {
+        const players = await resp.json();
+        if (Array.isArray(players)) {
+          players.forEach(p => { S.projections[p.name] = p; });
+          S.projCount = players.length;
+        }
+      }
+    } catch(e) { /* no static projections available */ }
+  }
   return S.projections;
 }
 
