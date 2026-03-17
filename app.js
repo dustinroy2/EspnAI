@@ -42,8 +42,10 @@ async function api(path, opts = {}) {
       headers: opts.body ? {'Content-Type':'application/json'} : {},
       body: opts.body ? JSON.stringify(opts.body) : undefined,
     });
+    const ct = r.headers.get('content-type') || '';
+    if (!r.ok || !ct.includes('application/json')) return { error: 'No backend available' };
     return await r.json();
-  } catch (e) { console.error('API error:', path, e); return { error: e.message }; }
+  } catch (e) { return { error: 'No backend available' }; }
 }
 
 /* ═══════════════════════════════════════════════════════
