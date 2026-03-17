@@ -2406,19 +2406,41 @@ function renderBoardView(targetEl) {
 }
 
 function renderPositionBoard(allPlayers, isDrafted, playerTile) {
+  const ofFilter = p => ['OF','LF','CF','RF'].includes((p.pos||'').toUpperCase());
   const POS_COLS = [
     { key: 'C', label: 'C', color: '#d97706', filter: p => (p.pos||'').toUpperCase() === 'C' },
     { key: '1B', label: '1B', color: '#2563eb', filter: p => (p.pos||'').toUpperCase() === '1B' },
     { key: '2B', label: '2B', color: '#059669', filter: p => ['2B','2B/SS'].includes((p.pos||'').toUpperCase()) },
     { key: 'SS', label: 'SS', color: '#7c3aed', filter: p => ['SS','2B/SS'].includes((p.pos||'').toUpperCase()) },
     { key: '3B', label: '3B', color: '#d00', filter: p => ['3B','1B/3B'].includes((p.pos||'').toUpperCase()) },
-    { key: 'OF', label: 'OF', color: '#059669', filter: p => ['OF','LF','CF','RF'].includes((p.pos||'').toUpperCase()) },
     { key: 'SP', label: 'SP', color: '#2563eb', filter: p => isPitcherProj(p) && (p.SV||0) <= 5 },
     { key: 'RP', label: 'RP', color: '#d00', filter: p => isPitcherProj(p) && (p.SV||0) > 5 },
   ];
 
-  return `<div class="board-cols" style="grid-template-columns:repeat(${POS_COLS.length}, 1fr);max-height:450px;overflow-y:auto">
-    ${POS_COLS.map(col => {
+  // Split OF into 3 columns — deal players round-robin so each row = a tier of 3
+  const allOF = allPlayers.filter(ofFilter).sort((a,b) => (a.espnADP||999) - (b.espnADP||999));
+  const ofCols = [[], [], []];
+  allOF.slice(0, 75).forEach((p, i) => ofCols[i % 3].push(p));
+  const ofAvail = allOF.filter(p => !isDrafted(p.name)).length;
+
+  const numCols = POS_COLS.length + 3; // 7 regular + 3 OF
+  return `<div class="board-cols" style="grid-template-columns:repeat(${numCols}, 1fr);max-height:450px;overflow-y:auto">
+    ${POS_COLS.slice(0, 5).map(col => {
+      const players = allPlayers.filter(col.filter).sort((a,b) => (a.espnADP||999) - (b.espnADP||999));
+      const avail = players.filter(p => !isDrafted(p.name)).length;
+      return `<div class="board-col">
+        <div class="board-col-header" style="color:${col.color};border-bottom-color:${col.color}">${col.label} <span class="board-col-count">${avail}</span></div>
+        ${players.slice(0, 25).map(p => playerTile(p)).join('')}
+      </div>`;
+    }).join('')}
+    ${ofCols.map((col, i) => {
+      const avail = col.filter(p => !isDrafted(p.name)).length;
+      return `<div class="board-col">
+        <div class="board-col-header" style="color:#059669;border-bottom-color:#059669">OF${i+1} <span class="board-col-count">${avail}</span></div>
+        ${col.map(p => playerTile(p)).join('')}
+      </div>`;
+    }).join('')}
+    ${POS_COLS.slice(5).map(col => {
       const players = allPlayers.filter(col.filter).sort((a,b) => (a.espnADP||999) - (b.espnADP||999));
       const avail = players.filter(p => !isDrafted(p.name)).length;
       return `<div class="board-col">
