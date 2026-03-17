@@ -1256,8 +1256,10 @@ async function loadWarRoomFeed() {
   if (!_wrFeedData) {
     try {
       const resp = await fetch('warroom_intel_2026.json');
-      _wrFeedData = await resp.json();
-    } catch(e) { _wrFeedData = { experts: { scout: {} } }; }
+      if (!resp.ok) throw new Error('fetch failed');
+      const text = await resp.text();
+      _wrFeedData = JSON.parse(text);
+    } catch(e) { console.warn('War room feed load failed:', e); _wrFeedData = { experts: { scout: {} } }; }
   }
   const sc = _wrFeedData.experts?.scout || {};
   const ts = _wrFeedData.generated || new Date().toISOString();

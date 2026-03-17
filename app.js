@@ -85,6 +85,12 @@ function toast(msg) {
 async function refreshHub() {
   const status = await api('status');
   const projStatus = await api('draft/projections/status');
+  if (status.error && status.error === 'No backend available') {
+    // No local server running — show default disconnected state, no error
+    document.getElementById('hub-status-tag').textContent = 'Setup needed';
+    document.getElementById('hub-status-tag').className = 'topbar-tag tag-yellow';
+    return;
+  }
 
   // ESPN card
   const sc1 = document.getElementById('sc-espn');
@@ -2859,6 +2865,7 @@ async function refreshWarRoom() {
   if (!wrData) {
     try {
       const resp = await fetch('warroom_intel_2026.json');
+      if (!resp.ok) throw new Error('fetch failed');
       wrData = await resp.json();
     } catch(e) { wrData = { experts: { scout: {} } }; }
   }
