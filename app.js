@@ -113,16 +113,20 @@ async function refreshHub() {
     sc3.className = 'status-card ok';
     sc3.innerHTML = `<div class="label">Projections</div><div class="value">${projStatus.player_count} players</div><div class="meta">${projStatus.age_hours}h ago</div>`;
     S.projCount = projStatus.player_count;
+  } else if (S.projCount > 0) {
+    sc3.className = 'status-card ok';
+    sc3.innerHTML = `<div class="label">Projections</div><div class="value">${S.projCount} players</div><div class="meta">Static file loaded</div>`;
   } else {
     sc3.className = 'status-card warn';
     sc3.innerHTML = '<div class="label">Projections</div><div class="value" style="color:var(--yellow)">None</div><div class="meta">Generate in Draft Prep</div>';
   }
 
   // Overall tag
-  const allGood = status.hasSavedCookies && status.hasApiKey && projStatus.fresh;
+  const hasProj = projStatus.fresh || S.projCount > 0;
+  const allGood = status.hasSavedCookies && status.hasApiKey && hasProj;
   const tag = document.getElementById('hub-status-tag');
-  tag.textContent = allGood ? 'All Systems Go' : 'Setup needed';
-  tag.className = 'topbar-tag ' + (allGood ? 'tag-green' : 'tag-yellow');
+  tag.textContent = allGood ? 'All Systems Go' : (hasProj ? 'Projections Ready' : 'Setup needed');
+  tag.className = 'topbar-tag ' + (allGood ? 'tag-green' : hasProj ? 'tag-blue' : 'tag-yellow');
 
   // Footer
   updateFooter(status.hasSavedCookies);
@@ -3369,6 +3373,5 @@ function truncate(s, n) { return s.length > n ? s.slice(0, n) + '...' : s; }
 /* ═══════════════════════════════════════════════════════
    INIT
    ═══════════════════════════════════════════════════════ */
-refreshHub();
-// Preload projections so Draft Prep has data ready immediately
-loadProjections();
+// Load projections first, then refresh Hub so it shows correct status
+loadProjections().then(() => refreshHub());
