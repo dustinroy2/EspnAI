@@ -2332,9 +2332,39 @@ function renderBoardView(targetEl) {
     const stats = isPit
       ? `${p.K||0}K · ${p.QS||0}QS · ${(p.ERA||0).toFixed(2)} ERA${(p.SV||0)>0?' · '+p.SV+'SV':' · '+(p.WHIP||0).toFixed(2)+' WH'}`
       : `${p.R||0}R · ${p.HR||0}HR · ${p.RBI||0}RBI · ${p.SB||0}SB · .${Math.round((p.AVG||0)*1000)}`;
+    // Scout metrics from war room intel
+    let scoutHTML = '';
+    const sl = (window._scoutLookup || {})[p.name];
+    if (sl) {
+      const chips = [];
+      const action = sl._action || '';
+      const cls = action === 'avoid' ? 'warn' : 'hot';
+      if (sl.barrel) chips.push(`<span class="sm ${cls}">${sl.barrel}</span>`);
+      if (sl.hard_hit) chips.push(`<span class="sm ${cls}">${sl.hard_hit}</span>`);
+      if (sl.ev) chips.push(`<span class="sm ${cls}">${sl.ev}</span>`);
+      if (sl.max_ev) chips.push(`<span class="sm ${cls}">${sl.max_ev}</span>`);
+      if (sl.bat_speed) chips.push(`<span class="sm info">${sl.bat_speed}</span>`);
+      if (sl.bat_speed_gain) chips.push(`<span class="sm hot">${sl.bat_speed_gain}</span>`);
+      if (sl.speed) chips.push(`<span class="sm info">${sl.speed}</span>`);
+      if (sl.sb) chips.push(`<span class="sm hot">${sl.sb}</span>`);
+      if (sl.xwoba) chips.push(`<span class="sm ${cls}">${sl.xwoba}</span>`);
+      if (sl.xslg) chips.push(`<span class="sm ${cls}">${sl.xslg}</span>`);
+      if (sl.stuff_plus) chips.push(`<span class="sm hot">${sl.stuff_plus}</span>`);
+      if (sl.kbb) chips.push(`<span class="sm hot">${sl.kbb}</span>`);
+      if (sl.k9) chips.push(`<span class="sm info">${sl.k9}</span>`);
+      if (sl.velo) chips.push(`<span class="sm info">${sl.velo}</span>`);
+      if (sl.swstr) chips.push(`<span class="sm hot">${sl.swstr}</span>`);
+      if (sl.era) chips.push(`<span class="sm ${cls}">${sl.era}</span>`);
+      if (sl.xera) chips.push(`<span class="sm ${cls}">${sl.xera}</span>`);
+      if (sl.whip) chips.push(`<span class="sm info">${sl.whip}</span>`);
+      if (sl.siera) chips.push(`<span class="sm warn">${sl.siera}</span>`);
+      if (sl.babip) chips.push(`<span class="sm warn">${sl.babip}</span>`);
+      if (sl.injury) chips.push(`<span class="sm warn">${sl.injury}</span>`);
+      if (chips.length) scoutHTML = `<div class="bp-scout">${chips.slice(0,4).join('')}</div>`;
+    }
     return `<div class="bp ${tier}${gone?' drafted':''}${onWL&&!gone?' wishlist':''}" onclick="${gone?'':`showWarRoom('${p.name.replace(/'/g,"\\'")}')`}">
       <div class="bp-name">${p.name}</div>
-      <div class="bp-stats">${stats}</div>
+      <div class="bp-stats">${stats}</div>${scoutHTML}
       <div class="bp-adp">ADP ${adp < 900 ? adp : '?'} · AI #${p.aiRank||'?'}</div>
     </div>`;
   }
@@ -2826,7 +2856,7 @@ async function refreshWarRoom() {
   const el = document.getElementById('warroom-content');
   if (!wrData) {
     try {
-      const resp = await fetch('/warroom_intel_2026.json');
+      const resp = await fetch('warroom_intel_2026.json');
       wrData = await resp.json();
     } catch(e) { wrData = { experts: { scout: {} } }; }
   }

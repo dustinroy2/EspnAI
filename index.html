@@ -182,6 +182,17 @@
   .fi-tag.stash { background:#faf5ff; color:var(--purple); }
   .fi-body { font-size:10px; color:var(--text2); line-height:1.4; }
   .fi-source { font-size:8px; color:var(--text4); margin-top:2px; }
+  .fi[data-cat] { } /* feed items carry category for filtering */
+
+  /* Scout metrics on board tiles */
+  .bp-scout { display:flex; gap:4px; flex-wrap:wrap; margin-top:2px; }
+  .bp-scout .sm {
+    font-size:7px; font-weight:600; padding:1px 3px; border-radius:2px;
+    background:var(--bg); color:var(--text3); white-space:nowrap;
+  }
+  .bp-scout .sm.hot { background:var(--green-soft); color:var(--green); }
+  .bp-scout .sm.warn { background:var(--red-soft); color:var(--red); }
+  .bp-scout .sm.info { background:var(--blue-soft); color:var(--blue); }
 
   /* ═══════════════════════════════════════════════
      CARDS & BUTTONS
@@ -923,52 +934,7 @@
         <div class="pr-tab" onclick="switchFeedTab(this,'wishlist')">Wishlist</div>
       </div>
       <div class="pr-feed" id="prep-war-feed">
-        <!-- Populated by inline script from warroom data -->
-        <div class="fi crit">
-          <div class="fi-top"><span class="fi-expert" style="color:var(--red)">THE QUANT</span><span class="fi-time">Live</span></div>
-          <div class="fi-body"><span class="fi-tag alert">CRITICAL</span>Only <strong>5 elite SB sources</strong> remain. Address SB before it's too late.</div>
-          <div class="fi-source">Draft Engine SGP Analysis</div>
-        </div>
-        <div class="fi good">
-          <div class="fi-top"><span class="fi-expert" style="color:var(--green)">THE SCOUT</span><span class="fi-time">Mar 15</span></div>
-          <div class="fi-body"><span class="fi-tag buy">BUY</span><strong>Bryce Harper</strong> — 15.2% barrel rate, 93.3 EV. Five-category 1B anchor.</div>
-          <div class="fi-source">Baseball Savant Barrel% Leaderboard</div>
-        </div>
-        <div class="fi warn">
-          <div class="fi-top"><span class="fi-expert" style="color:var(--red)">THE CONTRARIAN</span><span class="fi-time">Mar 15</span></div>
-          <div class="fi-body"><span class="fi-tag sell">AVOID</span><strong>Josh Naylor</strong> — .315 BABIP (30pts above career). Let someone else overpay.</div>
-          <div class="fi-source">FanGraphs BABIP Analysis</div>
-        </div>
-        <div class="fi good">
-          <div class="fi-top"><span class="fi-expert" style="color:var(--blue)">THE SCOUT</span><span class="fi-time">Mar 15</span></div>
-          <div class="fi-body"><span class="fi-tag buy">STEAL</span><strong>Eury Perez</strong> — 118 Stuff+ (#8 in MLB). Ace ceiling at Round 13 price.</div>
-          <div class="fi-source">FanGraphs Stuff+ Rankings</div>
-        </div>
-        <div class="fi crit">
-          <div class="fi-top"><span class="fi-expert" style="color:var(--red)">THE HISTORIAN</span><span class="fi-time">Mar 15</span></div>
-          <div class="fi-body"><span class="fi-tag alert">DANGER</span><strong>Carlos Estevez</strong> — -6.9 mph velocity drop. Closer role at serious risk.</div>
-          <div class="fi-source">RotoWire Spring Velo Tracker</div>
-        </div>
-        <div class="fi warn">
-          <div class="fi-top"><span class="fi-expert" style="color:var(--yellow)">SPRING INTEL</span><span class="fi-time">Mar 14</span></div>
-          <div class="fi-body"><span class="fi-tag watch">WATCH</span><strong>Jac Caglianone</strong> — 120.2 mph double, 460-ft HR. EV90 of 116.5 mph.</div>
-          <div class="fi-source">MLB.com Spring Statcast</div>
-        </div>
-        <div class="fi info">
-          <div class="fi-top"><span class="fi-expert" style="color:var(--blue)">SPEED SCOUT</span><span class="fi-time">Mar 15</span></div>
-          <div class="fi-body"><span class="fi-tag buy">ADD</span><strong>Jose Caballero</strong> — 30 ft/sec, 49 SB in 126 games. Best SB/PA ratio in baseball.</div>
-          <div class="fi-source">Baseball Savant Sprint Speed</div>
-        </div>
-        <div class="fi info">
-          <div class="fi-top"><span class="fi-expert" style="color:var(--purple)">CLOSER SPECIALIST</span><span class="fi-time">Mar 15</span></div>
-          <div class="fi-body"><span class="fi-tag stash">VOLATILE</span><strong>LAD Bullpen</strong> — true committee. With 7 trans/week, stream the hot arm.</div>
-          <div class="fi-source">CloserMonkey Depth Charts</div>
-        </div>
-        <div class="fi good">
-          <div class="fi-top"><span class="fi-expert" style="color:var(--green)">THE QUANT</span><span class="fi-time">Mar 15</span></div>
-          <div class="fi-body"><span class="fi-tag buy">EDGE</span><strong>7 transactions/matchup</strong> = streaming superpower. Draft 3 aces + stream the rest.</div>
-          <div class="fi-source">League Settings SGP Calculator</div>
-        </div>
+        <div class="fi info"><div class="fi-body" style="text-align:center;color:var(--text4)">Loading war room intel...</div></div>
       </div>
     </div>
   </div>
@@ -1271,11 +1237,177 @@ function toggleOTC(btn) {
     btn.classList.toggle('active');
   }
 }
+
+/* ═══════════════════════════════════════════════
+   WAR ROOM FEED — Dynamic from JSON
+   ═══════════════════════════════════════════════ */
+let _wrFeedData = null;
+window._scoutLookup = {}; // exposed for board tiles in app.js
+
+function _fiFeedItem(cat, cls, expert, expertColor, tag, tagCls, playerName, body, source, time) {
+  return `<div class="fi ${cls}" data-cat="${cat}">
+    <div class="fi-top"><span class="fi-expert" style="color:${expertColor}">${expert}</span><span class="fi-time">${time}</span></div>
+    <div class="fi-body"><span class="fi-tag ${tagCls}">${tag}</span><strong>${playerName}</strong> — ${body}</div>
+    <div class="fi-source">${source}</div>
+  </div>`;
+}
+
+async function loadWarRoomFeed() {
+  if (!_wrFeedData) {
+    try {
+      const resp = await fetch('warroom_intel_2026.json');
+      _wrFeedData = await resp.json();
+    } catch(e) { _wrFeedData = { experts: { scout: {} } }; }
+  }
+  const sc = _wrFeedData.experts?.scout || {};
+  const ts = _wrFeedData.generated || new Date().toISOString();
+  const time = new Date(ts).toLocaleDateString('en-US', { month:'short', day:'numeric' });
+  const items = [];
+
+  // Build scout metrics lookup for board tiles
+  const lookup = {};
+  (sc.buy_low_hitters||[]).forEach(p => {
+    const m = {};
+    if (p.barrel) m.barrel = p.barrel + '% Brl';
+    if (p.hard_hit) m.hard_hit = p.hard_hit + '% HH';
+    if (p.ev) m.ev = p.ev + ' EV';
+    if (p.bat_speed) m.bat_speed = p.bat_speed + ' BatSpd';
+    if (p.speed) m.speed = p.speed + ' ft/s';
+    if (p.xwoba) m.xwoba = p.xwoba + ' xwOBA';
+    if (p.xslg) m.xslg = p.xslg + ' xSLG';
+    if (p.max_ev) m.max_ev = p.max_ev + ' MaxEV';
+    m._action = 'buy';
+    lookup[p.name] = m;
+  });
+  (sc.sell_high_avoid||[]).forEach(p => {
+    const m = {};
+    if (p.era) m.era = p.era + ' ERA';
+    if (p.siera) m.siera = p.siera + ' SIERA';
+    if (p.k_rate) m.k_rate = p.k_rate + '% K';
+    if (p.babip) m.babip = p.babip + ' BABIP';
+    m._action = 'avoid';
+    lookup[p.name] = m;
+  });
+  (sc.buy_low_pitchers||[]).forEach(p => {
+    const m = {};
+    if (p.stuff_plus) m.stuff_plus = p.stuff_plus + ' Stuff+';
+    if (p.kbb) m.kbb = p.kbb + '% K-BB';
+    if (p.k9) m.k9 = p.k9 + ' K/9';
+    if (p.era) m.era = p.era + ' ERA';
+    if (p.xera) m.xera = p.xera + ' xERA';
+    if (p.whip) m.whip = p.whip + ' WHIP';
+    if (p.velo) m.velo = p.velo + ' mph';
+    if (p.swstr) m.swstr = p.swstr + '% SwStr';
+    m._action = 'buy';
+    lookup[p.name] = m;
+  });
+  (sc.sprint_speed_sb||[]).forEach(p => {
+    const m = {};
+    if (p.speed) m.speed = p.speed + ' ft/s';
+    if (p.sb) m.sb = p.sb + ' SB';
+    if (p.bat_speed_gain) m.bat_speed_gain = '+' + p.bat_speed_gain + ' BatSpd';
+    m._action = 'buy';
+    lookup[p.name] = m;
+  });
+  (sc.injury_flags||[]).forEach(p => {
+    const m = {};
+    m.injury = p.injury || p.action;
+    m._action = 'avoid';
+    lookup[p.name] = m;
+  });
+  (sc.spring_training||[]).forEach(p => {
+    if (!lookup[p.name]) lookup[p.name] = {};
+    lookup[p.name]._spring = true;
+  });
+  window._scoutLookup = lookup;
+
+  // ── FEED: Buy Low Hitters (scouts) ──
+  (sc.buy_low_hitters||[]).forEach(p => {
+    const key = p.barrel ? `${p.barrel}% Brl, ${p.hard_hit||''}% HH` : (p.xwoba ? `.${Math.round(p.xwoba*1000)} xwOBA` : '');
+    items.push(_fiFeedItem('scouts','good','THE SCOUT','var(--green)','BUY','buy', p.name, p.take, p.source, time));
+  });
+
+  // ── FEED: Sell/Avoid (scouts) ──
+  (sc.sell_high_avoid||[]).forEach(p => {
+    items.push(_fiFeedItem('scouts','warn','THE CONTRARIAN','var(--red)','AVOID','sell', p.name, p.take, p.source, time));
+  });
+
+  // ── FEED: Buy Low Pitchers (scouts) ──
+  (sc.buy_low_pitchers||[]).forEach(p => {
+    items.push(_fiFeedItem('scouts','good','THE SCOUT','var(--blue)','BUY','buy', p.name, p.take, p.source, time));
+  });
+
+  // ── FEED: Sprint Speed (scouts) ──
+  (sc.sprint_speed_sb||[]).forEach(p => {
+    items.push(_fiFeedItem('scouts','info','SPEED SCOUT','var(--blue)','ADD','buy', p.name, p.take, p.source, time));
+  });
+
+  // ── FEED: Spring Training (scouts) ──
+  (sc.spring_training||[]).forEach(p => {
+    const cls = p.signal?.includes('WARNING') ? 'crit' : 'warn';
+    const tag = p.signal?.includes('WARNING') ? 'ALERT' : 'WATCH';
+    const tagCls = p.signal?.includes('WARNING') ? 'alert' : 'watch';
+    items.push(_fiFeedItem('scouts', cls, 'SPRING INTEL', 'var(--yellow)', tag, tagCls, p.name, p.signal, p.source, time));
+  });
+
+  // ── FEED: Injury Flags (scouts) ──
+  (sc.injury_flags||[]).forEach(p => {
+    items.push(_fiFeedItem('scouts','crit','INJURY DESK','var(--red)','DANGER','alert', p.name,
+      `${p.injury} — ${p.timeline}. ${p.action}`, p.source, time));
+  });
+
+  // ── FEED: Closers ──
+  (sc.closer_situations||[]).forEach(c => {
+    const cls = c.volatility === 'high' ? 'warn' : (c.volatility === 'low' ? 'good' : 'info');
+    const tag = c.volatility.toUpperCase();
+    const tagCls = c.volatility === 'high' ? 'alert' : (c.volatility === 'low' ? 'buy' : 'watch');
+    items.push(_fiFeedItem('closers', cls, 'CLOSER MAP', 'var(--purple)', tag, tagCls,
+      `${c.team}: ${c.closer}`, `${c.status} Backup: ${c.backup}`, 'CloserMonkey Depth Charts', time));
+  });
+
+  // ── FEED: Meta/Quant (feed only) ──
+  items.unshift(_fiFeedItem('feed','crit','THE QUANT','var(--red)','CRITICAL','alert',
+    'Category Alert', `Only <strong>${(sc.sprint_speed_sb||[]).length} elite SB sources</strong> tracked. Address SB before it's too late.`,
+    'Draft Engine SGP Analysis', 'Live'));
+  items.push(_fiFeedItem('feed','good','THE QUANT','var(--green)','EDGE','buy',
+    '7 transactions/matchup', '= streaming superpower. Draft 3 aces + stream the rest.',
+    'League Settings SGP Calculator', 'Live'));
+
+  // Populate both panels
+  const prepFeed = document.getElementById('prep-war-feed');
+  const liveFeed = document.getElementById('live-war-feed');
+  const allHTML = items.join('');
+  if (prepFeed) prepFeed.innerHTML = allHTML;
+  if (liveFeed) liveFeed.innerHTML = allHTML;
+
+  // If board is visible, re-render to pick up scout data
+  if (typeof renderBoardView === 'function' && document.getElementById('prep-board-view')?.style.display !== 'none') {
+    renderBoardView();
+  }
+}
+
 function switchFeedTab(el, tab) {
   el.parentElement.querySelectorAll('.pr-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
-  // Future: filter feed items by tab type
+  const feed = el.parentElement.nextElementSibling;
+  if (!feed) return;
+  const items = feed.querySelectorAll('.fi[data-cat]');
+  items.forEach(fi => {
+    const cat = fi.getAttribute('data-cat');
+    if (tab === 'feed') {
+      fi.style.display = '';
+    } else if (tab === 'wishlist') {
+      // Show wishlist items — players on user's wishlist
+      const name = fi.querySelector('strong')?.textContent || '';
+      fi.style.display = (typeof isOnWishlist === 'function' && isOnWishlist(name)) ? '' : 'none';
+    } else {
+      fi.style.display = (cat === tab) ? '' : 'none';
+    }
+  });
 }
+
+// Load feed on page load
+loadWarRoomFeed();
 </script>
 </body>
 </html>
