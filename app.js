@@ -2099,215 +2099,284 @@ function showFullMockBoard() {
 //   MOCK LAB
 // ═══════════════════════════════════════════════════════
 
+let mlActiveTab = 0; // -1 = trends view, 0+ = mock index
+
 function refreshMockLab() {
-  renderMockLabList();
-  renderMockLabTrends();
-  renderMockLabSuperTeam();
   const countEl = document.getElementById('mocklab-count');
-  if (countEl) countEl.textContent = `${PREP.mockDrafts.length} mock${PREP.mockDrafts.length !== 1 ? 's' : ''} imported`;
+  if (countEl) countEl.textContent = `${PREP.mockDrafts.length} mock${PREP.mockDrafts.length !== 1 ? 's' : ''}`;
+  if (mlActiveTab >= PREP.mockDrafts.length) mlActiveTab = Math.max(0, PREP.mockDrafts.length - 1);
+  renderMockLabTabs();
+  renderMockLabContent();
 }
 
-function renderMockLabList() {
-  const el = document.getElementById('mocklab-list');
+function renderMockLabTabs() {
+  const el = document.getElementById('mocklab-tabs');
   if (!el) return;
+  if (PREP.mockDrafts.length === 0) { el.innerHTML = ''; return; }
+
+  const hasTrends = PREP.mockDrafts.length >= 2;
+  el.innerHTML = `<div class="ml-tabs">
+    ${hasTrends ? `<div class="ml-tab${mlActiveTab === -1 ? ' active' : ''}" onclick="mlActiveTab=-1;renderMockLabContent()">Trends<span class="ml-tab-badge">${PREP.mockDrafts.length}</span></div>` : ''}
+    ${PREP.mockDrafts.map((m, i) => `<div class="ml-tab${mlActiveTab === i ? ' active' : ''}" onclick="mlActiveTab=${i};renderMockLabContent()">${m.label || 'Mock ' + (i+1)}</div>`).join('')}
+  </div>`;
+}
+
+function renderMockLabContent() {
+  const el = document.getElementById('mocklab-content');
+  if (!el) return;
+
   if (PREP.mockDrafts.length === 0) {
-    el.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--text4)">
-      <div style="font-size:32px;margin-bottom:8px">&#9918;</div>
-      <div style="font-size:14px;font-weight:600;margin-bottom:4px">No mocks imported yet</div>
-      <div style="font-size:12px">Paste your ESPN practice draft emails here to track trends across multiple mocks</div>
+    el.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--text4)">
+      <div style="font-size:40px;margin-bottom:12px">&#9918;</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">Import your practice drafts</div>
+      <div style="font-size:13px;max-width:400px;margin:0 auto;line-height:1.5">
+        Paste ESPN mock draft emails here. Each mock gets its own analysis with pick grades, roster scores, and recommendations.
+        With 2+ mocks you'll see trend data showing which players you keep gravitating toward.
+      </div>
     </div>`;
     return;
   }
 
-  el.innerHTML = `<div class="ml-section">Your Mocks (${PREP.mockDrafts.length})</div>` +
-    PREP.mockDrafts.map((mock, idx) => {
-      const picks = mock.myPicks || [];
-      return `<div class="ml-mock-card">
-        <div class="ml-header">
-          <div>
-            <div class="ml-title">${mock.label || 'Mock #' + (idx + 1)}</div>
-            <div class="ml-meta">${mock.date || '?'} · ${picks.length} picks · ${mock.allPicks?.length || 0} total</div>
-          </div>
-          <div style="display:flex;gap:4px">
-            <button class="btn btn-secondary btn-sm" style="font-size:9px;padding:2px 6px" onclick="viewMockLabDraft(${idx})">View</button>
-            <button class="btn btn-secondary btn-sm" style="font-size:9px;padding:2px 6px;color:var(--espn-red)" onclick="deleteMockLabDraft(${idx})">Delete</button>
-          </div>
-        </div>
-        <div class="ml-picks-row">
-          ${picks.map(p => {
-            const proj = projFor(p.name);
-            const espnADP = proj?.espnADP || proj?.adp || 999;
-            const pickNum = PREP.pickOrder[(p.round || 1) - 1]?.overall || p.round * 12;
-            const diff = espnADP - pickNum;
-            const cls = diff < -15 ? 'ml-reach' : diff > 10 ? 'ml-steal' : '';
-            return `<div class="ml-pick ${cls}">R${p.round} ${p.name.split(' ').pop()}</div>`;
-          }).join('')}
-        </div>
-      </div>`;
-    }).join('');
+  if (mlActiveTab === -1 && PREP.mockDrafts.length >= 2) {
+    renderMockLabTrendsView(el);
+  } else {
+    const idx = Math.max(0, mlActiveTab);
+    renderMockLabRecap(el, idx);
+  }
 }
 
-function renderMockLabTrends() {
-  const el = document.getElementById('mocklab-trends');
-  if (!el || PREP.mockDrafts.length === 0) { if (el) el.innerHTML = ''; return; }
-
-  // Aggregate: player -> {count, rounds[], mocks[]}
-  const agg = {};
-  PREP.mockDrafts.forEach((mock, i) => {
-    (mock.myPicks || []).forEach(p => {
-      if (!agg[p.name]) agg[p.name] = { name: p.name, pos: p.pos || '?', count: 0, rounds: [], mockIndices: [] };
-      agg[p.name].count++;
-      agg[p.name].rounds.push(p.round);
-      agg[p.name].mockIndices.push(i + 1);
-    });
-  });
-
-  const trends = Object.values(agg).sort((a, b) => b.count - a.count || a.rounds[0] - b.rounds[0]);
-  const totalMocks = PREP.mockDrafts.length;
-
-  el.innerHTML = `<div class="ml-section">Player Trends <span style="font-weight:400;color:var(--text4);font-size:10px">(across ${totalMocks} mocks)</span></div>
-    <div style="font-size:10px;color:var(--text4);margin-bottom:8px">Players you keep drafting bubble to the top. Click to add/remove from wishlist.</div>
-    <div class="ml-trend-grid">
-      ${trends.map(t => {
-        const proj = projFor(t.name);
-        const isPit = proj ? isPitcherProj(proj) : false;
-        const onWL = isOnWishlist(t.name);
-        const avgRound = (t.rounds.reduce((a,b) => a+b, 0) / t.rounds.length).toFixed(1);
-        const pct = Math.round((t.count / totalMocks) * 100);
-        const stats = proj ? (isPit
-          ? `${proj.K||0}K · ${proj.QS||0}QS · ${(proj.ERA||0).toFixed(2)}ERA${(proj.SV||0)>0?' · '+proj.SV+'SV':''}`
-          : `${proj.HR||0}HR · ${proj.RBI||0}RBI · ${proj.SB||0}SB · .${Math.round((proj.AVG||0)*1000)}`)
-          : '';
-        const espnADP = proj?.espnADP || proj?.adp || '?';
-        return `<div class="ml-trend-card${onWL ? ' on-wishlist' : ''}" onclick="toggleWishlist('${t.name.replace(/'/g,"\\'")}','${t.pos}','${proj?.team||'?'}');refreshMockLab()" style="cursor:pointer">
-          <div class="ml-freq">${t.count}/${totalMocks}</div>
-          <div class="ml-trend-name">${t.name} ${onWL ? '<span style="color:var(--yellow)">&#9733;</span>' : ''}</div>
-          <div class="ml-trend-meta">${t.pos} · ADP ${espnADP < 900 ? espnADP : '?'} · Avg R${avgRound} · ${pct}%</div>
-          <div class="ml-trend-rounds">Rounds: ${t.rounds.join(', ')} ${t.rounds.length > 1 ? (t.rounds.every((r,i,a) => i===0 || Math.abs(r - a[i-1]) <= 2) ? '(consistent)' : '(varying)') : ''}</div>
-          ${stats ? `<div style="font-size:9px;color:var(--text4);margin-top:2px">${stats}</div>` : ''}
-        </div>`;
-      }).join('')}
-    </div>`;
-}
-
-function renderMockLabSuperTeam() {
-  const el = document.getElementById('mocklab-superteam');
-  if (!el || PREP.mockDrafts.length === 0) { if (el) el.innerHTML = ''; return; }
-
-  // Build super team: take the best player for each slot based on frequency + value
-  // Combine mock trends with current draft prep picks
-  const currentPicks = PREP.picks.filter(Boolean);
+// ── Individual Mock Recap ──
+function renderMockLabRecap(el, idx) {
+  const mock = PREP.mockDrafts[idx];
+  if (!mock) return;
+  const picks = (mock.myPicks || []).sort((a, b) => a.round - b.round);
   const allPlayers = getPrepPlayers();
 
-  // Aggregate mock data
-  const agg = {};
-  PREP.mockDrafts.forEach(mock => {
-    (mock.myPicks || []).forEach(p => {
-      if (!agg[p.name]) agg[p.name] = { name: p.name, pos: p.pos || '?', count: 0, rounds: [], bestRound: 99 };
-      agg[p.name].count++;
-      agg[p.name].rounds.push(p.round);
-      agg[p.name].bestRound = Math.min(agg[p.name].bestRound, p.round);
-    });
+  // Grade each pick
+  const graded = picks.map(p => {
+    const proj = projFor(p.name);
+    const player = allPlayers.find(pl => pl.name === p.name);
+    const isPit = proj ? isPitcherProj(proj) : false;
+    const espnADP = proj?.espnADP || proj?.adp || 999;
+    const pickNum = PREP.pickOrder[(p.round || 1) - 1]?.overall || p.round * NUM_TEAMS_DRAFT;
+    const diff = espnADP - pickNum;
+
+    let grade, color, bg;
+    if (espnADP >= 900) { grade = '?'; color = 'var(--text4)'; bg = 'var(--bg)'; }
+    else if (diff < -20) { grade = 'REACH'; color = '#dc2626'; bg = '#fef2f2'; }
+    else if (diff < -8) { grade = 'EARLY'; color = '#d97706'; bg = '#fffbeb'; }
+    else if (diff > 15) { grade = 'STEAL'; color = '#059669'; bg = '#ecfdf5'; }
+    else if (diff > 5) { grade = 'VALUE'; color = '#059669'; bg = '#ecfdf5'; }
+    else { grade = 'FAIR'; color = 'var(--text3)'; bg = 'var(--bg)'; }
+
+    const stats = proj ? (isPit
+      ? `${proj.K||0}K · ${proj.QS||0}QS · ${(proj.ERA||0).toFixed(2)} ERA${(proj.SV||0)>0?' · '+proj.SV+' SV':''}`
+      : `${proj.R||0}R · ${proj.HR||0}HR · ${proj.RBI||0}RBI · ${proj.SB||0}SB · .${Math.round((proj.AVG||0)*1000)}`)
+      : '';
+
+    return { ...p, proj, player, isPit, espnADP, pickNum, diff, grade, color, bg, stats, aiRank: player?.aiRank || '?' };
   });
 
-  // Score each player: frequency * 10 + aiRank bonus + round bonus
-  const candidates = Object.values(agg).map(t => {
-    const proj = projFor(t.name);
-    const player = allPlayers.find(p => p.name === t.name);
-    const aiRank = player?.aiRank || 999;
-    const freq = t.count / PREP.mockDrafts.length;
-    const score = freq * 30 + (300 - Math.min(aiRank, 300)) / 10 + (24 - t.bestRound);
-    return { ...t, proj, aiRank, freq, score, team: proj?.team || '?' };
-  }).sort((a, b) => b.score - a.score);
-
-  // Build roster by position
-  const SLOTS = ['C','1B','2B','SS','3B','OF','OF','OF','UTIL','UTIL','SP','SP','SP','RP','RP','P','P','Bench','Bench','Bench','Bench','Bench','Bench'];
-  const superTeam = [];
-  const used = new Set();
-
-  // First: lock in current draft prep picks
-  currentPicks.forEach(p => {
-    if (!used.has(p.name)) {
-      superTeam.push({ ...p, source: 'drafted', slot: p.pos || '?' });
-      used.add(p.name);
-    }
-  });
-
-  // Then fill remaining slots from mock trends
-  for (const slot of SLOTS) {
-    if (superTeam.length >= 23) break;
-    const inSlot = superTeam.filter(p => {
-      if (slot === 'UTIL' || slot === 'Bench') return false; // always has room
-      if (slot === 'OF') return ['OF','LF','CF','RF'].includes((p.slot||p.pos||'').toUpperCase());
-      if (slot === 'P') return isPitcherProj(p);
-      return (p.slot||p.pos||'').toUpperCase() === slot;
-    }).length;
-    const needed = SLOTS.filter(s => s === slot).length;
-    if (slot !== 'UTIL' && slot !== 'Bench' && slot !== 'P' && inSlot >= needed) continue;
-
-    for (const cand of candidates) {
-      if (used.has(cand.name)) continue;
-      const p = cand.proj;
-      if (!p) continue;
-      const isPit = isPitcherProj(p);
-      const pos = (p.pos || '').toUpperCase();
-
-      let fits = false;
-      if (slot === 'UTIL' || slot === 'Bench') fits = true;
-      else if (slot === 'P') fits = isPit;
-      else if (slot === 'OF') fits = ['OF','LF','CF','RF'].includes(pos);
-      else if (slot === 'SP') fits = isPit && (p.SV||0) <= 5;
-      else if (slot === 'RP') fits = isPit && (p.SV||0) > 5;
-      else fits = pos === slot || pos.includes(slot);
-
-      if (fits) {
-        superTeam.push({ name: cand.name, pos: p.pos, team: cand.team, source: 'mock', slot, freq: cand.freq, count: cand.count, aiRank: cand.aiRank, bestRound: cand.bestRound, ...p });
-        used.add(cand.name);
-        break;
-      }
-    }
-  }
-
-  // Calculate scores for this super team
+  // Category scores for this mock team
+  const mockTeamPicks = graded.map(p => p.proj ? { name: p.name, round: p.round, ...p.proj } : null).filter(Boolean);
   const savedPicks = [...PREP.picks];
-  PREP.picks = superTeam.map((p, i) => ({ ...p, round: i + 1 }));
+  PREP.picks = mockTeamPicks;
   const scores = calcPrepScores();
   PREP.picks = savedPicks;
-  const overall = superTeam.length > 0 ? Math.round(Object.values(scores).reduce((a,b) => a+b, 0) / ALL_CATS.length) : 0;
+  const overall = mockTeamPicks.length > 0 ? Math.round(Object.values(scores).reduce((a,b) => a+b, 0) / ALL_CATS.length) : 0;
 
-  el.innerHTML = `<div class="ml-section">Super Team Builder <span style="font-weight:400;color:var(--text4);font-size:10px">(${currentPicks.length} drafted + ${superTeam.length - currentPicks.length} from mock trends)</span></div>
-    <div style="font-size:10px;color:var(--text4);margin-bottom:8px">Your current draft picks + the best players from your mock trends, assembled into one optimal roster. Overall: <strong style="color:var(--text);font-size:12px">${overall}/100</strong></div>
-    <div class="cat-bars cat-bars-compact" id="mocklab-cat-bars-bat" style="margin-bottom:6px"></div>
-    <div class="cat-bars cat-bars-compact" id="mocklab-cat-bars-pit" style="margin-bottom:12px"></div>
-    <div class="ml-super-grid">
-      ${superTeam.map(p => {
-        const isPit = isPitcherProj(p);
-        const stats = isPit
-          ? `${p.K||0}K · ${p.QS||0}QS · ${(p.ERA||0).toFixed(2)}ERA${(p.SV||0)>0?' · '+p.SV+'SV':''}`
-          : `${p.HR||0}HR · ${p.RBI||0}RBI · ${p.SB||0}SB · .${Math.round((p.AVG||0)*1000)}`;
-        const badge = p.source === 'drafted'
-          ? '<span class="ml-super-badge" style="background:var(--green-bg);color:var(--green)">DRAFTED</span>'
-          : `<span class="ml-super-badge" style="background:var(--blue-soft);color:var(--blue)">${p.count}/${PREP.mockDrafts.length} mocks</span>`;
-        return `<div class="ml-super-card${p.source === 'drafted' ? ' ml-locked' : ''}">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <div class="ml-super-name">${p.name}</div>
-            ${badge}
-          </div>
-          <div class="ml-super-meta">${p.pos} · ${p.team} · AI #${p.aiRank||'?'}${p.bestRound ? ' · Best R' + p.bestRound : ''}</div>
-          <div class="ml-super-stats">${stats}</div>
-        </div>`;
-      }).join('')}
+  // Insights
+  const insights = [];
+  const catsSorted = ALL_CATS.map(c => ({ cat: c, score: scores[c] || 0 })).sort((a,b) => a.score - b.score);
+  const weakest = catsSorted.filter(c => c.score < 50);
+  const strongest = catsSorted.filter(c => c.score >= 80);
+  const reaches = graded.filter(g => g.grade === 'REACH');
+  const steals = graded.filter(g => g.grade === 'STEAL' || g.grade === 'VALUE');
+  const numBats = graded.filter(g => !g.isPit).length;
+  const numPits = graded.filter(g => g.isPit).length;
+  const hasSV = graded.some(g => g.proj && (g.proj.SV || 0) > 5);
+  const totalSB = graded.reduce((s, g) => s + (g.proj?.SB || 0), 0);
+
+  if (weakest.length > 0 && weakest[0].score < 40) {
+    const w = weakest[0];
+    insights.push({ type: 'critical', icon: '&#9888;', title: `${w.cat} is critically low (${w.score}/100)`, text: w.cat === 'SB' ? 'Speed is scarce — once the top SB guys are gone, there\'s no replacement. Target 25+ SB players in rounds 1-3.' : w.cat === 'SV' ? 'No closer means losing SV every week. Grab one by round 8 or plan to stream.' : `Target ${w.cat} contributors earlier in your next mock.`, bg: '#fef2f2', color: '#dc2626' });
+  }
+  if (reaches.length > 0) {
+    insights.push({ type: 'warn', icon: '&#8593;', title: `${reaches.length} reach${reaches.length > 1 ? 'es' : ''} — players drafted above their ADP`, text: reaches.map(r => `${r.name} (ADP ${r.espnADP < 900 ? r.espnADP : '?'} at pick ${r.pickNum})`).join(', '), bg: '#fffbeb', color: '#d97706' });
+  }
+  if (steals.length > 0) {
+    insights.push({ type: 'good', icon: '&#10003;', title: `${steals.length} value pick${steals.length > 1 ? 's' : ''} — nice!`, text: steals.map(s => `${s.name} (ADP ${s.espnADP < 900 ? s.espnADP : '?'} fell to pick ${s.pickNum})`).join(', '), bg: '#ecfdf5', color: '#059669' });
+  }
+  if (totalSB < 80) {
+    insights.push({ type: 'warn', icon: '&#127939;', title: `Only ${totalSB} projected SB — need 200+ to compete`, text: 'Look for SB upside in rounds 1-4. Elly De La Cruz, Bobby Witt, Corbin Carroll, Trea Turner all give you 30+ SB with full stat profiles.', bg: '#fffbeb', color: '#d97706' });
+  }
+  if (!hasSV && numPits > 0) {
+    insights.push({ type: 'info', icon: '&#128293;', title: 'No closer drafted — SV will be 0 every week', text: 'Target one elite closer by round 8, or plan to stream the hot closer off waivers each week (uses transactions).', bg: '#eff6ff', color: '#2563eb' });
+  }
+  if (strongest.length >= 4) {
+    insights.push({ type: 'good', icon: '&#9733;', title: `${strongest.length} categories at 80+ — strong foundation`, text: strongest.map(s => `${s.cat}: ${s.score}`).join(', '), bg: '#ecfdf5', color: '#059669' });
+  }
+
+  // Next mock advice
+  const advice = [];
+  if (weakest.length > 0) advice.push(`Fix ${weakest[0].cat} — target it in rounds ${weakest[0].cat === 'SB' ? '1-3' : weakest[0].cat === 'SV' ? '6-10' : '3-6'}`);
+  if (reaches.length > 0) advice.push(`Let ${reaches[0].name} fall to you — their ADP says they'll be there later`);
+  if (numPits > 5) advice.push('Too many pitchers early — flip 1-2 late SPs for hitters with SB/AVG upside');
+  if (numBats > 0 && numPits === 0 && picks.length >= 5) advice.push('Grab at least 1 SP by round 5 to lock in K/QS production');
+
+  el.innerHTML = `
+    <!-- Header with score -->
+    <div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:16px">
+      <div style="text-align:center;background:var(--white);border:2px solid ${overall >= 70 ? 'var(--green)' : overall >= 50 ? 'var(--yellow)' : 'var(--espn-red)'};border-radius:12px;padding:12px 20px;flex-shrink:0">
+        <div style="font-size:32px;font-weight:800;color:${overall >= 70 ? 'var(--green)' : overall >= 50 ? '#d97706' : 'var(--espn-red)'}">${overall}</div>
+        <div style="font-size:9px;color:var(--text4);font-weight:600;text-transform:uppercase">Overall</div>
+      </div>
+      <div style="flex:1">
+        <div style="display:flex;gap:4px;align-items:center;margin-bottom:6px">
+          <span style="font-size:14px;font-weight:700">${mock.label || 'Mock #' + (idx + 1)}</span>
+          <span style="font-size:10px;color:var(--text4)">${mock.date} · ${picks.length} picks (${numBats} bat, ${numPits} pit)</span>
+          <button class="btn btn-secondary btn-sm" style="font-size:9px;padding:1px 6px;margin-left:auto" onclick="deleteMockLabDraft(${idx})">Delete</button>
+        </div>
+        <div class="cat-bars cat-bars-compact" id="ml-recap-bat" style="margin-bottom:4px"></div>
+        <div class="cat-bars cat-bars-compact" id="ml-recap-pit"></div>
+      </div>
     </div>
-    ${superTeam.length < 23 ? `<div style="font-size:10px;color:var(--text4);margin-top:8px;text-align:center">Import more mocks to fill all 23 roster slots (${superTeam.length}/23 filled)</div>` : ''}
+
+    <!-- Insights -->
+    ${insights.length > 0 ? `
+    <div class="ml-section">Insights</div>
+    ${insights.map(ins => `
+      <div class="ml-insight" style="background:${ins.bg};border:1px solid ${ins.color}20">
+        <div class="ml-insight-icon" style="color:${ins.color}">${ins.icon}</div>
+        <div class="ml-insight-text">
+          <div class="ml-insight-title" style="color:${ins.color}">${ins.title}</div>
+          <div style="font-size:11px;color:var(--text-secondary)">${ins.text}</div>
+        </div>
+      </div>
+    `).join('')}` : ''}
+
+    <!-- Pick-by-Pick Table -->
+    <div class="ml-section" style="margin-top:16px">Pick-by-Pick <span class="ml-section-sub">click star to add to wishlist</span></div>
+    <div class="ml-card" style="padding:0;overflow:hidden">
+      <table class="ml-recap-table">
+        <thead>
+          <tr><th>Rd</th><th>Pick</th><th>Player</th><th>Pos</th><th>ADP</th><th>Grade</th><th>Stats</th><th></th></tr>
+        </thead>
+        <tbody>
+          ${graded.map(g => {
+            const onWL = isOnWishlist(g.name);
+            return `<tr>
+              <td style="font-weight:700;color:var(--text3)">R${g.round}</td>
+              <td style="font-size:11px;color:var(--text4)">#${g.pickNum}</td>
+              <td style="font-weight:600">${g.name}</td>
+              <td><span class="pos-badge ${(g.pos||'').toLowerCase()}" style="font-size:9px">${g.pos}</span></td>
+              <td style="font-size:11px;color:var(--text3)">${g.espnADP < 900 ? g.espnADP : '?'}</td>
+              <td><span class="ml-pick-grade" style="background:${g.bg};color:${g.color}">${g.grade}</span></td>
+              <td style="font-size:10px;color:var(--text4);font-variant-numeric:tabular-nums">${g.stats}</td>
+              <td><span class="ml-pick-star${onWL ? ' active' : ''}" onclick="toggleWishlist('${g.name.replace(/'/g,"\\'")}','${g.pos}','${g.proj?.team||'?'}');refreshMockLab()">&#9733;</span></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Next Mock Advice -->
+    ${advice.length > 0 ? `
+    <div class="ml-section" style="margin-top:16px">Next Time</div>
+    <div class="ml-card">
+      ${advice.map(a => `<div style="font-size:12px;padding:4px 0;display:flex;gap:6px;align-items:flex-start"><span style="color:var(--blue);flex-shrink:0">&#10148;</span>${a}</div>`).join('')}
+    </div>` : ''}
   `;
 
-  // Render category bars after DOM update
   setTimeout(() => {
-    const batEl = document.getElementById('mocklab-cat-bars-bat');
-    const pitEl = document.getElementById('mocklab-cat-bars-pit');
+    const batEl = document.getElementById('ml-recap-bat');
+    const pitEl = document.getElementById('ml-recap-pit');
     if (batEl) renderCatBars(batEl, CATS_BAT, scores);
     if (pitEl) renderCatBars(pitEl, CATS_PIT, scores);
   }, 50);
+}
+
+// ── Multi-Mock Trends View ──
+function renderMockLabTrendsView(el) {
+  const totalMocks = PREP.mockDrafts.length;
+
+  // Aggregate across all mocks
+  const agg = {};
+  PREP.mockDrafts.forEach((mock, mi) => {
+    (mock.myPicks || []).forEach(p => {
+      if (!agg[p.name]) agg[p.name] = { name: p.name, pos: p.pos || '?', count: 0, rounds: [], mockLabels: [] };
+      agg[p.name].count++;
+      agg[p.name].rounds.push(p.round);
+      agg[p.name].mockLabels.push(mock.label || 'Mock ' + (mi + 1));
+    });
+  });
+
+  const trends = Object.values(agg).sort((a, b) => b.count - a.count || Math.min(...a.rounds) - Math.min(...b.rounds));
+  const allPlayers = getPrepPlayers();
+
+  // Mock-over-mock scoring
+  const mockScores = PREP.mockDrafts.map(mock => {
+    const mockPicks = (mock.myPicks || []).map(p => {
+      const proj = projFor(p.name);
+      return proj ? { name: p.name, round: p.round, ...proj } : null;
+    }).filter(Boolean);
+    const saved = [...PREP.picks];
+    PREP.picks = mockPicks;
+    const scores = calcPrepScores();
+    PREP.picks = saved;
+    const overall = mockPicks.length > 0 ? Math.round(Object.values(scores).reduce((a,b) => a+b, 0) / ALL_CATS.length) : 0;
+    return { label: mock.label, overall, scores };
+  });
+
+  el.innerHTML = `
+    <!-- Mock Comparison -->
+    <div class="ml-section">Mock Comparison</div>
+    <div class="ml-card">
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        ${mockScores.map((m, i) => `
+          <div style="text-align:center;cursor:pointer;padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:${mlActiveTab === i ? 'var(--blue-soft)' : 'var(--bg)'}" onclick="mlActiveTab=${i};renderMockLabContent()">
+            <div style="font-size:24px;font-weight:800;color:${m.overall >= 70 ? 'var(--green)' : m.overall >= 50 ? '#d97706' : 'var(--espn-red)'}">${m.overall}</div>
+            <div style="font-size:10px;color:var(--text4)">${m.label || 'Mock ' + (i+1)}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div style="font-size:10px;color:var(--text4);margin-top:8px">Click a mock to see its full recap</div>
+    </div>
+
+    <!-- Player Trends -->
+    <div class="ml-section" style="margin-top:16px">Player Trends <span class="ml-section-sub">players you keep picking — click to wishlist</span></div>
+    <div class="ml-trend-grid">
+      ${trends.map(t => {
+        const proj = projFor(t.name);
+        const player = allPlayers.find(p => p.name === t.name);
+        const isPit = proj ? isPitcherProj(proj) : false;
+        const onWL = isOnWishlist(t.name);
+        const pct = Math.round((t.count / totalMocks) * 100);
+        const avgRound = (t.rounds.reduce((a,b) => a+b, 0) / t.rounds.length).toFixed(1);
+        const espnADP = proj?.espnADP || proj?.adp || 999;
+        const stats = proj ? (isPit
+          ? `${proj.K||0}K · ${proj.QS||0}QS · ${(proj.ERA||0).toFixed(2)} ERA`
+          : `${proj.HR||0}HR · ${proj.RBI||0}RBI · ${proj.SB||0}SB · .${Math.round((proj.AVG||0)*1000)}`)
+          : '';
+
+        return `<div class="ml-trend-card${onWL ? ' on-wishlist' : ''}" onclick="toggleWishlist('${t.name.replace(/'/g,"\\'")}','${t.pos}','${proj?.team||'?'}');refreshMockLab()">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <div style="font-weight:700;font-size:13px">${t.name} ${onWL ? '<span style="color:var(--yellow)">&#9733;</span>' : ''}</div>
+              <div style="font-size:10px;color:var(--text3)">${t.pos} · ${proj?.team || '?'} · ADP ${espnADP < 900 ? espnADP : '?'} · AI #${player?.aiRank || '?'}</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <div style="font-size:20px;font-weight:800;color:${pct >= 75 ? 'var(--green)' : pct >= 50 ? '#d97706' : 'var(--text3)'}">${t.count}/${totalMocks}</div>
+              <div style="font-size:9px;color:var(--text4)">Avg R${avgRound}</div>
+            </div>
+          </div>
+          <div style="font-size:10px;color:var(--text4);margin-top:4px">${stats}</div>
+          <div class="ml-trend-bar"><div class="ml-trend-bar-fill" style="width:${pct}%"></div></div>
+          <div style="font-size:9px;color:var(--text4);margin-top:3px">Rounds: ${t.rounds.join(', ')}${t.rounds.length > 1 ? (t.rounds.every((r,i,a) => i===0 || Math.abs(r - a[i-1]) <= 2) ? ' (consistent spot)' : ' (round varies)') : ''}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
 }
 
 function viewMockLabDraft(idx) {
@@ -2318,9 +2387,8 @@ function viewMockLabDraft(idx) {
 }
 
 function deleteMockLabDraft(idx) {
-  if (!confirm(`Delete mock #${idx + 1}?`)) return;
+  if (!confirm(`Delete "${PREP.mockDrafts[idx]?.label || 'Mock ' + (idx+1)}"?`)) return;
   const mock = PREP.mockDrafts[idx];
-  // Also remove these picks from myMockPicks
   (mock.myPicks || []).forEach(p => {
     if (PREP.myMockPicks[p.name]) {
       PREP.myMockPicks[p.name] = PREP.myMockPicks[p.name].filter(r => !mock.myPicks.some(mp => mp.name === p.name && mp.round === r));
