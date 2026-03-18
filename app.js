@@ -2101,7 +2101,55 @@ function showFullMockBoard() {
 
 let mlActiveTab = 0; // -1 = trends view, 0+ = mock index
 
+// Extract user's picks from allPicks using known pick order positions
+// Much more reliable than team-name matching
+function getMyPicksFromBoard(allPicks) {
+  if (!allPicks || allPicks.length === 0) return null;
+  const myOveralls = new Set(PREP.pickOrder.map(p => p.overall));
+  const myPicks = [];
+  allPicks.forEach(p => {
+    if (myOveralls.has(p.overall)) {
+      const roundInfo = PREP.pickOrder.find(pk => pk.overall === p.overall);
+      const proj = projFor(p.name);
+      myPicks.push({ name: p.name, round: roundInfo?.round || p.round, pos: proj?.pos || p.pos || '?', overall: p.overall, team: p.teamName || '' });
+    }
+  });
+  return myPicks.sort((a, b) => a.round - b.round);
+}
+
+// Fix a mock's myPicks using the board data (pick positions > team name matching)
+function fixMockMyPicks(mock) {
+  if (!mock.allPicks || mock.allPicks.length === 0) return mock.myPicks || [];
+  const fixed = getMyPicksFromBoard(mock.allPicks);
+  if (fixed && fixed.length > 0) {
+    mock.myPicks = fixed;
+    return fixed;
+  }
+  return mock.myPicks || [];
+}
+
 function refreshMockLab() {
+  // Auto-fix all mocks on load
+  let needsSave = false;
+  PREP.mockDrafts.forEach(mock => {
+    if (mock.allPicks && mock.allPicks.length > 0) {
+      const before = (mock.myPicks || []).length;
+      fixMockMyPicks(mock);
+      if (mock.myPicks.length !== before) needsSave = true;
+    }
+  });
+  if (needsSave) {
+    // Rebuild myMockPicks from corrected mocks
+    PREP.myMockPicks = {};
+    PREP.mockDrafts.forEach(mock => {
+      (mock.myPicks || []).forEach(p => {
+        if (!PREP.myMockPicks[p.name]) PREP.myMockPicks[p.name] = [];
+        PREP.myMockPicks[p.name].push(p.round);
+      });
+    });
+    savePrepState();
+    _prepPlayersCache = null;
+  }
   const countEl = document.getElementById('mocklab-count');
   if (countEl) countEl.textContent = `${PREP.mockDrafts.length} mock${PREP.mockDrafts.length !== 1 ? 's' : ''}`;
   if (mlActiveTab >= PREP.mockDrafts.length) mlActiveTab = Math.max(0, PREP.mockDrafts.length - 1);
@@ -2158,7 +2206,7 @@ function renderMockLabRecap(el, idx) {
     const player = allPlayers.find(pl => pl.name === p.name);
     const isPit = proj ? isPitcherProj(proj) : false;
     const espnADP = proj?.espnADP || proj?.adp || 999;
-    const pickNum = PREP.pickOrder[(p.round || 1) - 1]?.overall || p.round * NUM_TEAMS_DRAFT;
+    const pickNum = p.overall || PREP.pickOrder[(p.round || 1) - 1]?.overall || p.round * NUM_TEAMS_DRAFT;
     const diff = espnADP - pickNum;
 
     let grade, color, bg;
@@ -2234,7 +2282,7 @@ function renderMockLabRecap(el, idx) {
       <div style="flex:1">
         <div style="display:flex;gap:4px;align-items:center;margin-bottom:6px">
           <span style="font-size:14px;font-weight:700">${mock.label || 'Mock #' + (idx + 1)}</span>
-          <span style="font-size:10px;color:var(--text4)">${mock.date} · ${picks.length} picks (${numBats} bat, ${numPits} pit)</span>
+          <span style="font-size:10px;color:var(--text4)">${mock.date} · ${picks.length} picks (${numBats} bat, ${numPits} pit)${picks[0]?.team ? ' · ' + picks[0].team : ''}</span>
           <button class="btn btn-secondary btn-sm" style="font-size:9px;padding:1px 6px;margin-left:auto" onclick="deleteMockLabDraft(${idx})">Delete</button>
         </div>
         <div class="cat-bars cat-bars-compact" id="ml-recap-bat" style="margin-bottom:4px"></div>
@@ -2279,6 +2327,44 @@ function renderMockLabRecap(el, idx) {
         </tbody>
       </table>
     </div>
+
+    <!-- Who Was Available — show the board context around your picks -->
+    ${mock.allPicks && mock.allPicks.length > 0 ? (() => {
+      const board = mock.allPicks;
+      // For each of your picks, show who went right before/after and who was a better ADP option
+      const boardContext = graded.map(g => {
+        const nearby = board.filter(bp => bp.round === g.round).sort((a,b) => a.overall - b.overall);
+        // Players drafted AFTER your pick in this round + next round who had better ADP
+        const draftedAfter = board.filter(bp => bp.overall > g.pickNum && bp.overall <= g.pickNum + 12);
+        const missedSteals = draftedAfter.filter(bp => {
+          const proj = projFor(bp.name);
+          const adp = proj?.espnADP || proj?.adp || 999;
+          return adp < g.pickNum && adp < g.espnADP; // they had better ADP than your pick AND were available
+        });
+        return { ...g, nearby, missedSteals };
+      });
+
+      const hasMisses = boardContext.some(bc => bc.missedSteals.length > 0);
+      return `
+      <div class="ml-section" style="margin-top:16px">Draft Context <span class="ml-section-sub">who went around your picks</span></div>
+      <div class="ml-card" style="padding:10px">
+        ${boardContext.map(bc => `
+          <div style="margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #f3f4f6">
+            <div style="font-size:12px;font-weight:700;margin-bottom:4px">Round ${bc.round} — Pick #${bc.pickNum}: <span style="color:var(--green)">${bc.name}</span></div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap">
+              ${bc.nearby.map(np => {
+                const isYou = np.overall === bc.pickNum;
+                return `<span style="font-size:10px;padding:2px 6px;border-radius:4px;${isYou ? 'background:var(--green-bg);color:var(--green);font-weight:700;border:1px solid var(--green)' : 'background:var(--bg);color:var(--text3);border:1px solid var(--border)'}">#${np.overall} ${np.name.split(' ').pop()}</span>`;
+              }).join('')}
+            </div>
+            ${bc.missedSteals.length > 0 ? `<div style="font-size:10px;color:#d97706;margin-top:4px">Available at your pick: ${bc.missedSteals.map(ms => {
+              const proj = projFor(ms.name);
+              return `<strong>${ms.name}</strong> (ADP ${proj?.espnADP || '?'})`;
+            }).join(', ')}</div>` : ''}
+          </div>
+        `).join('')}
+      </div>`;
+    })() : ''}
 
     <!-- Next Mock Advice -->
     ${advice.length > 0 ? `
