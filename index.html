@@ -550,6 +550,35 @@
   .ml-recap-table th { font-size:9px; font-weight:600; color:var(--text4); text-align:left; padding:4px 6px; border-bottom:2px solid var(--border); text-transform:uppercase; }
   .ml-recap-table td { font-size:12px; padding:6px; border-bottom:1px solid #f3f4f6; }
 
+  /* Targets View */
+  .tgt-round { background:var(--white); border:1px solid var(--border); border-radius:8px; margin-bottom:10px; overflow:hidden; }
+  .tgt-round-header { display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:var(--bg); border-bottom:1px solid var(--border); cursor:pointer; }
+  .tgt-round-header:hover { background:#f0f4ff; }
+  .tgt-round-header .tgt-rd { font-weight:800; font-size:13px; }
+  .tgt-round-header .tgt-pk { font-size:11px; color:var(--text3); }
+  .tgt-round-header .tgt-gap { font-size:10px; color:var(--text4); }
+  .tgt-round-header.tgt-current { background:var(--green-bg); border-bottom-color:var(--green); }
+  .tgt-round-header.tgt-current .tgt-rd { color:var(--green); }
+  .tgt-round-header.tgt-done { opacity:0.5; }
+  .tgt-player { display:flex; align-items:center; gap:8px; padding:7px 12px; border-bottom:1px solid #f8f9fa; transition:background .1s; }
+  .tgt-player:last-child { border-bottom:none; }
+  .tgt-player:hover { background:#f8faff; }
+  .tgt-player .tgt-num { width:18px; font-size:10px; font-weight:700; color:var(--text4); text-align:center; flex-shrink:0; }
+  .tgt-player .tgt-name { font-weight:600; font-size:12px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tgt-player .tgt-pos { flex-shrink:0; }
+  .tgt-player .tgt-adp { font-size:10px; color:var(--text3); width:50px; text-align:right; flex-shrink:0; }
+  .tgt-player .tgt-why { font-size:9px; color:var(--text4); flex-shrink:0; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tgt-player .tgt-star { cursor:pointer; font-size:14px; opacity:0.3; flex-shrink:0; }
+  .tgt-player .tgt-star:hover { opacity:1; }
+  .tgt-player .tgt-star.active { opacity:1; color:var(--yellow); }
+  .tgt-player .tgt-draft-btn { font-size:9px; padding:2px 6px; border-radius:4px; background:var(--green-bg); color:var(--green); border:1px solid var(--green); cursor:pointer; font-weight:600; flex-shrink:0; }
+  .tgt-player .tgt-draft-btn:hover { background:var(--green); color:white; }
+  .tgt-player.tgt-picked { opacity:0.3; text-decoration:line-through; }
+  .tgt-actions { display:flex; gap:6px; padding:8px 12px; background:var(--bg); border-top:1px solid var(--border); }
+  .tgt-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .tgt-header-title { font-size:14px; font-weight:700; }
+  .tgt-strategy-tag { font-size:9px; padding:2px 6px; border-radius:4px; font-weight:600; }
+
   /* ═══════════════════════════════════════════════
      OVERLAYS
      ═══════════════════════════════════════════════ */
@@ -965,6 +994,7 @@
           <button class="btn btn-sm" id="btn-view-table" style="font-size:9px;padding:2px 7px;background:var(--text);color:white;border:none" onclick="setPrepView('table')">Table</button>
           <button class="btn btn-secondary btn-sm" id="btn-view-board" style="font-size:9px;padding:2px 7px" onclick="setPrepView('board')">Board</button>
           <button class="btn btn-secondary btn-sm" id="btn-view-draftboard" style="font-size:9px;padding:2px 7px" onclick="setPrepView('draftboard')">Draft Board</button>
+          <button class="btn btn-secondary btn-sm" id="btn-view-targets" style="font-size:9px;padding:2px 7px" onclick="setPrepView('targets')">Targets</button>
           <label style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px;margin-left:6px">
             <input type="checkbox" id="prep-hide-drafted" checked> Hide picks
           </label>
@@ -981,6 +1011,8 @@
       <div id="prep-board-view" style="display:none;max-height:calc(100vh - 260px);overflow-y:auto;"></div>
       <!-- Draft Board View -->
       <div id="prep-draftboard-view" style="display:none;max-height:calc(100vh - 260px);overflow-y:auto;"></div>
+      <!-- Targets View -->
+      <div id="prep-targets-view" style="display:none;max-height:calc(100vh - 260px);overflow-y:auto;"></div>
     </div>
 
     <!-- RIGHT: War Room Feed -->

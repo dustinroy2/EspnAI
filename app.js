@@ -628,6 +628,7 @@ function renderPrepRound() {
   renderPrepTable();
   if (prepViewMode === 'board') renderBoardView();
   if (prepViewMode === 'draftboard') renderDraftBoard();
+  if (prepViewMode === 'targets') renderTargetsView();
   if (rosterViewMode === 'field') renderFieldView();
 }
 
@@ -2834,12 +2835,14 @@ function setPrepView(mode) {
   document.getElementById('prep-table-view').style.display = mode === 'table' ? '' : 'none';
   document.getElementById('prep-board-view').style.display = mode === 'board' ? '' : 'none';
   document.getElementById('prep-draftboard-view').style.display = mode === 'draftboard' ? '' : 'none';
-  ['table','board','draftboard'].forEach(m => {
+  document.getElementById('prep-targets-view').style.display = mode === 'targets' ? '' : 'none';
+  ['table','board','draftboard','targets'].forEach(m => {
     const btn = document.getElementById('btn-view-' + m);
     if (btn) { btn.style.background = mode === m ? 'var(--text)' : 'var(--bg)'; btn.style.color = mode === m ? 'white' : 'var(--text)'; }
   });
   if (mode === 'board') renderBoardView();
   if (mode === 'draftboard') renderDraftBoard();
+  if (mode === 'targets') renderTargetsView();
 }
 
 let boardTab = 'position';
@@ -3108,6 +3111,229 @@ function renderDraftBoard() {
 
   html += '</div>';
   el.innerHTML = html;
+}
+
+// ── Targets View — Pre-Draft Cheat Sheet ──
+function renderTargetsView() {
+  const el = document.getElementById('prep-targets-view');
+  if (!el) return;
+  const allPlayers = getPrepPlayers();
+  const currentRound = PREP.round;
+
+  // Build a simulated draft: predict which players other teams will take
+  // based on ADP, then show who's realistically available at each of your picks
+  const simDrafted = new Set([...PREP.draftedNames]); // start with user's actual picks
+
+  // For each round, determine targets
+  const roundTargets = [];
+
+  for (let r = 1; r <= NUM_ROUNDS_DRAFT; r++) {
+    const pickInfo = PREP.pickOrder[r - 1];
+    const overall = pickInfo.overall;
+    const userPick = PREP.picks[r - 1];
+
+    // Simulate other teams' picks before this one in the round
+    // All picks with ADP < overall that haven't been "taken" yet
+    const sorted = [...allPlayers]
+      .filter(p => !simDrafted.has(p.name))
+      .sort((a, b) => {
+        const adpA = a.espnADP < 900 ? a.espnADP : (a.adp < 900 ? a.adp : 999);
+        const adpB = b.espnADP < 900 ? b.espnADP : (b.adp < 900 ? b.adp : 999);
+        return adpA - adpB;
+      });
+
+    // Remove players that other teams would pick before our pick
+    // In a snake draft, picks before ours this round = overall - previousRoundEnd - 1
+    const prevRoundEnd = (r === 1) ? 0 : PREP.pickOrder[r - 2].overall;
+    // How many picks happen between our last pick and this one?
+    const picksBetween = overall - prevRoundEnd - 1;
+    for (let i = 0; i < picksBetween && i < sorted.length; i++) {
+      simDrafted.add(sorted[i].name);
+    }
+
+    // Now find who's available at our pick
+    const available = allPlayers
+      .filter(p => !simDrafted.has(p.name))
+      .sort((a, b) => b.aiScore - a.aiScore);
+
+    // Pick strategy: consider category needs
+    const scores = calcPrepScoresForPicks(PREP.picks.slice(0, r - 1).filter(Boolean));
+    const gapCats = calcPrepGaps(scores);
+    const criticals = gapCats.filter(g => g.cls === 'critical').map(g => g.cat);
+    const needs = gapCats.filter(g => g.cls === 'critical' || g.cls === 'soon').map(g => g.cat);
+
+    // Score available players by: AI rank + category fit + position need
+    const picksPicked = PREP.picks.slice(0, r).filter(Boolean);
+    const numSP = picksPicked.filter(p => isPitcherProj(p) && (p.SV||0) <= 5).length;
+    const numRP = picksPicked.filter(p => isPitcherProj(p) && (p.SV||0) > 5).length;
+    const numBats = picksPicked.length - numSP - numRP;
+    const hasSB = picksPicked.reduce((s, p) => s + (p.SB||0), 0) >= 60;
+
+    const scored = available.slice(0, 50).map(p => {
+      const isPit = isPitcherProj(p);
+      let targetScore = p.aiScore;
+
+      // Category fit bonus
+      if (!isPit) {
+        if (needs.includes('SB') && (p.SB||0) >= 15) targetScore += 8;
+        if (needs.includes('HR') && (p.HR||0) >= 25) targetScore += 4;
+        if (needs.includes('AVG') && (p.AVG||0) >= 0.275) targetScore += 3;
+        if (needs.includes('RBI') && (p.RBI||0) >= 80) targetScore += 3;
+      } else {
+        if (needs.includes('K') && (p.K||0) >= 150) targetScore += 5;
+        if (needs.includes('SV') && (p.SV||0) >= 15) targetScore += 8;
+        if (needs.includes('QS') && (p.QS||0) >= 12) targetScore += 4;
+      }
+
+      // Position balance
+      if (r <= 8 && !isPit && numBats < 6) targetScore += 2;
+      if (r >= 4 && isPit && numSP < 2) targetScore += 3;
+      if (r >= 6 && isPit && (p.SV||0) > 5 && numRP === 0) targetScore += 5;
+      if (!hasSB && !isPit && (p.SB||0) >= 20) targetScore += 5;
+
+      // Value signal: ADP says they should be gone but they're still here
+      const adp = p.espnADP < 900 ? p.espnADP : (p.adp || 999);
+      const adpDiff = adp - overall;
+      let why = '';
+      if (adpDiff < -10) why = 'STEAL — ADP ' + Math.round(adp);
+      else if (needs.includes('SB') && (p.SB||0) >= 20) why = 'SB fix';
+      else if (needs.includes('SV') && (p.SV||0) >= 15) why = 'Closer need';
+      else if (needs.includes('K') && (p.K||0) >= 170) why = 'K/QS ace';
+      else if (adpDiff < -3) why = 'Value';
+
+      return { ...p, targetScore, why };
+    }).sort((a, b) => b.targetScore - a.targetScore);
+
+    // Top 5 targets for this round
+    const targets = scored.slice(0, 5);
+
+    // Strategy tag for the round
+    let strategy = '';
+    let stratColor = '';
+    if (r <= 3) { strategy = 'BEST PLAYER'; stratColor = 'var(--espn-red)'; }
+    else if (r <= 5 && !hasSB) { strategy = 'GET SPEED'; stratColor = 'var(--green)'; }
+    else if (r >= 4 && r <= 7 && numSP < 2) { strategy = 'ACE SP'; stratColor = 'var(--blue)'; }
+    else if (r >= 6 && numRP === 0) { strategy = 'CLOSER'; stratColor = '#7c3aed'; }
+    else if (r >= 8) { strategy = 'FILL GAPS'; stratColor = 'var(--text3)'; }
+    else { strategy = 'BPA'; stratColor = 'var(--text3)'; }
+
+    // If user already picked this round, mark as done
+    if (userPick) simDrafted.add(userPick.name);
+
+    // Next pick gap
+    const nextOverall = PREP.pickOrder[r]?.overall || 0;
+    const gap = nextOverall ? nextOverall - overall : 0;
+
+    roundTargets.push({ round: r, overall, gap, targets, strategy, stratColor, userPick, isCurrent: r === currentRound });
+  }
+
+  // Render
+  let html = `
+    <div class="tgt-header">
+      <div>
+        <div class="tgt-header-title">Draft Targets — Pick ${PICK_POS} Cheat Sheet</div>
+        <div style="font-size:10px;color:var(--text4)">AI-ranked targets for each of your ${NUM_ROUNDS_DRAFT} picks in the snake draft. Accounts for who other teams will take based on ADP.</div>
+      </div>
+      <button class="btn btn-primary btn-sm" style="font-size:10px;padding:3px 10px" onclick="addAllTargetsToWishlist()">Add Top Targets to Wishlist</button>
+    </div>
+  `;
+
+  for (const rt of roundTargets) {
+    const isDone = !!rt.userPick;
+    const headerCls = rt.isCurrent ? 'tgt-round-header tgt-current' : isDone ? 'tgt-round-header tgt-done' : 'tgt-round-header';
+
+    html += `<div class="tgt-round">
+      <div class="${headerCls}" onclick="this.parentElement.querySelector('.tgt-body').style.display=this.parentElement.querySelector('.tgt-body').style.display==='none'?'':'none'">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="tgt-rd">R${rt.round}</span>
+          <span class="tgt-pk">Pick #${rt.overall}</span>
+          <span class="tgt-strategy-tag" style="background:${rt.stratColor}20;color:${rt.stratColor}">${rt.strategy}</span>
+          ${rt.isCurrent ? '<span style="font-size:9px;font-weight:700;color:var(--green)">&#9664; NOW</span>' : ''}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${isDone ? `<span style="font-size:11px;font-weight:600;color:var(--green)">${rt.userPick.name}</span>` : ''}
+          ${rt.gap > 0 ? `<span class="tgt-gap">${rt.gap} picks until next</span>` : ''}
+          <span style="font-size:12px;color:var(--text4)">${isDone ? '&#9660;' : '&#9654;'}</span>
+        </div>
+      </div>
+      <div class="tgt-body" style="${isDone && !rt.isCurrent ? 'display:none' : ''}">
+        ${isDone ? `<div style="padding:6px 12px;background:var(--green-bg);font-size:11px;color:var(--green);font-weight:600">Drafted: ${rt.userPick.name} (${rt.userPick.pos})</div>` : ''}
+        ${rt.targets.map((t, i) => {
+          const onWL = isOnWishlist(t.name);
+          const isPit = isPitcherProj(t);
+          const picked = PREP.draftedNames.has(t.name);
+          const stats = isPit
+            ? `${t.K||0}K · ${t.QS||0}QS · ${(t.ERA||0).toFixed(2)}ERA${(t.SV||0)>0?' · '+t.SV+'SV':''}`
+            : `${t.HR||0}HR · ${t.RBI||0}RBI · ${t.SB||0}SB · .${Math.round((t.AVG||0)*1000)}`;
+          return `<div class="tgt-player${picked ? ' tgt-picked' : ''}">
+            <div class="tgt-num">${i + 1}</div>
+            <div class="tgt-name" title="${stats}">${t.name}</div>
+            <div class="tgt-pos"><span class="pos-badge ${(t.pos||'').toLowerCase()}" style="font-size:9px">${t.pos}</span></div>
+            <div class="tgt-adp">ADP ${t.espnADP < 900 ? t.espnADP : '?'}</div>
+            <div style="font-size:10px;color:var(--text4);width:40px;text-align:right;flex-shrink:0">AI #${t.aiRank}</div>
+            ${t.why ? `<div class="tgt-why" title="${t.why}"><span class="tgt-strategy-tag" style="background:var(--green-bg);color:var(--green);font-size:8px">${t.why}</span></div>` : '<div style="width:70px"></div>'}
+            <span class="tgt-star${onWL ? ' active' : ''}" onclick="event.stopPropagation();toggleWishlist('${t.name.replace(/'/g,"\\'")}','${t.pos}','${t.team}');renderTargetsView()">&#9733;</span>
+            ${!picked && !isDone ? `<span class="tgt-draft-btn" onclick="event.stopPropagation();prepDraft('${t.name.replace(/'/g,"\\'")}')">Draft</span>` : ''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+// Helper: calculate category scores for an arbitrary set of picks
+function calcPrepScoresForPicks(picks) {
+  const saved = [...PREP.picks];
+  PREP.picks = picks;
+  const scores = calcPrepScores();
+  PREP.picks = saved;
+  return scores;
+}
+
+// Add top targets (rank 1 from each future round) to wishlist
+function addAllTargetsToWishlist() {
+  const allPlayers = getPrepPlayers();
+  const simDrafted = new Set([...PREP.draftedNames]);
+  let added = 0;
+
+  for (let r = 1; r <= NUM_ROUNDS_DRAFT; r++) {
+    if (PREP.picks[r - 1]) continue; // already picked
+    const pickInfo = PREP.pickOrder[r - 1];
+    const overall = pickInfo.overall;
+
+    // Quick sim: remove players other teams would take
+    const sorted = [...allPlayers]
+      .filter(p => !simDrafted.has(p.name))
+      .sort((a, b) => {
+        const adpA = a.espnADP < 900 ? a.espnADP : (a.adp < 900 ? a.adp : 999);
+        const adpB = b.espnADP < 900 ? b.espnADP : (b.adp < 900 ? b.adp : 999);
+        return adpA - adpB;
+      });
+
+    const prevRoundEnd = (r === 1) ? 0 : PREP.pickOrder[r - 2].overall;
+    const picksBetween = overall - prevRoundEnd - 1;
+    for (let i = 0; i < picksBetween && i < sorted.length; i++) {
+      simDrafted.add(sorted[i].name);
+    }
+
+    // Best available = highest AI score
+    const best = allPlayers
+      .filter(p => !simDrafted.has(p.name))
+      .sort((a, b) => b.aiScore - a.aiScore)[0];
+
+    if (best && !isOnWishlist(best.name)) {
+      toggleWishlist(best.name, best.pos, best.team);
+      added++;
+    }
+    if (best) simDrafted.add(best.name);
+  }
+
+  toast(`Added ${added} targets to wishlist`);
+  savePrepState();
+  renderTargetsView();
+  renderWishlist();
 }
 
 // Navigation
