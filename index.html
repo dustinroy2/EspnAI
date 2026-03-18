@@ -1110,6 +1110,7 @@
         <div style="display:flex;gap:4px;margin-left:auto;align-items:center">
           <button class="btn btn-sm" id="btn-live-table" style="font-size:9px;padding:2px 7px;background:var(--text);color:white;border:none" onclick="setLiveView('table')">Table</button>
           <button class="btn btn-secondary btn-sm" id="btn-live-board" style="font-size:9px;padding:2px 7px" onclick="setLiveView('board')">Board</button>
+          <button class="btn btn-secondary btn-sm" id="btn-live-targets" style="font-size:9px;padding:2px 7px" onclick="setLiveView('targets')">Targets</button>
           <label style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px;margin-left:6px">
             <input type="checkbox" id="live-hide-drafted" checked> Hide drafted
           </label>
@@ -1124,6 +1125,8 @@
       </div>
       <!-- Board View -->
       <div id="live-board-view" style="display:none;max-height:calc(100vh - 220px);overflow-y:auto;"></div>
+      <!-- Live Targets View -->
+      <div id="live-targets-view" style="display:none;max-height:calc(100vh - 220px);overflow-y:auto;"></div>
     </div>
 
     <!-- RIGHT: War Room Feed -->

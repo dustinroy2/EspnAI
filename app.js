@@ -3441,6 +3441,7 @@ async function pollDraft() {
   renderOTCStrip(state);
   renderLiveTable();
   if (liveViewMode === 'board') renderLiveBoardView();
+  if (liveViewMode === 'targets') renderLiveTargetsView();
   renderRosterPanel(state.myPicks);
   if (state.isMyTurn && !S.overlayShown) triggerOnClock(state);
   if (!state.isMyTurn && S.overlayShown) closeOverlay();
@@ -3528,11 +3529,13 @@ function setLiveView(mode) {
   liveViewMode = mode;
   document.getElementById('live-table-view').style.display = mode === 'table' ? '' : 'none';
   document.getElementById('live-board-view').style.display = mode === 'board' ? '' : 'none';
-  document.getElementById('btn-live-table').style.background = mode === 'table' ? 'var(--text)' : 'var(--bg)';
-  document.getElementById('btn-live-table').style.color = mode === 'table' ? 'white' : 'var(--text)';
-  document.getElementById('btn-live-board').style.background = mode === 'board' ? 'var(--text)' : 'var(--bg)';
-  document.getElementById('btn-live-board').style.color = mode === 'board' ? 'white' : 'var(--text)';
+  document.getElementById('live-targets-view').style.display = mode === 'targets' ? '' : 'none';
+  ['table','board','targets'].forEach(m => {
+    const btn = document.getElementById('btn-live-' + m);
+    if (btn) { btn.style.background = mode === m ? 'var(--text)' : 'var(--bg)'; btn.style.color = mode === m ? 'white' : 'var(--text)'; }
+  });
   if (mode === 'board') renderLiveBoardView();
+  if (mode === 'targets') renderLiveTargetsView();
 }
 
 function renderLiveBoardView() {
@@ -3546,6 +3549,185 @@ function renderLiveBoardView() {
   }
   renderBoardView(document.getElementById('live-board-view'));
   renderLiveWarnings(PREP.draftedNames);
+}
+
+// ── Live Targets View — updates every poll cycle with real available players ──
+function renderLiveTargetsView() {
+  const el = document.getElementById('live-targets-view');
+  if (!el) return;
+  const allPlayers = getPrepPlayers();
+  const state = S.draftState;
+
+  // Get actual state — works both with live ESPN data and with prep-only mode
+  const myPicks = state?.myPicks || [];
+  const currentRound = state?.round || PREP.round;
+  const picksMade = myPicks.length;
+
+  // Build set of actually drafted players (from ESPN or prep)
+  const draftedNames = new Set([...PREP.draftedNames]);
+  if (state?.available) {
+    const availNames = new Set(state.available.map(p => p.name));
+    allPlayers.forEach(p => { if (!availNames.has(p.name)) draftedNames.add(p.name); });
+  }
+
+  // Actually available players
+  const available = allPlayers.filter(p => !draftedNames.has(p.name));
+
+  // Current roster scores (from live picks)
+  const myRoster = myPicks.map(p => projFor(p.playerName) || {}).filter(p => p.R !== undefined || p.K !== undefined);
+  const scores = calcPrepScoresForPicks(myRoster);
+  const gapCats = calcPrepGaps(scores);
+  const needs = gapCats.filter(g => g.cls === 'critical' || g.cls === 'soon').map(g => g.cat);
+
+  // Roster composition
+  const numSP = myRoster.filter(p => isPitcherProj(p) && (p.SV||0) <= 5).length;
+  const numRP = myRoster.filter(p => isPitcherProj(p) && (p.SV||0) > 5).length;
+  const numBats = myRoster.length - numSP - numRP;
+  const totalSB = myRoster.reduce((s, p) => s + (p.SB||0), 0);
+  const hasSV = myRoster.some(p => (p.SV||0) > 5);
+
+  // Score available players by value + category fit
+  function scorePlayer(p) {
+    const isPit = isPitcherProj(p);
+    let score = p.aiScore || 0;
+
+    // Category need boosts
+    if (!isPit) {
+      if (needs.includes('SB') && (p.SB||0) >= 15) score += 10;
+      if (needs.includes('HR') && (p.HR||0) >= 25) score += 5;
+      if (needs.includes('AVG') && (p.AVG||0) >= 0.275) score += 4;
+      if (needs.includes('RBI') && (p.RBI||0) >= 80) score += 3;
+      if (needs.includes('R') && (p.R||0) >= 85) score += 3;
+    } else {
+      if (needs.includes('K') && (p.K||0) >= 150) score += 6;
+      if (needs.includes('SV') && (p.SV||0) >= 15) score += 10;
+      if (needs.includes('QS') && (p.QS||0) >= 12) score += 5;
+      if (needs.includes('ERA') && (p.ERA||0) < 3.5 && (p.ERA||0) > 0) score += 4;
+    }
+
+    // Positional balance
+    if (picksMade < 8 && !isPit && numBats < 6) score += 2;
+    if (picksMade >= 3 && isPit && numSP < 2) score += 4;
+    if (picksMade >= 5 && isPit && (p.SV||0) > 5 && numRP === 0) score += 6;
+    if (totalSB < 60 && !isPit && (p.SB||0) >= 20) score += 6;
+
+    // Determine "why" tag
+    let why = '';
+    if (needs.includes('SB') && !isPit && (p.SB||0) >= 20) why = 'SB need';
+    else if (needs.includes('SV') && isPit && (p.SV||0) >= 15) why = 'Closer need';
+    else if (needs.includes('K') && isPit && (p.K||0) >= 170) why = 'Ace SP';
+    else if (totalSB < 60 && !isPit && (p.SB||0) >= 25) why = 'Speed fix';
+    else if (!hasSV && isPit && (p.SV||0) > 5) why = 'First closer';
+    else if (p.aiRank <= 10) why = 'Elite BPA';
+
+    return { ...p, targetScore: score, why };
+  }
+
+  const scored = available.map(scorePlayer).sort((a, b) => b.targetScore - a.targetScore);
+
+  // Build targets for current pick and next few picks
+  const futureRounds = [];
+  for (let r = Math.max(1, picksMade + 1); r <= Math.min(NUM_ROUNDS_DRAFT, picksMade + 6); r++) {
+    const pickInfo = PREP.pickOrder[r - 1];
+    if (!pickInfo) continue;
+
+    // For the current/next pick, show actual available
+    // For future picks, simulate removals based on ADP
+    let roundAvailable;
+    if (r === picksMade + 1) {
+      // Current pick — use real available
+      roundAvailable = scored.slice(0, 8);
+    } else {
+      // Future picks — estimate who'll be gone
+      const picksUntil = pickInfo.overall - (PREP.pickOrder[picksMade]?.overall || 0);
+      const simGone = new Set(draftedNames);
+      // Remove top ADP players for each pick between now and then
+      const adpSorted = available
+        .filter(p => !simGone.has(p.name))
+        .sort((a, b) => (a.espnADP < 900 ? a.espnADP : 999) - (b.espnADP < 900 ? b.espnADP : 999));
+      for (let i = 0; i < Math.min(picksUntil, adpSorted.length); i++) {
+        simGone.add(adpSorted[i].name);
+      }
+      roundAvailable = available
+        .filter(p => !simGone.has(p.name))
+        .map(scorePlayer)
+        .sort((a, b) => b.targetScore - a.targetScore)
+        .slice(0, 6);
+    }
+
+    // Strategy
+    let strategy = '', stratColor = '';
+    if (r <= 3) { strategy = 'BEST PLAYER'; stratColor = 'var(--espn-red)'; }
+    else if (totalSB < 60 && !hasSV && r <= 5) { strategy = 'GET SPEED'; stratColor = 'var(--green)'; }
+    else if (numSP < 2 && r <= 7) { strategy = 'ACE SP'; stratColor = 'var(--blue)'; }
+    else if (numRP === 0 && r >= 6) { strategy = 'CLOSER'; stratColor = '#7c3aed'; }
+    else if (needs.length > 0) { strategy = 'FIX ' + needs[0]; stratColor = '#d97706'; }
+    else { strategy = 'BPA'; stratColor = 'var(--text3)'; }
+
+    const nextOverall = PREP.pickOrder[r]?.overall || 0;
+    const gap = nextOverall ? nextOverall - pickInfo.overall : 0;
+    const isCurrent = r === picksMade + 1;
+
+    futureRounds.push({ round: r, overall: pickInfo.overall, gap, targets: roundAvailable, strategy, stratColor, isCurrent });
+  }
+
+  // Render
+  let html = `
+    <div class="tgt-header">
+      <div>
+        <div class="tgt-header-title">Live Targets ${state?.isMyTurn ? '<span style="color:var(--espn-red);font-size:12px;margin-left:6px">&#9679; YOUR PICK</span>' : ''}</div>
+        <div style="font-size:10px;color:var(--text4)">${picksMade} picks made (${numBats}B ${numSP}SP ${numRP}RP) · ${available.length} players left${needs.length > 0 ? ' · Need: <strong style="color:var(--espn-red)">' + needs.join(', ') + '</strong>' : ''}</div>
+      </div>
+    </div>
+  `;
+
+  for (const rt of futureRounds) {
+    const headerCls = rt.isCurrent ? 'tgt-round-header tgt-current' : 'tgt-round-header';
+
+    html += `<div class="tgt-round">
+      <div class="${headerCls}">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="tgt-rd">R${rt.round}</span>
+          <span class="tgt-pk">Pick #${rt.overall}</span>
+          <span class="tgt-strategy-tag" style="background:${rt.stratColor}20;color:${rt.stratColor}">${rt.strategy}</span>
+          ${rt.isCurrent ? '<span style="font-size:9px;font-weight:700;color:var(--green)">&#9664; NEXT</span>' : ''}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${rt.gap > 0 ? `<span class="tgt-gap">${rt.gap} picks until next</span>` : ''}
+        </div>
+      </div>
+      <div class="tgt-body">
+        ${rt.targets.map((t, i) => {
+          const onWL = isOnWishlist(t.name);
+          const isPit = isPitcherProj(t);
+          const stats = isPit
+            ? `${t.K||0}K · ${t.QS||0}QS · ${(t.ERA||0).toFixed(2)}ERA${(t.SV||0)>0?' · '+t.SV+'SV':''}`
+            : `${t.HR||0}HR · ${t.RBI||0}RBI · ${t.SB||0}SB · .${Math.round((t.AVG||0)*1000)}`;
+          return `<div class="tgt-player">
+            <div class="tgt-num">${i + 1}</div>
+            <div class="tgt-name" title="${stats}">${t.name}</div>
+            <div class="tgt-pos"><span class="pos-badge ${(t.pos||'').toLowerCase()}" style="font-size:9px">${t.pos}</span></div>
+            <div class="tgt-adp">ADP ${t.espnADP < 900 ? t.espnADP : '?'}</div>
+            <div style="font-size:10px;color:var(--text4);width:40px;text-align:right;flex-shrink:0">AI #${t.aiRank}</div>
+            ${t.why ? `<div class="tgt-why"><span class="tgt-strategy-tag" style="background:var(--green-bg);color:var(--green);font-size:8px">${t.why}</span></div>` : '<div style="width:70px"></div>'}
+            <span class="tgt-star${onWL ? ' active' : ''}" onclick="event.stopPropagation();toggleWishlist('${t.name.replace(/'/g,"\\'")}','${t.pos}','${t.team}');renderLiveTargetsView()">&#9733;</span>
+            ${rt.isCurrent ? `<span class="tgt-draft-btn" onclick="event.stopPropagation();showWarRoom('${t.name.replace(/'/g,"\\'")}')">Info</span>` : ''}
+          </div>`;
+        }).join('')}
+        ${rt.targets.length === 0 ? '<div style="padding:8px 12px;font-size:11px;color:var(--text4)">No projected targets — more data needed</div>' : ''}
+      </div>
+    </div>`;
+  }
+
+  // If no draft started, show prep-based targets instead
+  if (!state && available.length === 0) {
+    html = `<div style="text-align:center;padding:40px;color:var(--text4)">
+      <div style="font-size:14px;font-weight:600;margin-bottom:4px">Start Draft or load projections</div>
+      <div style="font-size:12px">Targets will update live as the draft progresses</div>
+    </div>`;
+  }
+
+  el.innerHTML = html;
 }
 
 function renderLiveWarnings(draftedNames) {
