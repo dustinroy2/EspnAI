@@ -496,6 +496,52 @@
   .bp .bp-stats { font-size:8px; color:var(--text3); font-variant-numeric:tabular-nums; margin-top:1px; }
   .bp .bp-adp { font-size:8px; color:var(--text4); }
 
+  /* Draft Board grid */
+  .db-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:4px; padding:4px; }
+  .db-tile { padding:5px 7px; border-radius:6px; border-left:3px solid var(--border); cursor:pointer; transition:opacity .15s; }
+  .db-tile:hover { background:#f0f4ff; }
+  .db-tile.db-gone { opacity:0.12; pointer-events:none; text-decoration:line-through; }
+  .db-tile.db-mine { border-left-color:var(--espn-red); background:#fef2f2; opacity:0.25; pointer-events:none; }
+  .db-tile.db-available { }
+  .db-tile.db-available.wishlist { border-left-color:var(--yellow); background:#fffef5; }
+  .db-tile .db-rank { font-size:8px; color:var(--text4); font-weight:600; }
+  .db-tile .db-name { font-weight:700; font-size:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .db-tile .db-meta { font-size:8px; color:var(--text3); }
+  .db-tile .db-stats { font-size:8px; color:var(--text4); margin-top:1px; font-variant-numeric:tabular-nums; }
+  .db-round-sep { grid-column:1/-1; font-size:9px; font-weight:700; color:var(--text3); padding:6px 4px 2px; border-bottom:1px solid var(--border); margin-top:4px; }
+  .db-header { display:flex; align-items:center; gap:10px; margin-bottom:8px; flex-wrap:wrap; }
+  .db-header .db-legend { display:flex; gap:10px; font-size:9px; color:var(--text4); }
+  .db-toggle { display:flex; gap:0; }
+  .db-toggle button { font-size:9px; padding:2px 8px; border:1px solid var(--border); background:var(--bg); color:var(--text3); cursor:pointer; }
+  .db-toggle button:first-child { border-radius:4px 0 0 4px; }
+  .db-toggle button:last-child { border-radius:0 4px 4px 0; }
+  .db-toggle button.active { background:var(--text); color:white; border-color:var(--text); }
+
+  /* Mock Lab */
+  .ml-mock-card { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:8px; }
+  .ml-mock-card .ml-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .ml-mock-card .ml-title { font-weight:700; font-size:13px; }
+  .ml-mock-card .ml-meta { font-size:10px; color:var(--text4); }
+  .ml-picks-row { display:flex; gap:4px; flex-wrap:wrap; }
+  .ml-pick { font-size:10px; padding:2px 6px; border-radius:4px; background:var(--bg); border:1px solid var(--border); }
+  .ml-pick.ml-reach { border-color:#fca5a5; background:#fef2f2; }
+  .ml-pick.ml-steal { border-color:#86efac; background:#ecfdf5; }
+  .ml-section { font-size:12px; font-weight:700; margin-bottom:8px; color:var(--text); }
+  .ml-trend-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:6px; }
+  .ml-trend-card { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:10px; position:relative; }
+  .ml-trend-card .ml-freq { position:absolute; top:8px; right:10px; font-size:18px; font-weight:700; color:var(--green); }
+  .ml-trend-card .ml-trend-name { font-weight:700; font-size:12px; }
+  .ml-trend-card .ml-trend-meta { font-size:10px; color:var(--text3); }
+  .ml-trend-card .ml-trend-rounds { font-size:9px; color:var(--text4); margin-top:2px; }
+  .ml-trend-card.on-wishlist { border-color:var(--yellow); background:#fffef5; }
+  .ml-super-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:6px; }
+  .ml-super-card { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:10px; }
+  .ml-super-card.ml-locked { border-color:var(--green); background:var(--green-bg); }
+  .ml-super-card .ml-super-name { font-weight:700; font-size:12px; }
+  .ml-super-card .ml-super-meta { font-size:10px; color:var(--text3); }
+  .ml-super-card .ml-super-stats { font-size:9px; color:var(--text4); font-variant-numeric:tabular-nums; margin-top:2px; }
+  .ml-super-card .ml-super-badge { font-size:8px; font-weight:700; padding:1px 4px; border-radius:3px; }
+
   /* ═══════════════════════════════════════════════
      OVERLAYS
      ═══════════════════════════════════════════════ */
@@ -735,6 +781,7 @@
   <div class="nav-tabs">
     <div class="nav-item active" data-page="hub">Hub</div>
     <div class="nav-item" data-page="prep">Draft Prep</div>
+    <div class="nav-item" data-page="mocklab">Mock Lab</div>
     <div class="nav-item" data-page="live">Draft Live <span class="badge" id="live-badge" style="display:none">LIVE</span></div>
     <div class="nav-item" data-page="warroom">War Room</div>
     <div class="nav-item" data-page="intel">Intel</div>
@@ -904,11 +951,12 @@
         <div class="filter-pills" id="prep-pos-filter"></div>
         <div style="position:relative;display:inline-flex;align-items:center">
           <input class="search-input" placeholder="Search players..." id="prep-search" style="padding-right:24px;width:140px">
-          <button id="prep-search-clear" onclick="document.getElementById('prep-search').value='';renderPrepTable()" style="position:absolute;right:6px;background:none;border:none;cursor:pointer;font-size:14px;color:var(--text4);display:none">&times;</button>
+          <button id="prep-search-clear" onclick="document.getElementById('prep-search').value='';renderPrepTable();if(prepViewMode==='draftboard')renderDraftBoard()" style="position:absolute;right:6px;background:none;border:none;cursor:pointer;font-size:14px;color:var(--text4);display:none">&times;</button>
         </div>
         <div style="display:flex;gap:4px;margin-left:auto;align-items:center">
           <button class="btn btn-sm" id="btn-view-table" style="font-size:9px;padding:2px 7px;background:var(--text);color:white;border:none" onclick="setPrepView('table')">Table</button>
           <button class="btn btn-secondary btn-sm" id="btn-view-board" style="font-size:9px;padding:2px 7px" onclick="setPrepView('board')">Board</button>
+          <button class="btn btn-secondary btn-sm" id="btn-view-draftboard" style="font-size:9px;padding:2px 7px" onclick="setPrepView('draftboard')">Draft Board</button>
           <label style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px;margin-left:6px">
             <input type="checkbox" id="prep-hide-drafted" checked> Hide picks
           </label>
@@ -923,6 +971,8 @@
       </div>
       <!-- Board View -->
       <div id="prep-board-view" style="display:none;max-height:calc(100vh - 260px);overflow-y:auto;"></div>
+      <!-- Draft Board View -->
+      <div id="prep-draftboard-view" style="display:none;max-height:calc(100vh - 260px);overflow-y:auto;"></div>
     </div>
 
     <!-- RIGHT: War Room Feed -->
@@ -937,6 +987,28 @@
         <div class="fi info"><div class="fi-body" style="text-align:center;color:var(--text4)">Loading war room intel...</div></div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ─────────────────────── MOCK LAB ─────────────────────── -->
+<div class="page" id="page-mocklab">
+  <div style="flex-shrink:0;background:var(--white);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:10px">
+      <h2 style="font-size:14px;font-weight:700">Mock Lab</h2>
+      <span style="font-size:11px;color:var(--text4)" id="mocklab-count">0 mocks imported</span>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-primary btn-sm" id="btn-mocklab-paste" style="font-size:10px;padding:3px 10px">Paste Mock</button>
+      <button class="btn btn-secondary btn-sm" id="btn-mocklab-clear" style="font-size:10px;padding:3px 10px">Clear All</button>
+    </div>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:12px 16px">
+    <!-- Mock List -->
+    <div id="mocklab-list" style="margin-bottom:16px"></div>
+    <!-- Trend Analysis -->
+    <div id="mocklab-trends" style="margin-bottom:16px"></div>
+    <!-- Super Team Builder -->
+    <div id="mocklab-superteam"></div>
   </div>
 </div>
 

@@ -63,6 +63,7 @@ function showPage(id) {
   if (id === 'prep') refreshPrep();
   if (id === 'live') refreshLive();
   if (id === 'warroom') refreshWarRoom();
+  if (id === 'mocklab') refreshMockLab();
   if (id === 'intel') refreshIntel();
 }
 
@@ -259,6 +260,7 @@ const PREP = {
   espnADPLoaded: false,
   myMockPicks: {},     // name -> [round numbers from my mock drafts]
   lastMockBoard: [],   // full board from last imported mock
+  mockDrafts: [],      // [{id, label, date, myPicks:[{name,round,pos}], allPicks:[{...}]}]
 };
 
 // ── Persistence ──
@@ -270,6 +272,7 @@ function savePrepState() {
       wishlist: PREP.wishlist,
       myMockPicks: PREP.myMockPicks,
       lastMockBoard: PREP.lastMockBoard,
+      mockDrafts: PREP.mockDrafts,
       round: PREP.round,
       claudeMockDone: PREP.claudeMockDone,
       claudeMockTeam: PREP.claudeMockTeam,
@@ -288,6 +291,7 @@ function loadPrepState() {
     if (state.wishlist) PREP.wishlist = state.wishlist;
     if (state.myMockPicks) PREP.myMockPicks = state.myMockPicks;
     if (state.lastMockBoard) PREP.lastMockBoard = state.lastMockBoard;
+    if (state.mockDrafts) PREP.mockDrafts = state.mockDrafts;
     if (state.round) PREP.round = state.round;
     if (state.claudeMockDone) PREP.claudeMockDone = state.claudeMockDone;
     if (state.claudeMockTeam) PREP.claudeMockTeam = state.claudeMockTeam;
@@ -297,6 +301,17 @@ function loadPrepState() {
 
 // Load on startup
 loadPrepState();
+
+// Migrate legacy mock data into mockDrafts if needed
+if (Object.keys(PREP.myMockPicks).length > 0 && PREP.mockDrafts.length === 0) {
+  const myPicks = [];
+  for (const [name, rounds] of Object.entries(PREP.myMockPicks)) {
+    rounds.forEach(r => myPicks.push({ name, round: r, pos: '?' }));
+  }
+  myPicks.sort((a, b) => a.round - b.round);
+  PREP.mockDrafts.push({ id: Date.now(), label: 'Mock #1 (imported)', date: new Date().toLocaleDateString(), myPicks, allPicks: [...PREP.lastMockBoard] });
+  savePrepState();
+}
 
 const PICK_POS = 9;
 const NUM_TEAMS_DRAFT = 12;
@@ -612,6 +627,7 @@ function renderPrepRound() {
   // Player table or board
   renderPrepTable();
   if (prepViewMode === 'board') renderBoardView();
+  if (prepViewMode === 'draftboard') renderDraftBoard();
   if (rosterViewMode === 'field') renderFieldView();
 }
 
@@ -1853,6 +1869,15 @@ Gerrit Cole</div>
         `<br><code style="font-size:9px;white-space:pre-wrap">${debugLines.slice(0,4).map(l=>`"${l.slice(0,70)}"`).join('\n')}</code>`;
       return;
     }
+    // Also save to mockDrafts for Mock Lab
+    const myPicksArr = [];
+    for (const [name, rounds] of Object.entries(parsed)) {
+      const proj = projFor(name);
+      rounds.forEach(r => myPicksArr.push({ name, round: r, pos: proj?.pos || '?' }));
+    }
+    myPicksArr.sort((a, b) => a.round - b.round);
+    PREP.mockDrafts.push({ id: Date.now(), label: `Mock #${PREP.mockDrafts.length + 1}`, date: new Date().toLocaleDateString(), myPicks: myPicksArr, allPicks: [...PREP.lastMockBoard] });
+
     toast(`Imported ${count} picks from mock draft`);
     _prepPlayersCache = null;
     savePrepState();
@@ -2069,6 +2094,339 @@ function showFullMockBoard() {
   document.body.appendChild(overlay);
   overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
 }
+
+// ═══════════════════════════════════════════════════════
+//   MOCK LAB
+// ═══════════════════════════════════════════════════════
+
+function refreshMockLab() {
+  renderMockLabList();
+  renderMockLabTrends();
+  renderMockLabSuperTeam();
+  const countEl = document.getElementById('mocklab-count');
+  if (countEl) countEl.textContent = `${PREP.mockDrafts.length} mock${PREP.mockDrafts.length !== 1 ? 's' : ''} imported`;
+}
+
+function renderMockLabList() {
+  const el = document.getElementById('mocklab-list');
+  if (!el) return;
+  if (PREP.mockDrafts.length === 0) {
+    el.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--text4)">
+      <div style="font-size:32px;margin-bottom:8px">&#9918;</div>
+      <div style="font-size:14px;font-weight:600;margin-bottom:4px">No mocks imported yet</div>
+      <div style="font-size:12px">Paste your ESPN practice draft emails here to track trends across multiple mocks</div>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = `<div class="ml-section">Your Mocks (${PREP.mockDrafts.length})</div>` +
+    PREP.mockDrafts.map((mock, idx) => {
+      const picks = mock.myPicks || [];
+      return `<div class="ml-mock-card">
+        <div class="ml-header">
+          <div>
+            <div class="ml-title">${mock.label || 'Mock #' + (idx + 1)}</div>
+            <div class="ml-meta">${mock.date || '?'} · ${picks.length} picks · ${mock.allPicks?.length || 0} total</div>
+          </div>
+          <div style="display:flex;gap:4px">
+            <button class="btn btn-secondary btn-sm" style="font-size:9px;padding:2px 6px" onclick="viewMockLabDraft(${idx})">View</button>
+            <button class="btn btn-secondary btn-sm" style="font-size:9px;padding:2px 6px;color:var(--espn-red)" onclick="deleteMockLabDraft(${idx})">Delete</button>
+          </div>
+        </div>
+        <div class="ml-picks-row">
+          ${picks.map(p => {
+            const proj = projFor(p.name);
+            const espnADP = proj?.espnADP || proj?.adp || 999;
+            const pickNum = PREP.pickOrder[(p.round || 1) - 1]?.overall || p.round * 12;
+            const diff = espnADP - pickNum;
+            const cls = diff < -15 ? 'ml-reach' : diff > 10 ? 'ml-steal' : '';
+            return `<div class="ml-pick ${cls}">R${p.round} ${p.name.split(' ').pop()}</div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join('');
+}
+
+function renderMockLabTrends() {
+  const el = document.getElementById('mocklab-trends');
+  if (!el || PREP.mockDrafts.length === 0) { if (el) el.innerHTML = ''; return; }
+
+  // Aggregate: player -> {count, rounds[], mocks[]}
+  const agg = {};
+  PREP.mockDrafts.forEach((mock, i) => {
+    (mock.myPicks || []).forEach(p => {
+      if (!agg[p.name]) agg[p.name] = { name: p.name, pos: p.pos || '?', count: 0, rounds: [], mockIndices: [] };
+      agg[p.name].count++;
+      agg[p.name].rounds.push(p.round);
+      agg[p.name].mockIndices.push(i + 1);
+    });
+  });
+
+  const trends = Object.values(agg).sort((a, b) => b.count - a.count || a.rounds[0] - b.rounds[0]);
+  const totalMocks = PREP.mockDrafts.length;
+
+  el.innerHTML = `<div class="ml-section">Player Trends <span style="font-weight:400;color:var(--text4);font-size:10px">(across ${totalMocks} mocks)</span></div>
+    <div style="font-size:10px;color:var(--text4);margin-bottom:8px">Players you keep drafting bubble to the top. Click to add/remove from wishlist.</div>
+    <div class="ml-trend-grid">
+      ${trends.map(t => {
+        const proj = projFor(t.name);
+        const isPit = proj ? isPitcherProj(proj) : false;
+        const onWL = isOnWishlist(t.name);
+        const avgRound = (t.rounds.reduce((a,b) => a+b, 0) / t.rounds.length).toFixed(1);
+        const pct = Math.round((t.count / totalMocks) * 100);
+        const stats = proj ? (isPit
+          ? `${proj.K||0}K · ${proj.QS||0}QS · ${(proj.ERA||0).toFixed(2)}ERA${(proj.SV||0)>0?' · '+proj.SV+'SV':''}`
+          : `${proj.HR||0}HR · ${proj.RBI||0}RBI · ${proj.SB||0}SB · .${Math.round((proj.AVG||0)*1000)}`)
+          : '';
+        const espnADP = proj?.espnADP || proj?.adp || '?';
+        return `<div class="ml-trend-card${onWL ? ' on-wishlist' : ''}" onclick="toggleWishlist('${t.name.replace(/'/g,"\\'")}','${t.pos}','${proj?.team||'?'}');refreshMockLab()" style="cursor:pointer">
+          <div class="ml-freq">${t.count}/${totalMocks}</div>
+          <div class="ml-trend-name">${t.name} ${onWL ? '<span style="color:var(--yellow)">&#9733;</span>' : ''}</div>
+          <div class="ml-trend-meta">${t.pos} · ADP ${espnADP < 900 ? espnADP : '?'} · Avg R${avgRound} · ${pct}%</div>
+          <div class="ml-trend-rounds">Rounds: ${t.rounds.join(', ')} ${t.rounds.length > 1 ? (t.rounds.every((r,i,a) => i===0 || Math.abs(r - a[i-1]) <= 2) ? '(consistent)' : '(varying)') : ''}</div>
+          ${stats ? `<div style="font-size:9px;color:var(--text4);margin-top:2px">${stats}</div>` : ''}
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function renderMockLabSuperTeam() {
+  const el = document.getElementById('mocklab-superteam');
+  if (!el || PREP.mockDrafts.length === 0) { if (el) el.innerHTML = ''; return; }
+
+  // Build super team: take the best player for each slot based on frequency + value
+  // Combine mock trends with current draft prep picks
+  const currentPicks = PREP.picks.filter(Boolean);
+  const allPlayers = getPrepPlayers();
+
+  // Aggregate mock data
+  const agg = {};
+  PREP.mockDrafts.forEach(mock => {
+    (mock.myPicks || []).forEach(p => {
+      if (!agg[p.name]) agg[p.name] = { name: p.name, pos: p.pos || '?', count: 0, rounds: [], bestRound: 99 };
+      agg[p.name].count++;
+      agg[p.name].rounds.push(p.round);
+      agg[p.name].bestRound = Math.min(agg[p.name].bestRound, p.round);
+    });
+  });
+
+  // Score each player: frequency * 10 + aiRank bonus + round bonus
+  const candidates = Object.values(agg).map(t => {
+    const proj = projFor(t.name);
+    const player = allPlayers.find(p => p.name === t.name);
+    const aiRank = player?.aiRank || 999;
+    const freq = t.count / PREP.mockDrafts.length;
+    const score = freq * 30 + (300 - Math.min(aiRank, 300)) / 10 + (24 - t.bestRound);
+    return { ...t, proj, aiRank, freq, score, team: proj?.team || '?' };
+  }).sort((a, b) => b.score - a.score);
+
+  // Build roster by position
+  const SLOTS = ['C','1B','2B','SS','3B','OF','OF','OF','UTIL','UTIL','SP','SP','SP','RP','RP','P','P','Bench','Bench','Bench','Bench','Bench','Bench'];
+  const superTeam = [];
+  const used = new Set();
+
+  // First: lock in current draft prep picks
+  currentPicks.forEach(p => {
+    if (!used.has(p.name)) {
+      superTeam.push({ ...p, source: 'drafted', slot: p.pos || '?' });
+      used.add(p.name);
+    }
+  });
+
+  // Then fill remaining slots from mock trends
+  for (const slot of SLOTS) {
+    if (superTeam.length >= 23) break;
+    const inSlot = superTeam.filter(p => {
+      if (slot === 'UTIL' || slot === 'Bench') return false; // always has room
+      if (slot === 'OF') return ['OF','LF','CF','RF'].includes((p.slot||p.pos||'').toUpperCase());
+      if (slot === 'P') return isPitcherProj(p);
+      return (p.slot||p.pos||'').toUpperCase() === slot;
+    }).length;
+    const needed = SLOTS.filter(s => s === slot).length;
+    if (slot !== 'UTIL' && slot !== 'Bench' && slot !== 'P' && inSlot >= needed) continue;
+
+    for (const cand of candidates) {
+      if (used.has(cand.name)) continue;
+      const p = cand.proj;
+      if (!p) continue;
+      const isPit = isPitcherProj(p);
+      const pos = (p.pos || '').toUpperCase();
+
+      let fits = false;
+      if (slot === 'UTIL' || slot === 'Bench') fits = true;
+      else if (slot === 'P') fits = isPit;
+      else if (slot === 'OF') fits = ['OF','LF','CF','RF'].includes(pos);
+      else if (slot === 'SP') fits = isPit && (p.SV||0) <= 5;
+      else if (slot === 'RP') fits = isPit && (p.SV||0) > 5;
+      else fits = pos === slot || pos.includes(slot);
+
+      if (fits) {
+        superTeam.push({ name: cand.name, pos: p.pos, team: cand.team, source: 'mock', slot, freq: cand.freq, count: cand.count, aiRank: cand.aiRank, bestRound: cand.bestRound, ...p });
+        used.add(cand.name);
+        break;
+      }
+    }
+  }
+
+  // Calculate scores for this super team
+  const savedPicks = [...PREP.picks];
+  PREP.picks = superTeam.map((p, i) => ({ ...p, round: i + 1 }));
+  const scores = calcPrepScores();
+  PREP.picks = savedPicks;
+  const overall = superTeam.length > 0 ? Math.round(Object.values(scores).reduce((a,b) => a+b, 0) / ALL_CATS.length) : 0;
+
+  el.innerHTML = `<div class="ml-section">Super Team Builder <span style="font-weight:400;color:var(--text4);font-size:10px">(${currentPicks.length} drafted + ${superTeam.length - currentPicks.length} from mock trends)</span></div>
+    <div style="font-size:10px;color:var(--text4);margin-bottom:8px">Your current draft picks + the best players from your mock trends, assembled into one optimal roster. Overall: <strong style="color:var(--text);font-size:12px">${overall}/100</strong></div>
+    <div class="cat-bars cat-bars-compact" id="mocklab-cat-bars-bat" style="margin-bottom:6px"></div>
+    <div class="cat-bars cat-bars-compact" id="mocklab-cat-bars-pit" style="margin-bottom:12px"></div>
+    <div class="ml-super-grid">
+      ${superTeam.map(p => {
+        const isPit = isPitcherProj(p);
+        const stats = isPit
+          ? `${p.K||0}K · ${p.QS||0}QS · ${(p.ERA||0).toFixed(2)}ERA${(p.SV||0)>0?' · '+p.SV+'SV':''}`
+          : `${p.HR||0}HR · ${p.RBI||0}RBI · ${p.SB||0}SB · .${Math.round((p.AVG||0)*1000)}`;
+        const badge = p.source === 'drafted'
+          ? '<span class="ml-super-badge" style="background:var(--green-bg);color:var(--green)">DRAFTED</span>'
+          : `<span class="ml-super-badge" style="background:var(--blue-soft);color:var(--blue)">${p.count}/${PREP.mockDrafts.length} mocks</span>`;
+        return `<div class="ml-super-card${p.source === 'drafted' ? ' ml-locked' : ''}">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div class="ml-super-name">${p.name}</div>
+            ${badge}
+          </div>
+          <div class="ml-super-meta">${p.pos} · ${p.team} · AI #${p.aiRank||'?'}${p.bestRound ? ' · Best R' + p.bestRound : ''}</div>
+          <div class="ml-super-stats">${stats}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    ${superTeam.length < 23 ? `<div style="font-size:10px;color:var(--text4);margin-top:8px;text-align:center">Import more mocks to fill all 23 roster slots (${superTeam.length}/23 filled)</div>` : ''}
+  `;
+
+  // Render category bars after DOM update
+  setTimeout(() => {
+    const batEl = document.getElementById('mocklab-cat-bars-bat');
+    const pitEl = document.getElementById('mocklab-cat-bars-pit');
+    if (batEl) renderCatBars(batEl, CATS_BAT, scores);
+    if (pitEl) renderCatBars(pitEl, CATS_PIT, scores);
+  }, 50);
+}
+
+function viewMockLabDraft(idx) {
+  const mock = PREP.mockDrafts[idx];
+  if (!mock) return;
+  PREP.lastMockBoard = mock.allPicks || [];
+  showMockBoardOverlay({ totalPicks: mock.allPicks?.length || 0, draftType: mock.label || 'Mock', yourPicks: mock.myPicks || [], allPicks: mock.allPicks || [] });
+}
+
+function deleteMockLabDraft(idx) {
+  if (!confirm(`Delete mock #${idx + 1}?`)) return;
+  const mock = PREP.mockDrafts[idx];
+  // Also remove these picks from myMockPicks
+  (mock.myPicks || []).forEach(p => {
+    if (PREP.myMockPicks[p.name]) {
+      PREP.myMockPicks[p.name] = PREP.myMockPicks[p.name].filter(r => !mock.myPicks.some(mp => mp.name === p.name && mp.round === r));
+      if (PREP.myMockPicks[p.name].length === 0) delete PREP.myMockPicks[p.name];
+    }
+  });
+  PREP.mockDrafts.splice(idx, 1);
+  savePrepState();
+  refreshMockLab();
+  renderMockDisplay();
+}
+
+// Mock Lab Import (paste)
+document.getElementById('btn-mocklab-paste').addEventListener('click', () => {
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay-backdrop';
+  overlay.innerHTML = `
+    <div class="overlay-card" style="max-width:600px">
+      <div class="overlay-header" style="background:var(--blue)">
+        <h3>Import Mock Draft</h3>
+        <button class="btn btn-sm" style="background:rgba(255,255,255,0.2);color:white;border:none" onclick="this.closest('.overlay-backdrop').remove()">Close</button>
+      </div>
+      <div class="overlay-body" style="padding:20px">
+        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">
+          Paste your ESPN mock draft email. Each import is saved as a separate mock for trend tracking.
+        </div>
+        <input id="mocklab-label" placeholder="Label (e.g. Mock #3 — SB focus)" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;margin-bottom:8px">
+        <textarea id="mocklab-import-text" style="width:100%;height:200px;border:1px solid var(--border);border-radius:6px;padding:10px;font-size:13px;font-family:inherit;resize:vertical" placeholder="Paste your mock draft results here..."></textarea>
+        <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
+          <span style="font-size:11px;color:var(--text-tertiary);flex:1;align-self:center" id="mocklab-import-status"></span>
+          <button class="btn btn-secondary" onclick="this.closest('.overlay-backdrop').remove()">Cancel</button>
+          <button class="btn btn-primary" id="mocklab-import-go">Import</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+
+  // Live preview
+  document.getElementById('mocklab-import-text').addEventListener('input', () => {
+    const raw = document.getElementById('mocklab-import-text').value;
+    const saved = PREP.lastMockBoard;
+    const parsed = parseMockDraftEmail(raw);
+    const board = PREP.lastMockBoard;
+    PREP.lastMockBoard = saved;
+    const myCount = Object.keys(parsed).length;
+    document.getElementById('mocklab-import-status').textContent =
+      myCount > 0 ? `Found ${myCount} of your picks (${board.length} total)` : '';
+  });
+
+  document.getElementById('mocklab-import-go').addEventListener('click', async () => {
+    const raw = document.getElementById('mocklab-import-text').value;
+    if (!raw.trim()) { overlay.remove(); return; }
+    if (Object.keys(S.projections).length === 0) {
+      document.getElementById('mocklab-import-status').textContent = 'Loading projections...';
+      await loadProjections();
+    }
+    const savedBoard = PREP.lastMockBoard;
+    const parsed = parseMockDraftEmail(raw);
+    const allPicks = PREP.lastMockBoard;
+    PREP.lastMockBoard = savedBoard;
+    const myCount = Object.keys(parsed).length;
+    if (myCount === 0) {
+      document.getElementById('mocklab-import-status').innerHTML = '<span style="color:var(--espn-red)">0 picks found. Check the format.</span>';
+      return;
+    }
+
+    // Build myPicks array
+    const myPicks = [];
+    for (const [name, rounds] of Object.entries(parsed)) {
+      const proj = projFor(name);
+      rounds.forEach(r => myPicks.push({ name, round: r, pos: proj?.pos || '?' }));
+    }
+    myPicks.sort((a, b) => a.round - b.round);
+
+    const label = document.getElementById('mocklab-label').value.trim() || `Mock #${PREP.mockDrafts.length + 1}`;
+    const date = new Date().toLocaleDateString();
+
+    PREP.mockDrafts.push({ id: Date.now(), label, date, myPicks, allPicks });
+
+    // Also merge into myMockPicks for backward compatibility with Draft Prep
+    for (const [name, rounds] of Object.entries(parsed)) {
+      if (!PREP.myMockPicks[name]) PREP.myMockPicks[name] = [];
+      PREP.myMockPicks[name].push(...rounds);
+    }
+
+    savePrepState();
+    overlay.remove();
+    toast(`Imported ${myPicks.length} picks as "${label}"`);
+    refreshMockLab();
+    renderMockDisplay();
+    _prepPlayersCache = null;
+  });
+});
+
+// Mock Lab Clear All
+document.getElementById('btn-mocklab-clear').addEventListener('click', () => {
+  if (!confirm(`Delete all ${PREP.mockDrafts.length} imported mocks?`)) return;
+  PREP.mockDrafts = [];
+  PREP.myMockPicks = {};
+  PREP.lastMockBoard = [];
+  savePrepState();
+  refreshMockLab();
+  renderMockDisplay();
+  toast('All mocks cleared');
+});
 
 // ── Claude's Mock Draft ──
 document.getElementById('btn-claude-mock').addEventListener('click', () => {
@@ -2321,11 +2679,13 @@ function setPrepView(mode) {
   prepViewMode = mode;
   document.getElementById('prep-table-view').style.display = mode === 'table' ? '' : 'none';
   document.getElementById('prep-board-view').style.display = mode === 'board' ? '' : 'none';
-  document.getElementById('btn-view-table').style.background = mode === 'table' ? 'var(--text)' : 'var(--bg)';
-  document.getElementById('btn-view-table').style.color = mode === 'table' ? 'white' : 'var(--text)';
-  document.getElementById('btn-view-board').style.background = mode === 'board' ? 'var(--text)' : 'var(--bg)';
-  document.getElementById('btn-view-board').style.color = mode === 'board' ? 'white' : 'var(--text)';
+  document.getElementById('prep-draftboard-view').style.display = mode === 'draftboard' ? '' : 'none';
+  ['table','board','draftboard'].forEach(m => {
+    const btn = document.getElementById('btn-view-' + m);
+    if (btn) { btn.style.background = mode === m ? 'var(--text)' : 'var(--bg)'; btn.style.color = mode === m ? 'white' : 'var(--text)'; }
+  });
   if (mode === 'board') renderBoardView();
+  if (mode === 'draftboard') renderDraftBoard();
 }
 
 let boardTab = 'position';
@@ -2479,6 +2839,123 @@ function renderCategoryBoard(allPlayers, isDrafted, playerTile) {
   </div>`;
 }
 
+// ── Draft Board View ──
+// Shows all players in ADP order grouped by round. Players predicted to be gone
+// by the current round are faded out, user's picks are marked, remaining players
+// are bright and draftable. Toggling "Show Gone" hides/shows predicted picks.
+let dbShowGone = true;
+let dbPosFilter = 'ALL';
+
+function renderDraftBoard() {
+  const el = document.getElementById('prep-draftboard-view');
+  if (!el) return;
+  const allPlayers = getPrepPlayers();
+  const currentRound = PREP.round;
+  const currentOverall = PREP.pickOrder[currentRound - 1]?.overall || 0;
+
+  // Sort all players by ADP (best available order)
+  const sorted = [...allPlayers].sort((a, b) => {
+    const adpA = a.espnADP < 900 ? a.espnADP : (a.adp < 900 ? a.adp : 999);
+    const adpB = b.espnADP < 900 ? b.espnADP : (b.adp < 900 ? b.adp : 999);
+    return adpA - adpB;
+  });
+
+  // Position filter
+  const filtered = dbPosFilter === 'ALL' ? sorted : sorted.filter(p => posMatch(p.pos, dbPosFilter));
+
+  // Search filter
+  const search = document.getElementById('prep-search').value.toLowerCase();
+  const players = search ? filtered.filter(p => p.name.toLowerCase().includes(search)) : filtered;
+
+  // Determine which players are "gone" by the current pick
+  // A player is predicted gone if their ADP < currentOverall and user hasn't drafted them
+  function playerStatus(p) {
+    if (PREP.draftedNames.has(p.name)) return 'mine'; // user drafted
+    const adp = p.espnADP < 900 ? p.espnADP : (p.adp < 900 ? p.adp : 999);
+    if (adp < currentOverall - 5) return 'gone'; // predicted taken by others (5-pick cushion)
+    return 'available';
+  }
+
+  // Group by draft round (based on ADP)
+  function adpToRound(adp) {
+    if (adp >= 900) return 24; // no ADP → end
+    return Math.min(Math.ceil(adp / NUM_TEAMS_DRAFT), NUM_ROUNDS_DRAFT);
+  }
+
+  // Count stats
+  let availCount = 0, goneCount = 0, mineCount = 0;
+  players.forEach(p => {
+    const st = playerStatus(p);
+    if (st === 'available') availCount++;
+    else if (st === 'gone') goneCount++;
+    else mineCount++;
+  });
+
+  // Build grid HTML grouped by predicted round
+  let html = '';
+  let lastRound = 0;
+
+  const POS_FILTERS = ['ALL','C','1B','2B','SS','3B','OF','SP','RP'];
+
+  html += `<div class="db-header">
+    <div class="db-legend">
+      <span style="display:inline-block;width:8px;height:8px;background:#ecfdf5;border-left:3px solid #059669;margin-right:2px"></span> Available (${availCount})
+      <span style="display:inline-block;width:8px;height:8px;background:#f3f4f6;border-left:3px solid #d1d5db;margin-right:2px;margin-left:8px;opacity:.3"></span> Predicted gone (${goneCount})
+      <span style="display:inline-block;width:8px;height:8px;background:#fef2f2;border-left:3px solid #ef4444;margin-right:2px;margin-left:8px;opacity:.4"></span> Your picks (${mineCount})
+    </div>
+    <div class="db-toggle">
+      <button class="${dbShowGone?'active':''}" onclick="dbShowGone=true;renderDraftBoard()">Show All</button>
+      <button class="${!dbShowGone?'active':''}" onclick="dbShowGone=false;renderDraftBoard()">Available Only</button>
+    </div>
+  </div>
+  <div style="display:flex;gap:3px;margin-bottom:8px;flex-wrap:wrap">
+    ${POS_FILTERS.map(f => `<button class="btn btn-sm" style="font-size:8px;padding:1px 6px;${dbPosFilter===f?'background:var(--text);color:white;border-color:var(--text)':'background:var(--bg);color:var(--text3);border:1px solid var(--border)'}" onclick="dbPosFilter='${f}';renderDraftBoard()">${f}</button>`).join('')}
+  </div>`;
+
+  html += '<div class="db-grid">';
+
+  players.forEach(p => {
+    const adp = p.espnADP < 900 ? p.espnADP : (p.adp < 900 ? p.adp : 999);
+    const round = adpToRound(adp);
+    const status = playerStatus(p);
+
+    // Hide gone players if toggle is off
+    if (!dbShowGone && status !== 'available') return;
+
+    // Round separator
+    if (round !== lastRound) {
+      // Highlight the user's pick round
+      const isUserRound = round === currentRound;
+      const pickInRound = PREP.pickOrder[round - 1];
+      const pickLabel = pickInRound ? ` — Your pick #${pickInRound.overall}` : '';
+      html += `<div class="db-round-sep" ${isUserRound ? 'style="color:var(--espn-red);border-bottom-color:var(--espn-red)"' : ''}>Round ${round}${isUserRound ? pickLabel : ''}${round <= currentRound && round !== currentRound ? ' <span style="font-weight:400;color:var(--text4)">(passed)</span>' : ''}${isUserRound ? ' <span style="font-weight:400">&#8592; YOU ARE HERE</span>' : ''}</div>`;
+      lastRound = round;
+    }
+
+    const isPit = isPitcherProj(p);
+    const stats = isPit
+      ? `${p.K||0}K · ${p.QS||0}QS · ${(p.ERA||0).toFixed(2)}ERA${(p.SV||0)>0?' · '+p.SV+'SV':''}`
+      : `${p.HR||0}HR · ${p.RBI||0}RBI · ${p.SB||0}SB · .${Math.round((p.AVG||0)*1000)}`;
+
+    const onWL = isOnWishlist(p.name);
+    const tileClass = status === 'mine' ? 'db-tile db-mine'
+      : status === 'gone' ? 'db-tile db-gone'
+      : `db-tile db-available${onWL ? ' wishlist' : ''}`;
+
+    const onclick = status === 'available' ? `onclick="showWarRoom('${p.name.replace(/'/g, "\\'")}')"` : '';
+
+    html += `<div class="${tileClass}" ${onclick}>
+      <div class="db-rank">#${adp < 900 ? adp : '?'} ADP · AI #${p.aiRank||'?'}</div>
+      <div class="db-name">${p.name}</div>
+      <div class="db-meta">${p.pos} · ${p.team}${p.health < 85 ? ' · <span style="color:var(--espn-red)">' + p.health + '% HP</span>' : ''}</div>
+      <div class="db-stats">${stats}</div>
+    </div>`;
+  });
+
+  html += '</div>';
+  el.innerHTML = html;
+}
+
 // Navigation
 document.getElementById('btn-prev-round').addEventListener('click', () => {
   if (PREP.round > 1) { PREP.round--; renderPrepRound(); }
@@ -2489,6 +2966,7 @@ document.getElementById('btn-next-round').addEventListener('click', () => {
 document.getElementById('prep-search').addEventListener('input', () => {
   document.getElementById('prep-search-clear').style.display = document.getElementById('prep-search').value ? '' : 'none';
   renderPrepTable();
+  if (prepViewMode === 'draftboard') renderDraftBoard();
 });
 document.getElementById('prep-hide-drafted').addEventListener('change', () => renderPrepTable());
 document.getElementById('btn-undo-pick').addEventListener('click', prepUndo);
